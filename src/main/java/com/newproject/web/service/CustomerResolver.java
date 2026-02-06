@@ -1,0 +1,53 @@
+package com.newproject.web.service;
+
+import com.newproject.web.dto.Customer;
+import com.newproject.web.dto.CustomerRequest;
+import java.util.List;
+import java.util.Locale;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.stereotype.Service;
+
+@Service
+public class CustomerResolver {
+    private final GatewayClient gatewayClient;
+
+    public CustomerResolver(GatewayClient gatewayClient) {
+        this.gatewayClient = gatewayClient;
+    }
+
+    public Customer resolveCurrentCustomer(Authentication authentication) {
+        if (!(authentication instanceof OAuth2AuthenticationToken)) {
+            return null;
+        }
+
+        OidcUser user = (OidcUser) authentication.getPrincipal();
+        String email = user.getEmail();
+        String preferredUsername = user.getPreferredUsername();
+        String keycloakUserId = user.getSubject();
+
+        List<Customer> customers = gatewayClient.listCustomers();
+        for (Customer customer : customers) {
+            if (email != null && email.equalsIgnoreCase(customer.getEmail())) {
+                return customer;
+            }
+            if (email == null && preferredUsername != null && preferredUsername.equalsIgnoreCase(customer.getEmail())) {
+                return customer;
+            }
+        }
+
+        CustomerRequest request = new CustomerRequest();
+        request.setActive(true);
+        request.setKeycloakUserId(keycloakUserId);
+        request.setEmail(email != null ? email.toLowerCase(Locale.ROOT) : preferredUsername + "@example.local");
+        request.setFirstName(user.getGivenName());
+        request.setLastName(user.getFamilyName());
+        return gatewayClient.createCustomer(request);
+    }
+
+    public Long resolveCustomerId(Authentication authentication) {
+        Customer customer = resolveCurrentCustomer(authentication);
+        return customer != null ? customer.getId() : null;
+    }
+}

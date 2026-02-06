@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>TSATech Commerce</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+</head>
+<body>
+<div th:replace="fragments/header :: header"></div>
+
+<main class="container">
+    <section class="hero">
+        <div class="hero-text">
+            <h1>Catalogo prodotti</h1>
+            <p>Interfaccia stile OpenCart: veloce, pulita, operativa.</p>
+        </div>
+        <div class="hero-card">
+            <div class="stat">
+                <div class="stat-label">Prodotti</div>
+                <div class="stat-value" th:text="${products.size()}">0</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Ambiente</div>
+                <div class="stat-value">OpenShift</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="grid">
+        <div class="card" th:each="product : ${products}">
+            <div class="card-header">
+                <div class="sku" th:text="${product.sku}">SKU</div>
+                <div class="badge" th:text="${product.active} ? 'Active' : 'Disabled'">Active</div>
+            </div>
+            <h3 th:text="${product.name}">Product</h3>
+            <p class="desc" th:text="${product.description}">Description</p>
+            <div class="card-footer">
+                <div class="price" th:text="${product.price}">0.00</div>
+                <div class="actions">
+                    <a class="btn" th:href="@{/shop/products/{id}(id=${product.id})}">Dettagli</a>
+                    <form th:action="@{/cart/add}" method="post">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                        <input type="hidden" name="productId" th:value="${product.id}" />
+                        <input type="hidden" name="quantity" value="1" />
+                        <button class="btn btn-primary" type="submit">Aggiungi</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<div th:replace="fragments/footer :: footer"></div>
+</body>
+</html>

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>Admin Spedizioni</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+</head>
+<body>
+<div th:replace="fragments/header :: header"></div>
+
+<main class="container admin">
+    <h1>Spedizioni</h1>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Order</th>
+                <th>Carrier</th>
+                <th>Tracking</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="shipment : ${shipments}">
+                <td th:text="${shipment.id}">1</td>
+                <td th:text="${shipment.orderId}">1</td>
+                <td th:text="${shipment.carrier}">Carrier</td>
+                <td th:text="${shipment.trackingNumber}">TRK</td>
+                <td th:text="${shipment.status}">NEW</td>
+            </tr>
+        </tbody>
+    </table>
+</main>
+
+<div th:replace="fragments/footer :: footer"></div>
+</body>
+</html>

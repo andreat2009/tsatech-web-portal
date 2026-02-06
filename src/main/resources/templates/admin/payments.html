@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>Admin Pagamenti</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+</head>
+<body>
+<div th:replace="fragments/header :: header"></div>
+
+<main class="container admin">
+    <h1>Pagamenti</h1>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Order</th>
+                <th>Importo</th>
+                <th>Valuta</th>
+                <th>Status</th>
+                <th>Provider</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="payment : ${payments}">
+                <td th:text="${payment.id}">1</td>
+                <td th:text="${payment.orderId}">1</td>
+                <td th:text="${payment.amount}">0.00</td>
+                <td th:text="${payment.currency}">EUR</td>
+                <td th:text="${payment.status}">NEW</td>
+                <td th:text="${payment.provider}">manual</td>
+            </tr>
+        </tbody>
+    </table>
+</main>
+
+<div th:replace="fragments/footer :: footer"></div>
+</body>
+</html>

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+<header class="topbar">
+    <div class="brand">
+        <a th:href="@{/}">TSATech Commerce</a>
+        <span class="tag">Storefront + Admin</span>
+    </div>
+    <nav class="nav">
+        <a th:href="@{/}">Shop</a>
+        <a th:href="@{/cart}" sec:authorize="isAuthenticated()">Cart</a>
+        <a th:href="@{/account/orders}" sec:authorize="isAuthenticated()">Orders</a>
+        <a th:href="@{/admin}" sec:authorize="hasRole('ADMIN')">Admin</a>
+    </nav>
+    <div class="auth">
+        <span sec:authorize="isAuthenticated()" class="user" th:text="${#authentication.name}"></span>
+        <a sec:authorize="!isAuthenticated()" th:href="@{/oauth2/authorization/keycloak}">Login</a>
+        <a sec:authorize="isAuthenticated()" th:href="@{/logout}">Logout</a>
+    </div>
+</header>
+</body>
+</html>

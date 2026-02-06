@@ -1,0 +1,36 @@
+server:
+  port: ${SERVER_PORT:8080}
+  ssl:
+    enabled: ${SERVER_SSL_ENABLED:false}
+    certificate: ${SERVER_SSL_CERT:/etc/tls/tls.crt}
+    certificate-private-key: ${SERVER_SSL_KEY:/etc/tls/tls.key}
+  forward-headers-strategy: framework
+
+spring:
+  application:
+    name: web-portal
+  thymeleaf:
+    cache: false
+  security:
+    oauth2:
+      client:
+        provider:
+          keycloak:
+            issuer-uri: ${KEYCLOAK_ISSUER_URI:https://keycloak-platform.apps-crc.testing/realms/master}
+        registration:
+          keycloak:
+            client-id: ${KEYCLOAK_CLIENT_ID:web-portal}
+            client-secret: ${KEYCLOAK_CLIENT_SECRET:changeme}
+            scope: openid,profile,email
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+
+app:
+  gateway-base-url: ${GATEWAY_BASE_URL:https://api-gateway-platform.apps-crc.testing}
+  currency: ${APP_CURRENCY:EUR}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

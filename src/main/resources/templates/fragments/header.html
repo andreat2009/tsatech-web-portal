@@ -1,7 +1,4 @@
-<!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<body>
-<header class="topbar">
+<header class="topbar" th:fragment="header" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
     <div class="brand">
         <a th:href="@{/}">TSATech Commerce</a>
         <span class="tag">Storefront + Admin</span>
@@ -18,5 +15,3 @@
         <a sec:authorize="isAuthenticated()" th:href="@{/logout}">Logout</a>
     </div>
 </header>
-</body>
-</html>

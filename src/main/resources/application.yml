@@ -7,6 +7,10 @@ server:
   forward-headers-strategy: framework
 
 spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
   application:
     name: web-portal
   thymeleaf:

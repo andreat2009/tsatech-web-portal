@@ -24,7 +24,7 @@ env:
   KEYCLOAK_ISSUER_URI: "https://keycloak-platform.apps-crc.testing/realms/master"
 
 secret:
-  name: "web-portalSecret"
+  name: "web-portal-secret"
   create: false
   data: {}
   # data example:

@@ -30,7 +30,7 @@ spring:
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
 
 app:
-  gateway-base-url: ${GATEWAY_BASE_URL:https://api-gateway-platform.apps-crc.testing}
+  gateway-base-url: ${GATEWAY_BASE_URL:https://api-gateway-ecommerce.apps-crc.testing}
   currency: ${APP_CURRENCY:EUR}
 
 management:

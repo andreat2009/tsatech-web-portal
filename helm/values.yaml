@@ -12,7 +12,7 @@ route:
   enabled: true
   host: "web-portal-ecommerce.apps-crc.testing"
   tls:
-    termination: reencrypt
+    termination: passthrough
     insecureEdgeTerminationPolicy: Redirect
   annotations: {}
 
@@ -34,12 +34,15 @@ secret:
   #   DB_USER: "web-portal"
   #   DB_PASSWORD: "change-me"
 
+secretEnv:
+  KEYCLOAK_CLIENT_SECRET: "KEYCLOAK_CLIENT_SECRET"
+
 tls:
   enabled: true
-  secretName: "web-portal-tls"
+  secretName: "wildcard-apps-tls"
 
 truststore:
-  enabled: false
+  enabled: true
   secretName: "platform-truststore"
   mountPath: "/etc/ssl/openshift"
   password: "changeit"

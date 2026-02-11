@@ -7,8 +7,12 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -29,8 +33,31 @@ public class StorefrontController {
     }
 
     @GetMapping({"/", "/shop"})
-    public String home(Model model) {
+    public String home(Model model, Authentication authentication) {
         List<Product> products = gatewayClient.listProducts();
+
+        if (isAuthenticated(authentication)) {
+            Map<Long, ProductPrice> pricesByProductId = gatewayClient.listPrices().stream()
+                .filter(price -> price.getProductId() != null)
+                .collect(Collectors.toMap(ProductPrice::getProductId, Function.identity(), (first, ignored) -> first));
+
+            Map<Long, InventoryItem> inventoryByProductId = gatewayClient.listInventory().stream()
+                .filter(item -> item.getProductId() != null)
+                .collect(Collectors.toMap(InventoryItem::getProductId, Function.identity(), (first, ignored) -> first));
+
+            for (Product product : products) {
+                ProductPrice price = pricesByProductId.get(product.getId());
+                if (price != null && Boolean.TRUE.equals(price.getActive()) && price.getAmount() != null) {
+                    product.setPrice(price.getAmount());
+                }
+
+                InventoryItem inventory = inventoryByProductId.get(product.getId());
+                if (inventory != null && inventory.getOnHand() != null && inventory.getReserved() != null) {
+                    product.setQuantity(Math.max(0, inventory.getOnHand() - inventory.getReserved()));
+                }
+            }
+        }
+
         products.sort(Comparator.comparing(Product::getId));
         model.addAttribute("products", products);
         return "index";
@@ -180,5 +207,11 @@ public class StorefrontController {
         request.setCurrency(currency);
         request.setStatus("OPEN");
         return gatewayClient.createCart(request);
+    }
+
+    private boolean isAuthenticated(Authentication authentication) {
+        return authentication != null
+            && authentication.isAuthenticated()
+            && !(authentication instanceof AnonymousAuthenticationToken);
     }
 }

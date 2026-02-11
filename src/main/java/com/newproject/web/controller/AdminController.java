@@ -1,9 +1,6 @@
 package com.newproject.web.controller;
 
-import com.newproject.web.dto.Order;
-import com.newproject.web.dto.Payment;
-import com.newproject.web.dto.Product;
-import com.newproject.web.dto.Shipment;
+import com.newproject.web.dto.*;
 import com.newproject.web.service.GatewayClient;
 import java.util.List;
 import org.springframework.stereotype.Controller;
@@ -23,13 +20,23 @@ public class AdminController {
     @GetMapping
     public String dashboard(Model model) {
         List<Product> products = gatewayClient.listProducts();
+        List<Customer> customers = gatewayClient.listCustomers();
+        List<Cart> carts = gatewayClient.listCarts(null);
         List<Order> orders = gatewayClient.listOrders(null);
+        List<InventoryItem> inventoryItems = gatewayClient.listInventory();
+        List<ProductPrice> prices = gatewayClient.listPrices();
         List<Payment> payments = gatewayClient.listPayments(null);
         List<Shipment> shipments = gatewayClient.listShipments(null);
+
         model.addAttribute("productCount", products.size());
+        model.addAttribute("customerCount", customers.size());
+        model.addAttribute("cartCount", carts.size());
         model.addAttribute("orderCount", orders.size());
+        model.addAttribute("inventoryCount", inventoryItems.size());
+        model.addAttribute("priceCount", prices.size());
         model.addAttribute("paymentCount", payments.size());
         model.addAttribute("shipmentCount", shipments.size());
+        model.addAttribute("notificationStatus", gatewayClient.notificationPing());
         return "admin/dashboard";
     }
 
@@ -52,5 +59,33 @@ public class AdminController {
         List<Shipment> shipments = gatewayClient.listShipments(null);
         model.addAttribute("shipments", shipments);
         return "admin/shipments";
+    }
+
+    @GetMapping("/customers")
+    public String customers(Model model) {
+        List<Customer> customers = gatewayClient.listCustomers();
+        model.addAttribute("customers", customers);
+        return "admin/customers";
+    }
+
+    @GetMapping("/carts")
+    public String carts(Model model) {
+        List<Cart> carts = gatewayClient.listCarts(null);
+        model.addAttribute("carts", carts);
+        return "admin/carts";
+    }
+
+    @GetMapping("/inventory")
+    public String inventory(Model model) {
+        List<InventoryItem> inventoryItems = gatewayClient.listInventory();
+        model.addAttribute("inventoryItems", inventoryItems);
+        return "admin/inventory";
+    }
+
+    @GetMapping("/pricing")
+    public String pricing(Model model) {
+        List<ProductPrice> prices = gatewayClient.listPrices();
+        model.addAttribute("prices", prices);
+        return "admin/pricing";
     }
 }

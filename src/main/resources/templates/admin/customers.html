@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>Admin Clienti</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+</head>
+<body>
+<div th:replace="fragments/header :: header"></div>
+
+<main class="container admin">
+    <h1>Clienti</h1>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Email</th>
+                <th>Nome</th>
+                <th>Cognome</th>
+                <th>Attivo</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="customer : ${customers}">
+                <td th:text="${customer.id}">1</td>
+                <td th:text="${customer.email}">mail@example.com</td>
+                <td th:text="${customer.firstName}">Nome</td>
+                <td th:text="${customer.lastName}">Cognome</td>
+                <td th:text="${customer.active}">true</td>
+            </tr>
+        </tbody>
+    </table>
+</main>
+
+<div th:replace="fragments/footer :: footer"></div>
+</body>
+</html>

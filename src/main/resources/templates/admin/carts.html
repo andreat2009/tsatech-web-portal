@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>Admin Carrelli</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+</head>
+<body>
+<div th:replace="fragments/header :: header"></div>
+
+<main class="container admin">
+    <h1>Carrelli</h1>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Cliente</th>
+                <th>Valuta</th>
+                <th>Stato</th>
+                <th>Creato il</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="cart : ${carts}">
+                <td th:text="${cart.id}">1</td>
+                <td th:text="${cart.customerId}">1</td>
+                <td th:text="${cart.currency}">EUR</td>
+                <td th:text="${cart.status}">OPEN</td>
+                <td th:text="${cart.createdAt}">-</td>
+            </tr>
+        </tbody>
+    </table>
+</main>
+
+<div th:replace="fragments/footer :: footer"></div>
+</body>
+</html>

@@ -17,9 +17,29 @@
             <a class="btn" th:href="@{/admin/products}">Gestisci prodotti</a>
         </div>
         <div class="card">
+            <div class="stat-label">Clienti</div>
+            <div class="stat-value" th:text="${customerCount}">0</div>
+            <a class="btn" th:href="@{/admin/customers}">Elenco clienti</a>
+        </div>
+        <div class="card">
+            <div class="stat-label">Carrelli</div>
+            <div class="stat-value" th:text="${cartCount}">0</div>
+            <a class="btn" th:href="@{/admin/carts}">Elenco carrelli</a>
+        </div>
+        <div class="card">
             <div class="stat-label">Ordini</div>
             <div class="stat-value" th:text="${orderCount}">0</div>
             <a class="btn" th:href="@{/admin/orders}">Gestisci ordini</a>
+        </div>
+        <div class="card">
+            <div class="stat-label">Inventario</div>
+            <div class="stat-value" th:text="${inventoryCount}">0</div>
+            <a class="btn" th:href="@{/admin/inventory}">Vedi stock</a>
+        </div>
+        <div class="card">
+            <div class="stat-label">Prezzi</div>
+            <div class="stat-value" th:text="${priceCount}">0</div>
+            <a class="btn" th:href="@{/admin/pricing}">Vedi prezzi</a>
         </div>
         <div class="card">
             <div class="stat-label">Pagamenti</div>
@@ -30,6 +50,11 @@
             <div class="stat-label">Spedizioni</div>
             <div class="stat-value" th:text="${shipmentCount}">0</div>
             <a class="btn" th:href="@{/admin/shipments}">Gestisci spedizioni</a>
+        </div>
+        <div class="card">
+            <div class="stat-label">Notification Service</div>
+            <div class="stat-value" th:text="${notificationStatus}">unknown</div>
+            <span class="muted">Kafka consumer health</span>
         </div>
     </div>
 </main>

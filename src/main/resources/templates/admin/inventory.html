@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>Admin Inventario</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+</head>
+<body>
+<div th:replace="fragments/header :: header"></div>
+
+<main class="container admin">
+    <h1>Inventario</h1>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Prodotto</th>
+                <th>On hand</th>
+                <th>Reserved</th>
+                <th>Aggiornato</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="item : ${inventoryItems}">
+                <td th:text="${item.id}">1</td>
+                <td th:text="${item.productId}">1001</td>
+                <td th:text="${item.onHand}">0</td>
+                <td th:text="${item.reserved}">0</td>
+                <td th:text="${item.updatedAt}">-</td>
+            </tr>
+        </tbody>
+    </table>
+</main>
+
+<div th:replace="fragments/footer :: footer"></div>
+</body>
+</html>

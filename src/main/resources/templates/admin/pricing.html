@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>Admin Prezzi</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+</head>
+<body>
+<div th:replace="fragments/header :: header"></div>
+
+<main class="container admin">
+    <h1>Prezzi</h1>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Prodotto</th>
+                <th>Importo</th>
+                <th>Valuta</th>
+                <th>Attivo</th>
+                <th>Aggiornato</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="price : ${prices}">
+                <td th:text="${price.id}">1</td>
+                <td th:text="${price.productId}">1001</td>
+                <td th:text="${price.amount}">0.00</td>
+                <td th:text="${price.currency}">EUR</td>
+                <td th:text="${price.active}">true</td>
+                <td th:text="${price.updatedAt}">-</td>
+            </tr>
+        </tbody>
+    </table>
+</main>
+
+<div th:replace="fragments/footer :: footer"></div>
+</body>
+</html>

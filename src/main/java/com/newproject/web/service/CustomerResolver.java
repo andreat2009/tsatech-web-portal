@@ -27,13 +27,17 @@ public class CustomerResolver {
         String preferredUsername = user.getPreferredUsername();
         String keycloakUserId = user.getSubject();
 
-        List<Customer> customers = gatewayClient.listCustomers();
-        for (Customer customer : customers) {
-            if (email != null && email.equalsIgnoreCase(customer.getEmail())) {
-                return customer;
+        if (keycloakUserId != null && !keycloakUserId.isBlank()) {
+            List<Customer> byKeycloak = gatewayClient.listCustomers(null, keycloakUserId, null);
+            if (!byKeycloak.isEmpty()) {
+                return byKeycloak.get(0);
             }
-            if (email == null && preferredUsername != null && preferredUsername.equalsIgnoreCase(customer.getEmail())) {
-                return customer;
+        }
+
+        if (email != null && !email.isBlank()) {
+            List<Customer> byEmail = gatewayClient.listCustomers(email, null, null);
+            if (!byEmail.isEmpty()) {
+                return byEmail.get(0);
             }
         }
 

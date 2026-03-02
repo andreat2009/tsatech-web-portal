@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8" />
     <title>TSATech Commerce</title>
@@ -12,7 +12,7 @@
     <section class="hero">
         <div class="hero-text">
             <h1>Catalogo prodotti</h1>
-            <p>Interfaccia stile OpenCart: veloce, pulita, operativa.</p>
+            <p>Replica OpenCart su stack Java 17 microservizi.</p>
         </div>
         <div class="hero-card">
             <div class="stat">
@@ -26,31 +26,84 @@
         </div>
     </section>
 
-    <section class="grid">
-        <div class="card" th:each="product : ${products}">
-            <div class="card-header">
-                <div class="sku" th:text="${product.sku}">SKU</div>
-                <div class="badge" th:text="${product.active} ? 'Active' : 'Disabled'">Active</div>
-            </div>
-            <h3 th:text="${product.name}">Product</h3>
-            <p class="desc" th:text="${product.description}">Description</p>
-            <div class="card-footer">
-                <div>
-                    <div class="price" th:text="${product.price}">0.00</div>
-                    <div class="muted" th:text="${product.quantity != null} ? 'Disponibili: ' + product.quantity : 'Disponibilita: n/d'">Disponibili: 0</div>
+    <section class="catalog-layout">
+        <aside class="catalog-sidebar">
+            <h3>Categorie</h3>
+            <a class="category-link"
+               th:classappend="${selectedCategoryId == null} ? ' active'"
+               th:href="@{/shop(q=${searchQuery},sort=${selectedSort})}">Tutte</a>
+
+            <ul class="category-tree" th:if="${!categoryTree.isEmpty()}">
+                <li th:each="category : ${categoryTree}">
+                    <a class="category-link"
+                       th:classappend="${selectedCategoryId == category.id} ? ' active'"
+                       th:text="${category.name}"
+                       th:href="@{/shop(q=${searchQuery},categoryId=${category.id},sort=${selectedSort})}">Categoria</a>
+                    <ul th:if="${!category.children.isEmpty()}">
+                        <li th:each="child : ${category.children}">
+                            <a class="category-link child"
+                               th:classappend="${selectedCategoryId == child.id} ? ' active'"
+                               th:text="${child.name}"
+                               th:href="@{/shop(q=${searchQuery},categoryId=${child.id},sort=${selectedSort})}">Sotto categoria</a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </aside>
+
+        <div class="catalog-main">
+            <form class="filters" method="get" th:action="@{/shop}">
+                <input type="text" name="q" placeholder="Cerca prodotto" th:value="${searchQuery}" />
+                <input type="hidden" name="categoryId" th:value="${selectedCategoryId}" />
+                <select name="sort">
+                    <option th:each="entry : ${sortOptions.entrySet()}"
+                            th:value="${entry.key}"
+                            th:text="${entry.value}"
+                            th:selected="${selectedSort == entry.key}">
+                        Nome (A-Z)
+                    </option>
+                </select>
+                <button class="btn btn-primary" type="submit">Filtra</button>
+            </form>
+
+            <section class="grid" th:if="${!products.isEmpty()}">
+                <div class="card" th:each="product : ${products}">
+                    <div class="card-header">
+                        <div class="sku" th:text="${product.sku}">SKU</div>
+                        <div class="badge" th:text="${product.active} ? 'Active' : 'Disabled'">Active</div>
+                    </div>
+                    <h3 th:text="${product.name}">Product</h3>
+                    <p class="desc" th:text="${product.description}">Description</p>
+                    <div class="card-footer">
+                        <div>
+                            <div class="price" th:text="${product.price}">0.00</div>
+                            <div class="muted" th:text="${product.quantity != null} ? 'Disponibili: ' + product.quantity : 'Disponibilita: n/d'">Disponibili: 0</div>
+                        </div>
+                        <div class="actions">
+                            <a class="btn" th:href="@{/shop/products/{id}(id=${product.id})}">Dettagli</a>
+                            <form th:action="@{/cart/add}" method="post" sec:authorize="isAuthenticated()">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                <input type="hidden" name="productId" th:value="${product.id}" />
+                                <input type="hidden" name="quantity" value="1" />
+                                <button class="btn btn-primary"
+                                        type="submit"
+                                        th:disabled="${product.quantity != null and product.quantity <= 0}"
+                                        th:text="${product.quantity != null and product.quantity <= 0} ? 'Esaurito' : 'Aggiungi'">Aggiungi</button>
+                            </form>
+                            <form th:action="@{/account/wishlist/add}" method="post" sec:authorize="isAuthenticated()">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                <input type="hidden" name="productId" th:value="${product.id}" />
+                                <button class="btn"
+                                        type="submit"
+                                        th:text="${wishlistProductIds.contains(product.id)} ? 'In wishlist' : 'Wishlist'">Wishlist</button>
+                            </form>
+                        </div>
+                    </div>
                 </div>
-                <div class="actions">
-                    <a class="btn" th:href="@{/shop/products/{id}(id=${product.id})}">Dettagli</a>
-                    <form th:action="@{/cart/add}" method="post">
-                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                        <input type="hidden" name="productId" th:value="${product.id}" />
-                        <input type="hidden" name="quantity" value="1" />
-                        <button class="btn btn-primary"
-                                type="submit"
-                                th:disabled="${product.quantity != null and product.quantity <= 0}"
-                                th:text="${product.quantity != null and product.quantity <= 0} ? 'Esaurito' : 'Aggiungi'">Aggiungi</button>
-                    </form>
-                </div>
+            </section>
+
+            <div class="empty" th:if="${products.isEmpty()}">
+                Nessun prodotto trovato con i filtri correnti.
             </div>
         </div>
     </section>

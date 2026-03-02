@@ -9,14 +9,25 @@
 <div th:replace="fragments/header :: header"></div>
 
 <main class="container">
-    <h1>I miei ordini</h1>
-    <table class="table">
+    <div class="page-header">
+        <h1>I miei ordini</h1>
+        <div class="actions">
+            <a class="btn" th:href="@{/account/addresses}">I miei indirizzi</a>
+            <a class="btn" th:href="@{/account/wishlist}">Wishlist</a>
+            <a class="btn" th:href="@{/account/returns}">Resi</a>
+        </div>
+    </div>
+
+    <div th:if="${orders.isEmpty()}" class="empty">Nessun ordine disponibile.</div>
+
+    <table class="table" th:if="${!orders.isEmpty()}">
         <thead>
             <tr>
                 <th>ID</th>
                 <th>Data</th>
                 <th>Totale</th>
                 <th>Status</th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
@@ -25,6 +36,9 @@
                 <td th:text="${order.createdAt}">-</td>
                 <td th:text="${order.total}">0.00</td>
                 <td th:text="${order.status}">NEW</td>
+                <td>
+                    <a class="btn" th:href="@{/account/orders/{id}(id=${order.id})}">Dettaglio</a>
+                </td>
             </tr>
         </tbody>
     </table>

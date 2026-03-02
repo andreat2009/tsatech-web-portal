@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>Dettaglio ordine</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+</head>
+<body>
+<div th:replace="fragments/header :: header"></div>
+
+<main class="container">
+    <div class="page-header">
+        <h1>Ordine #<span th:text="${order.id}">1</span></h1>
+        <div class="actions">
+            <a class="btn" th:href="@{/account/orders}">Torna agli ordini</a>
+            <a class="btn" th:href="@{/account/returns}">I miei resi</a>
+        </div>
+    </div>
+
+    <section class="order-meta card-lite">
+        <div><strong>Stato:</strong> <span th:text="${order.status}">NEW</span></div>
+        <div><strong>Data:</strong> <span th:text="${order.createdAt}">-</span></div>
+        <div><strong>Totale:</strong> <span th:text="${order.total}">0.00</span></div>
+    </section>
+
+    <section>
+        <h2>Righe ordine</h2>
+        <table class="table">
+            <thead>
+            <tr>
+                <th>SKU</th>
+                <th>Prodotto</th>
+                <th>Q.tà</th>
+                <th>Prezzo unitario</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="item : ${items}">
+                <td th:text="${item.sku}">SKU</td>
+                <td th:text="${item.name}">Name</td>
+                <td th:text="${item.quantity}">1</td>
+                <td th:text="${item.unitPrice}">0.00</td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="grid-2">
+        <div>
+            <h2>Pagamenti</h2>
+            <table class="table compact">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Provider</th>
+                    <th>Stato</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="payment : ${payments}">
+                    <td th:text="${payment.id}">1</td>
+                    <td th:text="${payment.provider}">cod</td>
+                    <td th:text="${payment.status}">CREATED</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div>
+            <h2>Spedizioni</h2>
+            <table class="table compact">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Carrier</th>
+                    <th>Tracking</th>
+                    <th>Stato</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="shipment : ${shipments}">
+                    <td th:text="${shipment.id}">1</td>
+                    <td th:text="${shipment.carrier}">FLAT_RATE</td>
+                    <td th:text="${shipment.trackingNumber}">TRK</td>
+                    <td th:text="${shipment.status}">CREATED</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section>
+        <h2>Apri reso</h2>
+        <form class="form" th:action="@{/account/returns}" method="post" th:object="${returnForm}">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+            <input type="hidden" th:field="*{orderId}" />
+            <div class="field">
+                <label>Riga ordine (opzionale)</label>
+                <select th:field="*{orderItemId}">
+                    <option value="">Intero ordine</option>
+                    <option th:each="item : ${items}" th:value="${item.id}" th:text="${item.name + ' (x' + item.quantity + ')'}">Item</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Motivo</label>
+                <input th:field="*{reason}" placeholder="Es. prodotto difettoso" required />
+            </div>
+            <div class="field">
+                <label>Commento</label>
+                <textarea th:field="*{comment}" rows="3"></textarea>
+            </div>
+            <button class="btn btn-primary" type="submit">Invia richiesta reso</button>
+        </form>
+    </section>
+</main>
+
+<div th:replace="fragments/footer :: footer"></div>
+</body>
+</html>

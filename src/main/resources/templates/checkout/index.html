@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>Checkout</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+</head>
+<body>
+<div th:replace="fragments/header :: header"></div>
+
+<main class="container">
+    <h1>Checkout</h1>
+
+    <div class="checkout-layout">
+        <section class="checkout-form-wrap">
+            <form class="form" th:action="@{/checkout/confirm}" method="post" th:object="${checkoutForm}">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+                <div class="field">
+                    <label>Indirizzo di spedizione</label>
+                    <select th:if="${!addresses.isEmpty()}" th:field="*{addressId}" required>
+                        <option th:each="address : ${addresses}" th:value="${address.id}"
+                                th:text="${address.line1 + ', ' + address.city + ' (' + address.country + ')'}">Address</option>
+                    </select>
+                    <div th:if="${addresses.isEmpty()}" class="empty">Aggiungi almeno un indirizzo prima di completare il checkout.</div>
+                    <a class="inline-link" th:href="@{/account/addresses}">Gestisci indirizzi</a>
+                </div>
+
+                <div class="field">
+                    <label>Metodo di spedizione</label>
+                    <select th:field="*{shippingMethod}" required>
+                        <option th:each="entry : ${shippingMethods.entrySet()}" th:value="${entry.key}"
+                                th:text="${entry.key + ' - ' + entry.value}">flat.flat</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>Metodo di pagamento</label>
+                    <select th:field="*{paymentMethod}" required>
+                        <option th:each="entry : ${paymentMethods.entrySet()}" th:value="${entry.key}"
+                                th:text="${entry.value}">Pagamento</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>Coupon</label>
+                    <input th:field="*{couponCode}" placeholder="Inserisci coupon (es. WELCOME10)" />
+                    <small class="muted" th:text="${quoteMessage}">Messaggio coupon</small>
+                </div>
+
+                <div class="field">
+                    <label>Commento ordine</label>
+                    <textarea th:field="*{comment}" rows="4" placeholder="Note aggiuntive"></textarea>
+                </div>
+
+                <button class="btn btn-primary" type="submit" th:disabled="${addresses.isEmpty()}">Conferma ordine</button>
+            </form>
+        </section>
+
+        <aside class="checkout-summary">
+            <h3>Riepilogo</h3>
+            <table class="table compact">
+                <thead>
+                <tr>
+                    <th>Prodotto</th>
+                    <th>Q.tà</th>
+                    <th>Totale</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="item : ${items}">
+                    <td th:text="${item.productName}">Prodotto</td>
+                    <td th:text="${item.quantity}">1</td>
+                    <td th:text="${item.lineTotal}">0.00</td>
+                </tr>
+                </tbody>
+            </table>
+            <div class="summary-grid">
+                <div class="summary-row">
+                    <span>Subtotale</span>
+                    <strong th:text="${subtotal}">0.00</strong>
+                </div>
+                <div class="summary-row">
+                    <span>Spedizione</span>
+                    <strong th:text="${shipping}">0.00</strong>
+                </div>
+                <div class="summary-row" th:if="${discount != null}">
+                    <span>Sconto</span>
+                    <strong th:text="'-' + ${discount}">0.00</strong>
+                </div>
+                <div class="summary-row total">
+                    <span>Totale</span>
+                    <strong th:text="${total}">0.00</strong>
+                </div>
+            </div>
+        </aside>
+    </div>
+</main>
+
+<div th:replace="fragments/footer :: footer"></div>
+</body>
+</html>

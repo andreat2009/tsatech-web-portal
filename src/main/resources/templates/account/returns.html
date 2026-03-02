@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>Resi</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+</head>
+<body>
+<div th:replace="fragments/header :: header"></div>
+
+<main class="container">
+    <div class="page-header">
+        <h1>I miei resi</h1>
+        <a class="btn" th:href="@{/account/orders}">Torna agli ordini</a>
+    </div>
+
+    <div class="grid-2">
+        <div>
+            <h2>Storico resi</h2>
+            <div th:if="${returns.isEmpty()}" class="empty">Nessun reso aperto.</div>
+            <table class="table" th:if="${!returns.isEmpty()}">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Ordine</th>
+                    <th>Motivo</th>
+                    <th>Stato</th>
+                    <th>Data</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="ret : ${returns}">
+                    <td th:text="${ret.id}">1</td>
+                    <td th:text="${ret.orderId}">100</td>
+                    <td th:text="${ret.reason}">reason</td>
+                    <td th:text="${ret.status}">REQUESTED</td>
+                    <td th:text="${ret.createdAt}">-</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div>
+            <h2>Nuovo reso</h2>
+            <form class="form" th:action="@{/account/returns}" method="post" th:object="${returnForm}">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <div class="field">
+                    <label>Ordine</label>
+                    <select th:field="*{orderId}" required>
+                        <option value="">Seleziona ordine</option>
+                        <option th:each="order : ${orders}" th:value="${order.id}" th:text="${'Ordine #' + order.id + ' - ' + order.total}">Order</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Motivo</label>
+                    <input th:field="*{reason}" required />
+                </div>
+                <div class="field">
+                    <label>Commento</label>
+                    <textarea th:field="*{comment}" rows="3"></textarea>
+                </div>
+                <button class="btn btn-primary" type="submit">Apri reso</button>
+            </form>
+        </div>
+    </div>
+</main>
+
+<div th:replace="fragments/footer :: footer"></div>
+</body>
+</html>

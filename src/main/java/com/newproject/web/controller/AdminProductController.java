@@ -1,10 +1,12 @@
 package com.newproject.web.controller;
 
+import com.newproject.web.dto.Category;
 import com.newproject.web.dto.Product;
 import com.newproject.web.dto.ProductRequest;
 import com.newproject.web.service.GatewayClient;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.List;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -28,7 +30,11 @@ public class AdminProductController {
 
     @GetMapping("/new")
     public String createForm(Model model) {
-        model.addAttribute("product", new ProductRequest());
+        ProductRequest product = new ProductRequest();
+        product.setActive(true);
+        product.setCategoryIds(new HashSet<>());
+        model.addAttribute("product", product);
+        model.addAttribute("categories", gatewayClient.listCategories(true));
         model.addAttribute("formTitle", "Nuovo prodotto");
         model.addAttribute("formAction", "/admin/products");
         return "admin/product-form";
@@ -57,6 +63,7 @@ public class AdminProductController {
         request.setCategoryIds(product.getCategoryIds());
 
         model.addAttribute("product", request);
+        model.addAttribute("categories", gatewayClient.listCategories(true));
         model.addAttribute("formTitle", "Modifica prodotto");
         model.addAttribute("formAction", "/admin/products/" + id);
         return "admin/product-form";
@@ -87,6 +94,9 @@ public class AdminProductController {
         }
         if (request.getActive() == null) {
             request.setActive(true);
+        }
+        if (request.getCategoryIds() == null) {
+            request.setCategoryIds(new HashSet<>());
         }
     }
 }

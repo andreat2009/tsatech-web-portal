@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8" />
     <title th:text="${product.name}">Prodotto</title>
@@ -9,23 +9,83 @@
 <div th:replace="fragments/header :: header"></div>
 
 <main class="container">
+    <div class="breadcrumbs">
+        <a th:href="@{/shop}">Catalogo</a>
+        <span>/</span>
+        <span th:text="${product.name}">Product</span>
+    </div>
+
     <div class="product-detail">
-        <div class="product-info">
+        <div class="product-info card-lite">
             <h1 th:text="${product.name}">Product</h1>
             <div class="muted" th:text="${product.sku}">SKU</div>
             <p class="desc" th:text="${product.description}">Description</p>
+            <div class="meta-grid">
+                <div><strong>Modello:</strong> <span th:text="${product.model}">MODEL</span></div>
+                <div><strong>Disponibilità:</strong> <span th:text="${product.quantity}">0</span></div>
+                <div><strong>Rating medio:</strong> <span th:text="${#numbers.formatDecimal(avgRating,1,1)}">0.0</span></div>
+                <div><strong>Recensioni:</strong> <span th:text="${reviews.size()}">0</span></div>
+            </div>
         </div>
         <div class="product-buy">
             <div class="price" th:text="${product.price}">0.00</div>
-            <form th:action="@{/cart/add}" method="post" class="buy-form">
-                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+            <form th:action="@{/cart/add}" method="post" class="buy-form" sec:authorize="isAuthenticated()">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                 <input type="hidden" name="productId" th:value="${product.id}" />
                 <label>Quantità</label>
                 <input type="number" name="quantity" min="1" value="1" />
                 <button class="btn btn-primary" type="submit">Aggiungi al carrello</button>
             </form>
+            <form th:action="@{/account/wishlist/add}" method="post" sec:authorize="isAuthenticated()">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <input type="hidden" name="productId" th:value="${product.id}" />
+                <button class="btn" type="submit"
+                        th:text="${wishlistProductIds.contains(product.id)} ? 'In wishlist' : 'Aggiungi wishlist'">Wishlist</button>
+            </form>
+            <a class="btn" th:href="@{/cart}" sec:authorize="isAuthenticated()">Vai al carrello</a>
+            <a class="btn" th:href="@{/oauth2/authorization/keycloak}" sec:authorize="!isAuthenticated()">Login per acquistare</a>
         </div>
     </div>
+
+    <section class="reviews">
+        <h2>Recensioni</h2>
+        <div th:if="${reviews.isEmpty()}" class="empty">Nessuna recensione approvata per questo prodotto.</div>
+        <div class="review-card" th:each="review : ${reviews}">
+            <div class="review-head">
+                <strong th:text="${review.authorName}">Autore</strong>
+                <span class="muted" th:text="${review.createdAt}">data</span>
+            </div>
+            <div class="review-rating" th:text="'Rating: ' + ${review.rating} + '/5'">Rating</div>
+            <h3 th:text="${review.title}">Titolo</h3>
+            <p th:text="${review.text}">Testo</p>
+        </div>
+
+        <div sec:authorize="isAuthenticated()" class="review-form-wrap">
+            <h3>Scrivi una recensione</h3>
+            <form class="form" th:action="@{/shop/products/{id}/reviews(id=${product.id})}" method="post" th:object="${reviewForm}">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <div class="field">
+                    <label>Titolo</label>
+                    <input th:field="*{title}" />
+                </div>
+                <div class="field">
+                    <label>Rating</label>
+                    <select th:field="*{rating}">
+                        <option value="5">5</option>
+                        <option value="4">4</option>
+                        <option value="3">3</option>
+                        <option value="2">2</option>
+                        <option value="1">1</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Commento</label>
+                    <textarea th:field="*{text}" rows="4" required></textarea>
+                </div>
+                <button class="btn btn-primary" type="submit">Invia recensione</button>
+            </form>
+        </div>
+    </section>
 </main>
 
 <div th:replace="fragments/footer :: footer"></div>

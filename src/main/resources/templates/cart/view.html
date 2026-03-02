@@ -25,12 +25,18 @@
         <tbody>
             <tr th:each="item : ${items}">
                 <td th:text="${item.productName}">Name</td>
-                <td th:text="${item.quantity}">1</td>
+                <td>
+                    <form class="qty-form" th:action="@{/cart/items/{id}/quantity(id=${item.id})}" method="post">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                        <input type="number" name="quantity" min="1" th:value="${item.quantity}" />
+                        <button class="btn" type="submit">Aggiorna</button>
+                    </form>
+                </td>
                 <td th:text="${item.unitPrice}">0.00</td>
                 <td th:text="${item.lineTotal}">0.00</td>
                 <td>
                     <form th:action="@{/cart/items/{id}/delete(id=${item.id})}" method="post">
-                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                         <button class="btn btn-link" type="submit">Rimuovi</button>
                     </form>
                 </td>
@@ -39,14 +45,21 @@
     </table>
 
     <div class="checkout" th:if="${!items.isEmpty()}">
-        <div class="summary">
-            <div class="label">Totale</div>
-            <div class="value" th:text="${total}">0.00</div>
+        <div class="summary-grid">
+            <div class="summary-row">
+                <span>Subtotale</span>
+                <strong th:text="${subtotal}">0.00</strong>
+            </div>
+            <div class="summary-row">
+                <span>Spedizione stimata</span>
+                <strong th:text="${shipping}">0.00</strong>
+            </div>
+            <div class="summary-row total">
+                <span>Totale</span>
+                <strong th:text="${total}">0.00</strong>
+            </div>
         </div>
-        <form th:action="@{/checkout}" method="post">
-                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-            <button class="btn btn-primary" type="submit">Checkout</button>
-        </form>
+        <a class="btn btn-primary" th:href="@{/checkout}">Procedi al checkout</a>
     </div>
 </main>
 

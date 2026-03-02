@@ -6,7 +6,11 @@
     <nav class="nav">
         <a th:href="@{/}">Shop</a>
         <a th:href="@{/cart}" sec:authorize="isAuthenticated()">Cart</a>
+        <a th:href="@{/account/wishlist}" sec:authorize="isAuthenticated()">Wishlist</a>
+        <a th:href="@{/checkout}" sec:authorize="isAuthenticated()">Checkout</a>
         <a th:href="@{/account/orders}" sec:authorize="isAuthenticated()">Orders</a>
+        <a th:href="@{/account/returns}" sec:authorize="isAuthenticated()">Returns</a>
+        <a th:href="@{/account/addresses}" sec:authorize="isAuthenticated()">Addresses</a>
         <a th:href="@{/admin}" sec:authorize="hasRole('ADMIN')">Admin</a>
     </nav>
     <div class="auth">

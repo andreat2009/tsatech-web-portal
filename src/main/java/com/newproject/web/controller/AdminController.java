@@ -20,22 +20,28 @@ public class AdminController {
     @GetMapping
     public String dashboard(Model model) {
         List<Product> products = gatewayClient.listProducts();
+        List<Category> categories = gatewayClient.listCategories(null);
         List<Customer> customers = gatewayClient.listCustomers();
         List<Cart> carts = gatewayClient.listCarts(null);
         List<Order> orders = gatewayClient.listOrders(null);
         List<InventoryItem> inventoryItems = gatewayClient.listInventory();
         List<ProductPrice> prices = gatewayClient.listPrices();
+        List<Coupon> coupons = gatewayClient.listCoupons();
         List<Payment> payments = gatewayClient.listPayments(null);
         List<Shipment> shipments = gatewayClient.listShipments(null);
+        List<OrderReturn> returns = gatewayClient.listReturns(null, null);
 
         model.addAttribute("productCount", products.size());
+        model.addAttribute("categoryCount", categories.size());
         model.addAttribute("customerCount", customers.size());
         model.addAttribute("cartCount", carts.size());
         model.addAttribute("orderCount", orders.size());
         model.addAttribute("inventoryCount", inventoryItems.size());
         model.addAttribute("priceCount", prices.size());
+        model.addAttribute("couponCount", coupons.size());
         model.addAttribute("paymentCount", payments.size());
         model.addAttribute("shipmentCount", shipments.size());
+        model.addAttribute("returnCount", returns.size());
         model.addAttribute("notificationStatus", gatewayClient.notificationPing());
         return "admin/dashboard";
     }
@@ -45,6 +51,13 @@ public class AdminController {
         List<Order> orders = gatewayClient.listOrders(null);
         model.addAttribute("orders", orders);
         return "admin/orders";
+    }
+
+    @GetMapping("/returns")
+    public String returns(Model model) {
+        List<OrderReturn> returns = gatewayClient.listReturns(null, null);
+        model.addAttribute("returns", returns);
+        return "admin/returns";
     }
 
     @GetMapping("/payments")

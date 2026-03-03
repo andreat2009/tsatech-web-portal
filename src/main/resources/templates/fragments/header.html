@@ -1,21 +1,42 @@
-<header class="topbar" th:fragment="header" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-    <div class="brand">
-        <a th:href="@{/}">TSATech Commerce</a>
-        <span class="tag">Storefront + Admin</span>
+<header th:fragment="header" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+    <div id="top">
+        <div class="container top-row">
+            <div class="top-left">
+                <span><i class="icon-phone"></i> Supporto: +39 800 000 000</span>
+            </div>
+            <ul class="top-links">
+                <li><a th:href="@{/account/wishlist}" sec:authorize="isAuthenticated()">Wishlist</a></li>
+                <li><a th:href="@{/cart}" sec:authorize="isAuthenticated()">Carrello</a></li>
+                <li><a th:href="@{/checkout}" sec:authorize="isAuthenticated()">Checkout</a></li>
+                <li sec:authorize="!isAuthenticated()"><a th:href="@{/oauth2/authorization/keycloak}">Login</a></li>
+                <li sec:authorize="isAuthenticated()" class="user-pill" th:text="${#authentication.name}">user</li>
+                <li sec:authorize="isAuthenticated()"><a th:href="@{/logout}">Logout</a></li>
+            </ul>
+        </div>
     </div>
-    <nav class="nav">
-        <a th:href="@{/}">Shop</a>
-        <a th:href="@{/cart}" sec:authorize="isAuthenticated()">Cart</a>
-        <a th:href="@{/account/wishlist}" sec:authorize="isAuthenticated()">Wishlist</a>
-        <a th:href="@{/checkout}" sec:authorize="isAuthenticated()">Checkout</a>
-        <a th:href="@{/account/orders}" sec:authorize="isAuthenticated()">Orders</a>
-        <a th:href="@{/account/returns}" sec:authorize="isAuthenticated()">Returns</a>
-        <a th:href="@{/account/addresses}" sec:authorize="isAuthenticated()">Addresses</a>
-        <a th:href="@{/admin}" sec:authorize="hasRole('ADMIN')">Admin</a>
+
+    <div id="header-main">
+        <div class="container header-row">
+            <div id="logo">
+                <a th:href="@{/}">TSATech Store</a>
+            </div>
+            <form class="header-search" method="get" th:action="@{/shop}">
+                <input type="text" name="q" placeholder="Cerca prodotti" />
+                <button type="submit" class="btn btn-search">Cerca</button>
+            </form>
+            <a class="header-cart" th:href="@{/cart}" sec:authorize="isAuthenticated()">Vai al carrello</a>
+            <a class="header-cart" th:href="@{/oauth2/authorization/keycloak}" sec:authorize="!isAuthenticated()">Accedi</a>
+        </div>
+    </div>
+
+    <nav id="menu">
+        <div class="container menu-links">
+            <a th:href="@{/}">Home</a>
+            <a th:href="@{/shop}">Catalogo</a>
+            <a th:href="@{/account/orders}" sec:authorize="isAuthenticated()">Ordini</a>
+            <a th:href="@{/account/returns}" sec:authorize="isAuthenticated()">Resi</a>
+            <a th:href="@{/account/addresses}" sec:authorize="isAuthenticated()">Indirizzi</a>
+            <a th:href="@{/admin}" sec:authorize="hasRole('ADMIN')">Admin</a>
+        </div>
     </nav>
-    <div class="auth">
-        <span sec:authorize="isAuthenticated()" class="user" th:text="${#authentication.name}"></span>
-        <a sec:authorize="!isAuthenticated()" th:href="@{/oauth2/authorization/keycloak}">Login</a>
-        <a sec:authorize="isAuthenticated()" th:href="@{/logout}">Logout</a>
-    </div>
 </header>

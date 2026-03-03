@@ -29,9 +29,21 @@ public class GatewayClient {
         @Qualifier("defaultWebClient") WebClient defaultWebClient,
         @Value("${app.gateway-base-url}") String baseUrl
     ) {
-        this.oauth2WebClient = oauth2WebClient;
-        this.defaultWebClient = defaultWebClient;
-        this.baseUrl = baseUrl;
+        String normalizedBaseUrl = normalizeBaseUrl(baseUrl);
+        this.oauth2WebClient = oauth2WebClient.mutate().baseUrl(normalizedBaseUrl).build();
+        this.defaultWebClient = defaultWebClient.mutate().baseUrl(normalizedBaseUrl).build();
+        this.baseUrl = "";
+    }
+
+    private String normalizeBaseUrl(String rawUrl) {
+        if (rawUrl == null) {
+            return "";
+        }
+        String trimmed = rawUrl.trim();
+        while (trimmed.endsWith("/")) {
+            trimmed = trimmed.substring(0, trimmed.length() - 1);
+        }
+        return trimmed;
     }
 
     private WebClient client() {

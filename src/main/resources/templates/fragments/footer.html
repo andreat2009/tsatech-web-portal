@@ -1,4 +1,39 @@
-<footer class="footer" th:fragment="footer" xmlns:th="http://www.thymeleaf.org">
-    <div>TSATech Commerce · Backoffice & Storefront</div>
-    <div class="muted">Powered by Spring Boot + Thymeleaf</div>
+<footer id="footer" th:fragment="footer" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+    <div class="container">
+        <div class="footer-grid">
+            <div>
+                <h5>Informazioni</h5>
+                <ul>
+                    <li><a th:href="@{/shop}">Catalogo</a></li>
+                    <li><a th:href="@{/account/orders}">I miei ordini</a></li>
+                    <li><a th:href="@{/account/returns}">I miei resi</a></li>
+                </ul>
+            </div>
+            <div>
+                <h5>Servizi</h5>
+                <ul>
+                    <li><a th:href="@{/cart}">Carrello</a></li>
+                    <li><a th:href="@{/checkout}">Checkout</a></li>
+                    <li><a th:href="@{/account/addresses}">Indirizzi</a></li>
+                </ul>
+            </div>
+            <div>
+                <h5>Account</h5>
+                <ul>
+                    <li><a th:href="@{/oauth2/authorization/keycloak}" sec:authorize="!isAuthenticated()">Login</a></li>
+                    <li><a th:href="@{/logout}" sec:authorize="isAuthenticated()">Logout</a></li>
+                    <li><a th:href="@{/admin}" sec:authorize="hasRole('ADMIN')">Amministrazione</a></li>
+                </ul>
+            </div>
+            <div>
+                <h5>Contatti</h5>
+                <ul>
+                    <li><a href="mailto:support@tsatech.local">support@tsatech.local</a></li>
+                    <li><span>+39 800 000 000</span></li>
+                </ul>
+            </div>
+        </div>
+        <hr>
+        <p class="powered">TSATech Commerce - OpenCart-like experience su Spring Boot + OpenShift</p>
+    </div>
 </footer>

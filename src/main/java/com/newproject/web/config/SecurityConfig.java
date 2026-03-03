@@ -23,7 +23,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/", "/shop/**", "/css/**", "/js/**", "/images/**", "/actuator/health", "/actuator/info").permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
-                .requestMatchers("/cart/**", "/checkout/**", "/account/**").hasAnyRole("USER", "ADMIN")
+                .requestMatchers("/cart/**", "/checkout/**", "/account/**").authenticated()
                 .anyRequest().authenticated()
             )
             .oauth2Login(oauth2 -> oauth2.userInfoEndpoint(userInfo -> userInfo.oidcUserService(oidcUserService())))

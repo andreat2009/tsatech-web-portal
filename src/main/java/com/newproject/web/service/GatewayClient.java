@@ -429,12 +429,16 @@ public class GatewayClient {
     }
 
     public Customer createCustomer(CustomerRequest request) {
-        return client().post()
-            .uri(baseUrl + "/api/customers")
-            .bodyValue(request)
-            .retrieve()
-            .bodyToMono(Customer.class)
-            .block();
+        return safeCall(
+            () -> client().post()
+                .uri(baseUrl + "/api/customers")
+                .bodyValue(request)
+                .retrieve()
+                .bodyToMono(Customer.class)
+                .block(),
+            "/api/customers",
+            null
+        );
     }
 
     public List<Address> listCustomerAddresses(Long customerId) {

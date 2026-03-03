@@ -9,7 +9,13 @@
 <div th:replace="fragments/header :: header"></div>
 
 <main class="container">
-    <h1>Carrello</h1>
+    <div class="breadcrumbs">
+        <a th:href="@{/}">Home</a>
+        <span>/</span>
+        <span>Carrello</span>
+    </div>
+
+    <h1>Shopping Cart</h1>
     <div th:if="${items.isEmpty()}" class="empty">Il carrello è vuoto.</div>
 
     <table class="table" th:if="${!items.isEmpty()}">
@@ -59,7 +65,10 @@
                 <strong th:text="${total}">0.00</strong>
             </div>
         </div>
-        <a class="btn btn-primary" th:href="@{/checkout}">Procedi al checkout</a>
+        <div class="actions-row">
+            <a class="btn" th:href="@{/shop}">Continua acquisti</a>
+            <a class="btn btn-primary" th:href="@{/checkout}">Procedi al checkout</a>
+        </div>
     </div>
 </main>
 

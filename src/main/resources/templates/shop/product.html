@@ -10,6 +10,8 @@
 
 <main class="container">
     <div class="breadcrumbs">
+        <a th:href="@{/}">Home</a>
+        <span>/</span>
         <a th:href="@{/shop}">Catalogo</a>
         <span>/</span>
         <span th:text="${product.name}">Product</span>
@@ -17,6 +19,7 @@
 
     <div class="product-detail">
         <div class="product-info card-lite">
+            <div class="image-placeholder" th:text="${product.sku != null ? product.sku : 'SKU'}">SKU</div>
             <h1 th:text="${product.name}">Product</h1>
             <div class="muted" th:text="${product.sku}">SKU</div>
             <p class="desc" th:text="${product.description}">Description</p>
@@ -28,7 +31,7 @@
             </div>
         </div>
         <div class="product-buy">
-            <div class="price" th:text="${product.price}">0.00</div>
+            <p class="price" th:text="${product.price}">0.00</p>
             <form th:action="@{/cart/add}" method="post" class="buy-form" sec:authorize="isAuthenticated()">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                 <input type="hidden" name="productId" th:value="${product.id}" />

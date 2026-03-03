@@ -1,5 +1,6 @@
-FROM eclipse-temurin:17-jre
+FROM image-registry.openshift-image-registry.svc:5000/openshift/java-runtime:openjdk-17-ubi8
 WORKDIR /app
-COPY target/web-portal-0.0.1-SNAPSHOT.jar app.jar
+ARG JAR_FILE=target/*.jar
+COPY ${JAR_FILE} /app/app.jar
 EXPOSE 8080 8443
-ENTRYPOINT ["java","-jar","/app/app.jar"]
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]

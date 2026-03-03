@@ -14,6 +14,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -24,6 +26,7 @@ import org.springframework.web.bind.annotation.*;
 
 @Controller
 public class StorefrontController {
+    private static final Logger logger = LoggerFactory.getLogger(StorefrontController.class);
     private static final String SHIPPING_FLAT = "flat.flat";
     private static final String SHIPPING_PICKUP = "pickup.pickup";
 
@@ -95,7 +98,11 @@ public class StorefrontController {
 
     @GetMapping("/shop/products/{id}")
     public String product(@PathVariable Long id, Model model, Authentication authentication) {
-        Product product = gatewayClient.getProduct(id);
+        Optional<Product> productOpt = gatewayClient.getProductSafe(id);
+        if (productOpt.isEmpty()) {
+            return "redirect:/shop";
+        }
+        Product product = productOpt.get();
         List<ProductReview> reviews = gatewayClient.listProductReviews(id).stream()
             .filter(review -> Boolean.TRUE.equals(review.getApproved()))
             .collect(Collectors.toList());
@@ -160,7 +167,7 @@ public class StorefrontController {
     ) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
-            return "redirect:/";
+            return "redirect:/oauth2/authorization/keycloak";
         }
 
         Optional<Product> productOpt = gatewayClient.getProductSafe(productId);
@@ -220,10 +227,14 @@ public class StorefrontController {
     }
 
     @GetMapping("/checkout")
-    public String checkoutPage(Model model, Authentication authentication) {
+    public String checkoutPage(
+        @RequestParam(required = false) String error,
+        Model model,
+        Authentication authentication
+    ) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
-            return "redirect:/";
+            return "redirect:/oauth2/authorization/keycloak";
         }
 
         Optional<Cart> cartOpt = resolveCart(customerId);
@@ -266,6 +277,9 @@ public class StorefrontController {
         model.addAttribute("shippingMethods", shippingMethods());
         model.addAttribute("paymentMethods", paymentMethods());
         model.addAttribute("checkoutForm", checkoutForm);
+        model.addAttribute("checkoutError", "processing".equalsIgnoreCase(error)
+            ? "Checkout non completato. Verifica i servizi e riprova."
+            : null);
         return "checkout/index";
     }
 
@@ -273,7 +287,7 @@ public class StorefrontController {
     public String checkoutConfirm(@ModelAttribute CheckoutForm checkoutForm, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
-            return "redirect:/";
+            return "redirect:/oauth2/authorization/keycloak";
         }
 
         Optional<Cart> cartOpt = resolveCart(customerId);
@@ -308,41 +322,46 @@ public class StorefrontController {
 
         BigDecimal total = quote.getTotal() != null ? quote.getTotal() : subtotal.add(shippingCost);
 
-        OrderRequest orderRequest = new OrderRequest();
-        orderRequest.setCustomerId(customerId);
-        orderRequest.setCurrency(currency);
-        orderRequest.setTotal(total);
-        orderRequest.setStatus("PENDING_PAYMENT");
-        Order order = gatewayClient.createOrder(orderRequest);
+        try {
+            OrderRequest orderRequest = new OrderRequest();
+            orderRequest.setCustomerId(customerId);
+            orderRequest.setCurrency(currency);
+            orderRequest.setTotal(total);
+            orderRequest.setStatus("PENDING_PAYMENT");
+            Order order = gatewayClient.createOrder(orderRequest);
 
-        for (CartItem item : cartItems) {
-            Product product = gatewayClient.getProductSafe(item.getProductId()).orElse(null);
-            OrderItemRequest request = new OrderItemRequest();
-            request.setProductId(item.getProductId());
-            request.setSku(product != null ? product.getSku() : "N/A");
-            request.setName(product != null ? product.getName() : "Product #" + item.getProductId());
-            request.setQuantity(item.getQuantity());
-            request.setUnitPrice(item.getUnitPrice());
-            gatewayClient.addOrderItem(order.getId(), request);
-            gatewayClient.deleteCartItem(item.getId());
+            for (CartItem item : cartItems) {
+                Product product = gatewayClient.getProductSafe(item.getProductId()).orElse(null);
+                OrderItemRequest request = new OrderItemRequest();
+                request.setProductId(item.getProductId());
+                request.setSku(product != null ? product.getSku() : "N/A");
+                request.setName(product != null ? product.getName() : "Product #" + item.getProductId());
+                request.setQuantity(item.getQuantity());
+                request.setUnitPrice(item.getUnitPrice());
+                gatewayClient.addOrderItem(order.getId(), request);
+                gatewayClient.deleteCartItem(item.getId());
+            }
+
+            PaymentRequest paymentRequest = new PaymentRequest();
+            paymentRequest.setOrderId(order.getId());
+            paymentRequest.setAmount(total);
+            paymentRequest.setCurrency(currency);
+            paymentRequest.setStatus("CREATED");
+            paymentRequest.setProvider((quote.getAppliedCoupon() != null ? paymentMethod + ":" + quote.getAppliedCoupon() : paymentMethod));
+            gatewayClient.createPayment(paymentRequest);
+
+            ShipmentRequest shipmentRequest = new ShipmentRequest();
+            shipmentRequest.setOrderId(order.getId());
+            shipmentRequest.setCarrier(shippingMethod.startsWith("pickup") ? "PICKUP" : "FLAT_RATE");
+            shipmentRequest.setTrackingNumber("INIT-" + order.getId() + "-" + OffsetDateTime.now().toEpochSecond());
+            shipmentRequest.setStatus("CREATED");
+            gatewayClient.createShipment(shipmentRequest);
+
+            return "redirect:/checkout/success?orderId=" + order.getId();
+        } catch (Exception ex) {
+            logger.warn("Checkout flow failed for customer {}: {}", customerId, ex.getMessage());
+            return "redirect:/checkout?error=processing";
         }
-
-        PaymentRequest paymentRequest = new PaymentRequest();
-        paymentRequest.setOrderId(order.getId());
-        paymentRequest.setAmount(total);
-        paymentRequest.setCurrency(currency);
-        paymentRequest.setStatus("CREATED");
-        paymentRequest.setProvider((quote.getAppliedCoupon() != null ? paymentMethod + ":" + quote.getAppliedCoupon() : paymentMethod));
-        gatewayClient.createPayment(paymentRequest);
-
-        ShipmentRequest shipmentRequest = new ShipmentRequest();
-        shipmentRequest.setOrderId(order.getId());
-        shipmentRequest.setCarrier(shippingMethod.startsWith("pickup") ? "PICKUP" : "FLAT_RATE");
-        shipmentRequest.setTrackingNumber("INIT-" + order.getId() + "-" + OffsetDateTime.now().toEpochSecond());
-        shipmentRequest.setStatus("CREATED");
-        gatewayClient.createShipment(shipmentRequest);
-
-        return "redirect:/checkout/success?orderId=" + order.getId();
     }
 
     @GetMapping("/checkout/success")
@@ -368,6 +387,9 @@ public class StorefrontController {
     @GetMapping("/account/orders")
     public String accountOrders(Model model, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
+        if (customerId == null) {
+            return "redirect:/oauth2/authorization/keycloak";
+        }
         List<Order> orders = gatewayClient.listOrders(customerId);
         orders.sort(Comparator.comparing(Order::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())));
         model.addAttribute("orders", orders);
@@ -378,7 +400,7 @@ public class StorefrontController {
     public String accountOrderDetail(@PathVariable Long id, Model model, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
-            return "redirect:/";
+            return "redirect:/oauth2/authorization/keycloak";
         }
 
         Optional<Order> orderOpt = gatewayClient.getOrderSafe(id)
@@ -403,7 +425,7 @@ public class StorefrontController {
     public String accountAddresses(Model model, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
-            return "redirect:/";
+            return "redirect:/oauth2/authorization/keycloak";
         }
 
         List<Address> addresses = gatewayClient.listCustomerAddresses(customerId);
@@ -418,7 +440,7 @@ public class StorefrontController {
     public String createAddress(@ModelAttribute AddressRequest addressForm, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
-            return "redirect:/";
+            return "redirect:/oauth2/authorization/keycloak";
         }
 
         if (addressForm.getLine1() == null || addressForm.getLine1().isBlank()
@@ -442,7 +464,7 @@ public class StorefrontController {
     public String accountReturns(Model model, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
-            return "redirect:/";
+            return "redirect:/oauth2/authorization/keycloak";
         }
 
         model.addAttribute("returns", gatewayClient.listReturns(customerId, null));
@@ -455,7 +477,7 @@ public class StorefrontController {
     public String createReturn(@ModelAttribute OrderReturnRequest returnForm, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
-            return "redirect:/";
+            return "redirect:/oauth2/authorization/keycloak";
         }
 
         if (returnForm.getOrderId() == null || returnForm.getReason() == null || returnForm.getReason().isBlank()) {
@@ -470,7 +492,7 @@ public class StorefrontController {
     public String wishlist(Model model, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
-            return "redirect:/";
+            return "redirect:/oauth2/authorization/keycloak";
         }
 
         List<WishlistEntry> items = buildWishlist(customerId);
@@ -482,7 +504,7 @@ public class StorefrontController {
     public String addWishlist(@RequestParam Long productId, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
-            return "redirect:/";
+            return "redirect:/oauth2/authorization/keycloak";
         }
 
         gatewayClient.addWishlistItem(customerId, productId);
@@ -493,7 +515,7 @@ public class StorefrontController {
     public String removeWishlist(@PathVariable Long productId, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
-            return "redirect:/";
+            return "redirect:/oauth2/authorization/keycloak";
         }
 
         gatewayClient.removeWishlistItem(customerId, productId);
@@ -537,9 +559,11 @@ public class StorefrontController {
             view.setId(item.getId());
             view.setProductId(item.getProductId());
             view.setProductName(product != null && product.getName() != null ? product.getName() : "Product #" + item.getProductId());
-            view.setQuantity(item.getQuantity());
-            view.setUnitPrice(item.getUnitPrice());
-            BigDecimal lineTotal = item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
+            int quantity = item.getQuantity() != null ? item.getQuantity() : 1;
+            BigDecimal unitPrice = item.getUnitPrice() != null ? item.getUnitPrice() : BigDecimal.ZERO;
+            view.setQuantity(quantity);
+            view.setUnitPrice(unitPrice);
+            BigDecimal lineTotal = unitPrice.multiply(BigDecimal.valueOf(quantity));
             view.setLineTotal(lineTotal);
             items.add(view);
         }
@@ -556,7 +580,11 @@ public class StorefrontController {
 
     private BigDecimal calculateSubtotal(List<CartItem> cartItems) {
         return cartItems.stream()
-            .map(item -> item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+            .map(item -> {
+                BigDecimal unitPrice = item.getUnitPrice() != null ? item.getUnitPrice() : BigDecimal.ZERO;
+                int quantity = item.getQuantity() != null ? item.getQuantity() : 1;
+                return unitPrice.multiply(BigDecimal.valueOf(quantity));
+            })
             .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 

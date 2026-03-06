@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
@@ -20,8 +21,20 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+            .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/shop/**", "/css/**", "/js/**", "/images/**", "/actuator/health", "/actuator/info").permitAll()
+                .requestMatchers(
+                    "/",
+                    "/shop/**",
+                    "/product/**",
+                    "/information/**",
+                    "/blog/**",
+                    "/css/**",
+                    "/js/**",
+                    "/images/**",
+                    "/actuator/health",
+                    "/actuator/info"
+                ).permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .requestMatchers("/cart/**", "/checkout/**", "/account/**").authenticated()
                 .anyRequest().authenticated()

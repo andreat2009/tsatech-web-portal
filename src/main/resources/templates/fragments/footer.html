@@ -5,8 +5,9 @@
                 <h5>Informazioni</h5>
                 <ul>
                     <li><a th:href="@{/shop}">Catalogo</a></li>
-                    <li><a th:href="@{/account/orders}">I miei ordini</a></li>
-                    <li><a th:href="@{/account/returns}">I miei resi</a></li>
+                    <li><a th:href="@{/product/special}">Offerte</a></li>
+                    <li><a th:href="@{/blog}">Blog</a></li>
+                    <li><a th:href="@{/information/sitemap}">Sitemap</a></li>
                 </ul>
             </div>
             <div>
@@ -14,13 +15,15 @@
                 <ul>
                     <li><a th:href="@{/cart}">Carrello</a></li>
                     <li><a th:href="@{/checkout}">Checkout</a></li>
-                    <li><a th:href="@{/account/addresses}">Indirizzi</a></li>
+                    <li><a th:href="@{/product/compare}">Confronta</a></li>
+                    <li><a th:href="@{/information/contact}">Contattaci</a></li>
                 </ul>
             </div>
             <div>
                 <h5>Account</h5>
                 <ul>
                     <li><a th:href="@{/oauth2/authorization/keycloak}" sec:authorize="!isAuthenticated()">Login</a></li>
+                    <li><a th:href="@{/account}" sec:authorize="isAuthenticated()">Area account</a></li>
                     <li><a th:href="@{/logout}" sec:authorize="isAuthenticated()">Logout</a></li>
                     <li><a th:href="@{/admin}" sec:authorize="hasRole('ADMIN')">Amministrazione</a></li>
                 </ul>

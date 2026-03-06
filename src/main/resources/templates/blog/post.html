@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title th:text="${post.title}">Post</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css" />
+</head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+<main class="container">
+    <article class="card" style="padding:16px; margin-bottom:16px;">
+        <h1 th:text="${post.title}">Titolo</h1>
+        <p><small th:text="${post.publishedAt}">2026-01-01</small></p>
+        <div th:utext="${post.content}"></div>
+    </article>
+
+    <section class="card" style="padding:16px; margin-bottom:16px;">
+        <h2>Commenti</h2>
+        <div th:each="c : ${comments}" style="padding:8px 0; border-bottom:1px solid #eee;">
+            <strong th:text="${c.authorName}">Autore</strong>
+            <small th:text="${c.createdAt}">2026-01-01</small>
+            <p th:text="${c.comment}">Commento</p>
+        </div>
+        <p th:if="${#lists.isEmpty(comments)}">Nessun commento approvato.</p>
+    </section>
+
+    <section class="form" style="padding:16px;">
+        <h3>Aggiungi commento</h3>
+        <form method="post" th:action="@{/blog/{slug}/comments(slug=${post.slug})}" th:object="${commentForm}">
+            <div class="field"><label>Nome</label><input type="text" th:field="*{authorName}" /></div>
+            <div class="field"><label>Email</label><input type="email" th:field="*{authorEmail}" /></div>
+            <div class="field"><label>Commento</label><textarea th:field="*{comment}"></textarea></div>
+            <button class="btn btn-primary" type="submit">Invia</button>
+        </form>
+    </section>
+</main>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

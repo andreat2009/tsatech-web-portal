@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Modifica Profilo</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css" />
+</head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+<main class="container">
+    <section class="form" style="padding:16px; max-width:700px; margin:0 auto;">
+        <h1>Modifica profilo</h1>
+        <form method="post" th:action="@{/account/edit}" th:object="${profileForm}">
+            <div class="field"><label>Nome</label><input type="text" th:field="*{firstName}" /></div>
+            <div class="field"><label>Cognome</label><input type="text" th:field="*{lastName}" /></div>
+            <div class="field"><label>Telefono</label><input type="text" th:field="*{phone}" /></div>
+            <button class="btn btn-primary" type="submit">Salva</button>
+            <a class="btn" th:href="@{/account}">Annulla</a>
+        </form>
+    </section>
+</main>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

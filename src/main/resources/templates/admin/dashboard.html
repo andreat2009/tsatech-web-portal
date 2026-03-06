@@ -72,6 +72,26 @@
             <a class="btn" th:href="@{/admin/reviews}">Gestisci recensioni</a>
         </div>
         <div class="card">
+            <div class="stat-label">Pagine Info</div>
+            <div class="stat-value" th:text="${informationCount}">0</div>
+            <a class="btn" th:href="@{/admin/information}">Gestisci contenuti</a>
+        </div>
+        <div class="card">
+            <div class="stat-label">Blog Posts</div>
+            <div class="stat-value" th:text="${blogPostCount}">0</div>
+            <a class="btn" th:href="@{/admin/blog/posts}">Gestisci blog</a>
+        </div>
+        <div class="card">
+            <div class="stat-label">Blog Commenti</div>
+            <div class="stat-value" th:text="${blogCommentCount}">0</div>
+            <a class="btn" th:href="@{/admin/blog/comments}">Modera commenti</a>
+        </div>
+        <div class="card">
+            <div class="stat-label">Messaggi Contatto</div>
+            <div class="stat-value" th:text="${contactMessageCount}">0</div>
+            <a class="btn" th:href="@{/admin/contact-messages}">Inbox contatti</a>
+        </div>
+        <div class="card">
             <div class="stat-label">Notification Service</div>
             <div class="stat-value" th:text="${notificationStatus}">unknown</div>
             <span class="muted">Kafka consumer health</span>

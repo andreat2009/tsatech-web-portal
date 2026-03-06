@@ -30,6 +30,10 @@ public class AdminController {
         List<Payment> payments = gatewayClient.listPayments(null);
         List<Shipment> shipments = gatewayClient.listShipments(null);
         List<OrderReturn> returns = gatewayClient.listReturns(null, null);
+        List<InformationPage> informationPages = gatewayClient.listInformationPages(null);
+        List<BlogPost> blogPosts = gatewayClient.listBlogPosts(null);
+        List<BlogComment> blogComments = gatewayClient.listBlogComments(null);
+        List<ContactMessage> contactMessages = gatewayClient.listContactMessages(null);
 
         model.addAttribute("productCount", products.size());
         model.addAttribute("categoryCount", categories.size());
@@ -42,6 +46,10 @@ public class AdminController {
         model.addAttribute("paymentCount", payments.size());
         model.addAttribute("shipmentCount", shipments.size());
         model.addAttribute("returnCount", returns.size());
+        model.addAttribute("informationCount", informationPages.size());
+        model.addAttribute("blogPostCount", blogPosts.size());
+        model.addAttribute("blogCommentCount", blogComments.size());
+        model.addAttribute("contactMessageCount", contactMessages.size());
         model.addAttribute("notificationStatus", gatewayClient.notificationPing());
         return "admin/dashboard";
     }
@@ -56,6 +64,10 @@ public class AdminController {
     @GetMapping("/returns")
     public String returns(Model model) {
         List<OrderReturn> returns = gatewayClient.listReturns(null, null);
+        List<InformationPage> informationPages = gatewayClient.listInformationPages(null);
+        List<BlogPost> blogPosts = gatewayClient.listBlogPosts(null);
+        List<BlogComment> blogComments = gatewayClient.listBlogComments(null);
+        List<ContactMessage> contactMessages = gatewayClient.listContactMessages(null);
         model.addAttribute("returns", returns);
         return "admin/returns";
     }

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title th:text="${formTitle}">Form pagina</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css" />
+</head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+<main class="container">
+    <section class="form" style="padding:16px; max-width:900px; margin:0 auto;">
+        <h1 th:text="${formTitle}">Form</h1>
+        <form method="post" th:action="${formAction}" th:object="${pageForm}">
+            <div class="field"><label>Titolo</label><input type="text" th:field="*{title}" /></div>
+            <div class="field"><label>Slug</label><input type="text" th:field="*{slug}" /></div>
+            <div class="field"><label>Sort order</label><input type="number" th:field="*{sortOrder}" /></div>
+            <div class="field"><label><input type="checkbox" th:field="*{active}" /> Attiva</label></div>
+            <div class="field"><label>Contenuto (HTML)</label><textarea th:field="*{content}" rows="10"></textarea></div>
+            <button class="btn btn-primary" type="submit">Salva</button>
+            <a class="btn" th:href="@{/admin/information}">Annulla</a>
+        </form>
+    </section>
+</main>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

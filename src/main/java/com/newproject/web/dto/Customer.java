@@ -10,6 +10,7 @@ public class Customer {
     private String lastName;
     private String phone;
     private Boolean active;
+    private Boolean newsletter;
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
 
@@ -27,6 +28,8 @@ public class Customer {
     public void setPhone(String phone) { this.phone = phone; }
     public Boolean getActive() { return active; }
     public void setActive(Boolean active) { this.active = active; }
+    public Boolean getNewsletter() { return newsletter; }
+    public void setNewsletter(Boolean newsletter) { this.newsletter = newsletter; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
     public OffsetDateTime getUpdatedAt() { return updatedAt; }

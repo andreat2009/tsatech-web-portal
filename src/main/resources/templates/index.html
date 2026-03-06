@@ -89,6 +89,10 @@
                             <button type="submit"
                                     th:text="${wishlistProductIds.contains(product.id)} ? 'In wishlist' : 'Wishlist'">Wishlist</button>
                         </form>
+                        <form th:action="@{/product/compare/add}" method="post">
+                            <input type="hidden" name="productId" th:value="${product.id}" />
+                            <button type="submit">Confronta</button>
+                        </form>
                         <a class="btn-link" th:href="@{/shop/products/{id}(id=${product.id})}">Dettagli</a>
                     </div>
                 </article>

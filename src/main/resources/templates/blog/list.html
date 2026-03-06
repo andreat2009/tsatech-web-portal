@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Blog</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css" />
+</head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+<main class="container">
+    <section class="card" style="padding:16px;">
+        <h1>Blog</h1>
+        <div th:each="post : ${posts}" style="padding:12px 0; border-bottom:1px solid #eee;">
+            <h3><a th:href="@{/blog/{slug}(slug=${post.slug})}" th:text="${post.title}">Titolo</a></h3>
+            <p th:text="${post.excerpt}">Estratto</p>
+            <small th:text="${post.publishedAt}">2026-01-01</small>
+        </div>
+        <p th:if="${#lists.isEmpty(posts)}">Nessun articolo pubblicato.</p>
+    </section>
+</main>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

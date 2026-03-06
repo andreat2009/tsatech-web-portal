@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Confronta Prodotti</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css" />
+</head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+<main class="container">
+    <section class="card" style="padding:16px;">
+        <h1>Confronta prodotti</h1>
+        <table class="table">
+            <thead><tr><th>Prodotto</th><th>SKU</th><th>Prezzo</th><th>Disponibilità</th><th></th></tr></thead>
+            <tbody>
+            <tr th:each="p : ${products}">
+                <td><a th:href="@{/shop/products/{id}(id=${p.id})}" th:text="${p.name}">Prodotto</a></td>
+                <td th:text="${p.sku}">SKU</td>
+                <td th:text="${p.price}">0.00</td>
+                <td th:text="${p.quantity}">0</td>
+                <td>
+                    <form method="post" th:action="@{/product/compare/{id}/remove(id=${p.id})}">
+                        <button class="btn" type="submit">Rimuovi</button>
+                    </form>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(products)}"><td colspan="5">Nessun prodotto in confronto.</td></tr>
+            </tbody>
+        </table>
+    </section>
+</main>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

@@ -3,6 +3,7 @@ package com.newproject.web.service;
 import com.newproject.web.dto.*;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 import org.slf4j.Logger;
@@ -91,6 +92,19 @@ public class GatewayClient {
             .retrieve()
             .bodyToMono(Product.class)
             .block();
+    }
+
+
+    public List<Manufacturer> listManufacturers() {
+        return safeList(
+            () -> client().get()
+                .uri(baseUrl + "/api/catalog/manufacturers")
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<List<Manufacturer>>() {})
+                .blockOptional()
+                .orElse(List.of()),
+            "/api/catalog/manufacturers"
+        );
     }
 
     public Optional<Product> getProductSafe(Long id) {
@@ -637,6 +651,384 @@ public class GatewayClient {
             "/api/notifications/ping",
             "unreachable"
         );
+    }
+
+
+    public Customer updateCustomer(Long customerId, CustomerRequest request) {
+        return client().put()
+            .uri(baseUrl + "/api/customers/{customerId}", customerId)
+            .bodyValue(request)
+            .retrieve()
+            .bodyToMono(Customer.class)
+            .block();
+    }
+
+    public Optional<Customer> getCustomerSafe(Long customerId) {
+        return safeCall(
+            () -> Optional.ofNullable(
+                client().get()
+                    .uri(baseUrl + "/api/customers/{customerId}", customerId)
+                    .retrieve()
+                    .bodyToMono(Customer.class)
+                    .block()
+            ),
+            "/api/customers/{customerId}",
+            Optional.empty()
+        );
+    }
+
+    public NewsletterPreference getNewsletterPreference(Long customerId) {
+        NewsletterPreference fallback = new NewsletterPreference();
+        fallback.setCustomerId(customerId);
+        fallback.setSubscribed(Boolean.FALSE);
+        return safeCall(
+            () -> client().get()
+                .uri(baseUrl + "/api/customers/{customerId}/newsletter", customerId)
+                .retrieve()
+                .bodyToMono(NewsletterPreference.class)
+                .block(),
+            "/api/customers/{customerId}/newsletter",
+            fallback
+        );
+    }
+
+    public NewsletterPreference updateNewsletterPreference(Long customerId, boolean subscribed) {
+        return client().put()
+            .uri(baseUrl + "/api/customers/{customerId}/newsletter", customerId)
+            .bodyValue(Map.of("subscribed", subscribed))
+            .retrieve()
+            .bodyToMono(NewsletterPreference.class)
+            .block();
+    }
+
+    public RewardSummary getRewardSummary(Long customerId) {
+        return safeCall(
+            () -> client().get()
+                .uri(baseUrl + "/api/customers/{customerId}/rewards/summary", customerId)
+                .retrieve()
+                .bodyToMono(RewardSummary.class)
+                .block(),
+            "/api/customers/{customerId}/rewards/summary",
+            new RewardSummary()
+        );
+    }
+
+    public List<RewardTransaction> listRewardTransactions(Long customerId) {
+        return safeList(
+            () -> client().get()
+                .uri(baseUrl + "/api/customers/{customerId}/rewards/transactions", customerId)
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<List<RewardTransaction>>() {})
+                .blockOptional()
+                .orElse(List.of()),
+            "/api/customers/{customerId}/rewards/transactions"
+        );
+    }
+
+    public RewardTransaction addRewardTransaction(Long customerId, RewardTransactionRequest request) {
+        return client().post()
+            .uri(baseUrl + "/api/customers/{customerId}/rewards/transactions", customerId)
+            .bodyValue(request)
+            .retrieve()
+            .bodyToMono(RewardTransaction.class)
+            .block();
+    }
+
+    public List<StoreTransaction> listStoreTransactions(Long customerId) {
+        return safeList(
+            () -> client().get()
+                .uri(baseUrl + "/api/customers/{customerId}/transactions", customerId)
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<List<StoreTransaction>>() {})
+                .blockOptional()
+                .orElse(List.of()),
+            "/api/customers/{customerId}/transactions"
+        );
+    }
+
+    public StoreTransaction addStoreTransaction(Long customerId, StoreTransactionRequest request) {
+        return client().post()
+            .uri(baseUrl + "/api/customers/{customerId}/transactions", customerId)
+            .bodyValue(request)
+            .retrieve()
+            .bodyToMono(StoreTransaction.class)
+            .block();
+    }
+
+    public List<CustomerSubscription> listSubscriptions(Long customerId) {
+        return safeList(
+            () -> client().get()
+                .uri(baseUrl + "/api/customers/{customerId}/subscriptions", customerId)
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<List<CustomerSubscription>>() {})
+                .blockOptional()
+                .orElse(List.of()),
+            "/api/customers/{customerId}/subscriptions"
+        );
+    }
+
+    public CustomerSubscription createSubscription(Long customerId, CustomerSubscriptionRequest request) {
+        return client().post()
+            .uri(baseUrl + "/api/customers/{customerId}/subscriptions", customerId)
+            .bodyValue(request)
+            .retrieve()
+            .bodyToMono(CustomerSubscription.class)
+            .block();
+    }
+
+    public CustomerSubscription updateSubscription(Long customerId, Long subscriptionId, CustomerSubscriptionRequest request) {
+        return client().put()
+            .uri(baseUrl + "/api/customers/{customerId}/subscriptions/{subscriptionId}", customerId, subscriptionId)
+            .bodyValue(request)
+            .retrieve()
+            .bodyToMono(CustomerSubscription.class)
+            .block();
+    }
+
+    public List<CustomerDownload> listDownloads(Long customerId) {
+        return safeList(
+            () -> client().get()
+                .uri(baseUrl + "/api/customers/{customerId}/downloads", customerId)
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<List<CustomerDownload>>() {})
+                .blockOptional()
+                .orElse(List.of()),
+            "/api/customers/{customerId}/downloads"
+        );
+    }
+
+    public CustomerDownload createDownload(Long customerId, CustomerDownloadRequest request) {
+        return client().post()
+            .uri(baseUrl + "/api/customers/{customerId}/downloads", customerId)
+            .bodyValue(request)
+            .retrieve()
+            .bodyToMono(CustomerDownload.class)
+            .block();
+    }
+
+    public List<InformationPage> listInformationPages(Boolean active) {
+        return safeList(
+            () -> client().get()
+                .uri(uriBuilder -> uriBuilder
+                    .path(baseUrl + "/api/cms/information")
+                    .queryParamIfPresent("active", Optional.ofNullable(active))
+                    .build())
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<List<InformationPage>>() {})
+                .blockOptional()
+                .orElse(List.of()),
+            "/api/cms/information"
+        );
+    }
+
+
+    public Optional<InformationPage> getInformationPageSafe(Long id) {
+        return safeCall(
+            () -> Optional.ofNullable(
+                client().get()
+                    .uri(baseUrl + "/api/cms/information/{id}", id)
+                    .retrieve()
+                    .bodyToMono(InformationPage.class)
+                    .block()
+            ),
+            "/api/cms/information/{id}",
+            Optional.empty()
+        );
+    }
+
+    public Optional<InformationPage> getInformationBySlug(String slug) {
+        return safeCall(
+            () -> Optional.ofNullable(
+                client().get()
+                    .uri(baseUrl + "/api/cms/information/slug/{slug}", slug)
+                    .retrieve()
+                    .bodyToMono(InformationPage.class)
+                    .block()
+            ),
+            "/api/cms/information/slug/{slug}",
+            Optional.empty()
+        );
+    }
+
+    public InformationPage createInformationPage(InformationRequest request) {
+        return client().post()
+            .uri(baseUrl + "/api/cms/information")
+            .bodyValue(request)
+            .retrieve()
+            .bodyToMono(InformationPage.class)
+            .block();
+    }
+
+    public InformationPage updateInformationPage(Long id, InformationRequest request) {
+        return client().put()
+            .uri(baseUrl + "/api/cms/information/{id}", id)
+            .bodyValue(request)
+            .retrieve()
+            .bodyToMono(InformationPage.class)
+            .block();
+    }
+
+    public void deleteInformationPage(Long id) {
+        client().delete()
+            .uri(baseUrl + "/api/cms/information/{id}", id)
+            .retrieve()
+            .toBodilessEntity()
+            .block();
+    }
+
+    public List<BlogPost> listBlogPosts(Boolean active) {
+        return safeList(
+            () -> client().get()
+                .uri(uriBuilder -> uriBuilder
+                    .path(baseUrl + "/api/cms/blog/posts")
+                    .queryParamIfPresent("active", Optional.ofNullable(active))
+                    .build())
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<List<BlogPost>>() {})
+                .blockOptional()
+                .orElse(List.of()),
+            "/api/cms/blog/posts"
+        );
+    }
+
+
+    public Optional<BlogPost> getBlogPostSafe(Long id) {
+        return safeCall(
+            () -> Optional.ofNullable(
+                client().get()
+                    .uri(baseUrl + "/api/cms/blog/posts/{id}", id)
+                    .retrieve()
+                    .bodyToMono(BlogPost.class)
+                    .block()
+            ),
+            "/api/cms/blog/posts/{id}",
+            Optional.empty()
+        );
+    }
+
+    public Optional<BlogPost> getBlogPostBySlug(String slug) {
+        return safeCall(
+            () -> Optional.ofNullable(
+                client().get()
+                    .uri(baseUrl + "/api/cms/blog/posts/slug/{slug}", slug)
+                    .retrieve()
+                    .bodyToMono(BlogPost.class)
+                    .block()
+            ),
+            "/api/cms/blog/posts/slug/{slug}",
+            Optional.empty()
+        );
+    }
+
+    public BlogPost createBlogPost(BlogPostRequest request) {
+        return client().post()
+            .uri(baseUrl + "/api/cms/blog/posts")
+            .bodyValue(request)
+            .retrieve()
+            .bodyToMono(BlogPost.class)
+            .block();
+    }
+
+    public BlogPost updateBlogPost(Long id, BlogPostRequest request) {
+        return client().put()
+            .uri(baseUrl + "/api/cms/blog/posts/{id}", id)
+            .bodyValue(request)
+            .retrieve()
+            .bodyToMono(BlogPost.class)
+            .block();
+    }
+
+    public void deleteBlogPost(Long id) {
+        client().delete()
+            .uri(baseUrl + "/api/cms/blog/posts/{id}", id)
+            .retrieve()
+            .toBodilessEntity()
+            .block();
+    }
+
+    public List<BlogComment> listBlogCommentsByPost(Long postId, Boolean approved) {
+        return safeList(
+            () -> client().get()
+                .uri(uriBuilder -> uriBuilder
+                    .path(baseUrl + "/api/cms/blog/posts/{postId}/comments")
+                    .queryParamIfPresent("approved", Optional.ofNullable(approved))
+                    .build(postId))
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<List<BlogComment>>() {})
+                .blockOptional()
+                .orElse(List.of()),
+            "/api/cms/blog/posts/{postId}/comments"
+        );
+    }
+
+    public List<BlogComment> listBlogComments(Boolean approved) {
+        return safeList(
+            () -> client().get()
+                .uri(uriBuilder -> uriBuilder
+                    .path(baseUrl + "/api/cms/blog/comments")
+                    .queryParamIfPresent("approved", Optional.ofNullable(approved))
+                    .build())
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<List<BlogComment>>() {})
+                .blockOptional()
+                .orElse(List.of()),
+            "/api/cms/blog/comments"
+        );
+    }
+
+    public BlogComment createBlogComment(Long postId, BlogCommentRequest request) {
+        return client().post()
+            .uri(baseUrl + "/api/cms/blog/posts/{postId}/comments", postId)
+            .bodyValue(request)
+            .retrieve()
+            .bodyToMono(BlogComment.class)
+            .block();
+    }
+
+    public BlogComment setBlogCommentApproval(Long commentId, boolean approved) {
+        return client().patch()
+            .uri(uriBuilder -> uriBuilder
+                .path(baseUrl + "/api/cms/blog/comments/{id}/approval")
+                .queryParam("approved", approved)
+                .build(commentId))
+            .retrieve()
+            .bodyToMono(BlogComment.class)
+            .block();
+    }
+
+    public ContactMessage createContactMessage(ContactMessageRequest request) {
+        return client().post()
+            .uri(baseUrl + "/api/cms/contact")
+            .bodyValue(request)
+            .retrieve()
+            .bodyToMono(ContactMessage.class)
+            .block();
+    }
+
+    public List<ContactMessage> listContactMessages(String status) {
+        return safeList(
+            () -> client().get()
+                .uri(uriBuilder -> uriBuilder
+                    .path(baseUrl + "/api/cms/contact")
+                    .queryParamIfPresent("status", Optional.ofNullable(status))
+                    .build())
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<List<ContactMessage>>() {})
+                .blockOptional()
+                .orElse(List.of()),
+            "/api/cms/contact"
+        );
+    }
+
+    public ContactMessage updateContactMessageStatus(Long id, String status) {
+        return client().patch()
+            .uri(uriBuilder -> uriBuilder
+                .path(baseUrl + "/api/cms/contact/{id}/status")
+                .queryParam("status", status)
+                .build(id))
+            .retrieve()
+            .bodyToMono(ContactMessage.class)
+            .block();
     }
 
     private <T> List<T> safeList(Supplier<List<T>> supplier, String endpoint) {

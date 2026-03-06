@@ -52,6 +52,7 @@ public class CustomerResolver {
             request.setEmail(email != null ? email.toLowerCase(Locale.ROOT) : preferredUsername + "@example.local");
             request.setFirstName(user.getGivenName());
             request.setLastName(user.getFamilyName());
+            request.setNewsletter(false);
             return gatewayClient.createCustomer(request);
         } catch (Exception ex) {
             logger.warn("Unable to resolve/create customer for authenticated principal: {}", ex.getMessage());

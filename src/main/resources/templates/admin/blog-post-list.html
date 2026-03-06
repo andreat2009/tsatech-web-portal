@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Blog</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css" />
+</head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+<main class="container">
+    <section class="card" style="padding:16px;">
+        <h1>Articoli blog</h1>
+        <p><a class="btn btn-primary" th:href="@{/admin/blog/posts/new}">Nuovo articolo</a></p>
+        <table class="table">
+            <thead><tr><th>ID</th><th>Titolo</th><th>Slug</th><th>Pubblicato</th><th>Attivo</th><th>Azioni</th></tr></thead>
+            <tbody>
+            <tr th:each="p : ${posts}">
+                <td th:text="${p.id}">1</td>
+                <td th:text="${p.title}">Titolo</td>
+                <td th:text="${p.slug}">slug</td>
+                <td th:text="${p.publishedAt}">2026-01-01</td>
+                <td th:text="${p.active}">true</td>
+                <td>
+                    <a th:href="@{/admin/blog/posts/{id}/edit(id=${p.id})}">Modifica</a>
+                    <form method="post" th:action="@{/admin/blog/posts/{id}/delete(id=${p.id})}" style="display:inline;">
+                        <button class="btn" type="submit">Elimina</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+</main>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

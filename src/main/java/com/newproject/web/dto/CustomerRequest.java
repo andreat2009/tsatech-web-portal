@@ -7,6 +7,7 @@ public class CustomerRequest {
     private String lastName;
     private String phone;
     private Boolean active;
+    private Boolean newsletter;
 
     public String getKeycloakUserId() { return keycloakUserId; }
     public void setKeycloakUserId(String keycloakUserId) { this.keycloakUserId = keycloakUserId; }
@@ -20,4 +21,6 @@ public class CustomerRequest {
     public void setPhone(String phone) { this.phone = phone; }
     public Boolean getActive() { return active; }
     public void setActive(Boolean active) { this.active = active; }
+    public Boolean getNewsletter() { return newsletter; }
+    public void setNewsletter(Boolean newsletter) { this.newsletter = newsletter; }
 }

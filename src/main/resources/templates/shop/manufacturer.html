@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Produttori</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css" />
+</head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+<main class="container">
+    <section class="filters" style="margin-bottom:16px;">
+        <form method="get" th:action="@{/product/manufacturer}">
+            <label>Produttore</label>
+            <select name="manufacturerId">
+                <option value="">Tutti</option>
+                <option th:each="m : ${manufacturers}" th:value="${m.id}" th:selected="${selectedManufacturerId == m.id}" th:text="${m.name}">Brand</option>
+            </select>
+            <button class="btn btn-primary" type="submit">Filtra</button>
+        </form>
+    </section>
+    <section class="card" style="padding:16px;">
+        <h1>Prodotti per produttore</h1>
+        <div class="product-grid">
+            <article class="product-card" th:each="p : ${products}">
+                <h3><a th:href="@{/shop/products/{id}(id=${p.id})}" th:text="${p.name}">Prodotto</a></h3>
+                <p th:text="${p.description}">Descrizione</p>
+                <p><strong th:text="${p.price}">0.00</strong></p>
+                <form method="post" th:action="@{/cart/add}">
+                    <input type="hidden" name="productId" th:value="${p.id}" />
+                    <button class="btn btn-primary" type="submit">Aggiungi al carrello</button>
+                </form>
+            </article>
+        </div>
+    </section>
+</main>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

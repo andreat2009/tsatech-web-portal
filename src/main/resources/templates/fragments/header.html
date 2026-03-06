@@ -6,6 +6,7 @@
             </div>
             <ul class="top-links">
                 <li><a th:href="@{/account/wishlist}" sec:authorize="isAuthenticated()">Wishlist</a></li>
+                <li><a th:href="@{/product/compare}">Confronta</a></li>
                 <li><a th:href="@{/cart}" sec:authorize="isAuthenticated()">Carrello</a></li>
                 <li><a th:href="@{/checkout}" sec:authorize="isAuthenticated()">Checkout</a></li>
                 <li sec:authorize="!isAuthenticated()"><a th:href="@{/oauth2/authorization/keycloak}">Login</a></li>
@@ -33,6 +34,12 @@
         <div class="container menu-links">
             <a th:href="@{/}">Home</a>
             <a th:href="@{/shop}">Catalogo</a>
+            <a th:href="@{/product/special}">Offerte</a>
+            <a th:href="@{/product/manufacturer}">Produttori</a>
+            <a th:href="@{/blog}">Blog</a>
+            <a th:href="@{/information/contact}">Contatti</a>
+            <a th:href="@{/information/sitemap}">Sitemap</a>
+            <a th:href="@{/account}" sec:authorize="isAuthenticated()">Account</a>
             <a th:href="@{/account/orders}" sec:authorize="isAuthenticated()">Ordini</a>
             <a th:href="@{/account/returns}" sec:authorize="isAuthenticated()">Resi</a>
             <a th:href="@{/account/addresses}" sec:authorize="isAuthenticated()">Indirizzi</a>

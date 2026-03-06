@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Contatti</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css" />
+</head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+<main class="container">
+    <section class="card" style="padding:16px;">
+        <h1>Messaggi contatto</h1>
+        <table class="table">
+            <thead><tr><th>ID</th><th>Nome</th><th>Email</th><th>Oggetto</th><th>Messaggio</th><th>Stato</th><th>Azioni</th></tr></thead>
+            <tbody>
+            <tr th:each="m : ${messages}">
+                <td th:text="${m.id}">1</td>
+                <td th:text="${m.name}">Nome</td>
+                <td th:text="${m.email}">mail</td>
+                <td th:text="${m.subject}">Oggetto</td>
+                <td th:text="${m.message}">Messaggio</td>
+                <td th:text="${m.status}">NEW</td>
+                <td>
+                    <form method="post" th:action="@{/admin/contact-messages/{id}/status(id=${m.id})}" style="display:inline;">
+                        <input type="hidden" name="status" value="READ" />
+                        <button class="btn" type="submit">Segna letto</button>
+                    </form>
+                    <form method="post" th:action="@{/admin/contact-messages/{id}/status(id=${m.id})}" style="display:inline;">
+                        <input type="hidden" name="status" value="DONE" />
+                        <button class="btn" type="submit">Chiudi</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+</main>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

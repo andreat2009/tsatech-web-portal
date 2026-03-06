@@ -45,6 +45,10 @@
                 <button class="btn" type="submit"
                         th:text="${wishlistProductIds.contains(product.id)} ? 'In wishlist' : 'Aggiungi wishlist'">Wishlist</button>
             </form>
+            <form th:action="@{/product/compare/add}" method="post">
+                <input type="hidden" name="productId" th:value="${product.id}" />
+                <button class="btn" type="submit">Confronta prodotto</button>
+            </form>
             <a class="btn" th:href="@{/cart}" sec:authorize="isAuthenticated()">Vai al carrello</a>
             <a class="btn" th:href="@{/oauth2/authorization/keycloak}" sec:authorize="!isAuthenticated()">Login per acquistare</a>
         </div>

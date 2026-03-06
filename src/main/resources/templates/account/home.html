@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Account</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css" />
+</head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+<main class="container">
+    <section class="card" style="padding:16px; margin-bottom:16px;">
+        <h1>Il tuo account</h1>
+        <p th:text="${customer.firstName} + ' ' + ${customer.lastName} + ' - ' + ${customer.email}">Profilo</p>
+        <p>
+            Newsletter:
+            <strong th:text="${newsletterSubscribed} ? 'Attiva' : 'Disattiva'">stato</strong>
+        </p>
+        <form method="post" th:action="@{/account/newsletter}">
+            <input type="hidden" name="newsletter" th:value="${newsletterSubscribed} ? false : true" />
+            <button class="btn btn-primary" type="submit" th:text="${newsletterSubscribed} ? 'Disattiva newsletter' : 'Attiva newsletter'">Toggle</button>
+        </form>
+    </section>
+
+    <section class="card" style="padding:16px; margin-bottom:16px;">
+        <h2>Riepilogo rapido</h2>
+        <ul>
+            <li>Punti reward: <strong th:text="${rewardSummary.pointsBalance}">0</strong></li>
+            <li>Abbonamenti: <strong th:text="${subscriptionCount}">0</strong></li>
+            <li>Download: <strong th:text="${downloadCount}">0</strong></li>
+        </ul>
+        <p>
+            <a class="btn" th:href="@{/account/edit}">Modifica profilo</a>
+            <a class="btn" th:href="@{/account/reward}">Reward</a>
+            <a class="btn" th:href="@{/account/transactions}">Transazioni</a>
+            <a class="btn" th:href="@{/account/subscriptions}">Abbonamenti</a>
+            <a class="btn" th:href="@{/account/downloads}">Download</a>
+            <a class="btn" th:href="@{/account/password}">Password</a>
+        </p>
+    </section>
+
+    <section class="card" style="padding:16px;">
+        <h2>Ultimi ordini</h2>
+        <table class="table">
+            <thead>
+            <tr><th>ID</th><th>Stato</th><th>Totale</th><th>Azioni</th></tr>
+            </thead>
+            <tbody>
+            <tr th:each="order : ${latestOrders}">
+                <td th:text="${order.id}">1</td>
+                <td th:text="${order.status}">PENDING</td>
+                <td th:text="${order.total}">0.00</td>
+                <td><a th:href="@{/account/orders/{id}(id=${order.id})}">Dettaglio</a></td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(latestOrders)}"><td colspan="4">Nessun ordine.</td></tr>
+            </tbody>
+        </table>
+    </section>
+</main>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Abbonamenti</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css" />
+</head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+<main class="container">
+    <section class="form" style="padding:16px; margin-bottom:16px;">
+        <h1>Nuovo abbonamento</h1>
+        <form method="post" th:action="@{/account/subscriptions}" th:object="${subscriptionForm}">
+            <div class="field"><label>Piano</label><input type="text" th:field="*{planName}" /></div>
+            <div class="field"><label>Stato</label><input type="text" th:field="*{status}" /></div>
+            <div class="field"><label>Importo</label><input type="number" step="0.01" th:field="*{amount}" /></div>
+            <div class="field"><label>Valuta</label><input type="text" th:field="*{currency}" /></div>
+            <button class="btn btn-primary" type="submit">Attiva</button>
+        </form>
+    </section>
+
+    <section class="card" style="padding:16px;">
+        <h2>Abbonamenti attivi/storico</h2>
+        <table class="table">
+            <thead>
+            <tr><th>ID</th><th>Piano</th><th>Stato</th><th>Importo</th><th>Prossimo addebito</th><th>Azioni</th></tr>
+            </thead>
+            <tbody>
+            <tr th:each="s : ${subscriptions}">
+                <td th:text="${s.id}">1</td>
+                <td th:text="${s.planName}">Premium</td>
+                <td th:text="${s.status}">ACTIVE</td>
+                <td th:text="${s.amount} + ' ' + ${s.currency}">9.90 EUR</td>
+                <td th:text="${s.nextBillingAt}">2026-01-01</td>
+                <td>
+                    <form method="post" th:action="@{/account/subscriptions/{id}/status(id=${s.id})}" style="display:inline;">
+                        <input type="hidden" name="status" value="CANCELLED" />
+                        <button class="btn" type="submit" th:if="${s.status != 'CANCELLED'}">Annulla</button>
+                    </form>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(subscriptions)}"><td colspan="6">Nessun abbonamento.</td></tr>
+            </tbody>
+        </table>
+    </section>
+</main>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

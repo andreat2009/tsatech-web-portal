@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Offerte Speciali</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css" />
+</head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+<main class="container">
+    <section class="card" style="padding:16px;">
+        <h1>Offerte speciali</h1>
+        <div class="product-grid">
+            <article class="product-card" th:each="p : ${products}">
+                <h3><a th:href="@{/shop/products/{id}(id=${p.id})}" th:text="${p.name}">Prodotto</a></h3>
+                <p><strong th:text="${p.price}">0.00</strong></p>
+                <form method="post" th:action="@{/product/compare/add}">
+                    <input type="hidden" name="productId" th:value="${p.id}" />
+                    <button class="btn" type="submit">Confronta</button>
+                </form>
+            </article>
+        </div>
+    </section>
+</main>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

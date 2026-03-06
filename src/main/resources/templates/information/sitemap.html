@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sitemap</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css" />
+</head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+<main class="container">
+    <section class="card" style="padding:16px; margin-bottom:16px;">
+        <h1>Sitemap</h1>
+    </section>
+    <section class="card" style="padding:16px; margin-bottom:16px;">
+        <h2>Pagine informative</h2>
+        <ul>
+            <li th:each="p : ${informationPages}">
+                <a th:href="@{/information/{slug}(slug=${p.slug})}" th:text="${p.title}">Info</a>
+            </li>
+        </ul>
+    </section>
+    <section class="card" style="padding:16px; margin-bottom:16px;">
+        <h2>Blog</h2>
+        <ul>
+            <li th:each="post : ${blogPosts}"><a th:href="@{/blog/{slug}(slug=${post.slug})}" th:text="${post.title}">Post</a></li>
+        </ul>
+    </section>
+    <section class="card" style="padding:16px;">
+        <h2>Categorie</h2>
+        <ul>
+            <li th:each="c : ${categories}"><a th:href="@{/(categoryId=${c.id})}" th:text="${c.name}">Categoria</a></li>
+        </ul>
+    </section>
+</main>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

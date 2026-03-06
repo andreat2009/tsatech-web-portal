@@ -723,3 +723,19 @@ main.container {
     position: static;
   }
 }
+
+
+.product-card {
+  border: 1px solid #ddd;
+  background: #fff;
+  padding: 14px;
+  border-radius: 3px;
+}
+
+.product-card h3 {
+  margin-top: 0;
+}
+
+.product-card form {
+  margin-top: 10px;
+}

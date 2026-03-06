@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Transazioni</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css" />
+</head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+<main class="container">
+    <section class="card" style="padding:16px;">
+        <h1>Transazioni account</h1>
+        <table class="table">
+            <thead>
+            <tr><th>Data</th><th>Descrizione</th><th>Ordine</th><th>Importo</th></tr>
+            </thead>
+            <tbody>
+            <tr th:each="tx : ${transactions}">
+                <td th:text="${tx.createdAt}">2026-01-01</td>
+                <td th:text="${tx.description}">Rimborso</td>
+                <td th:text="${tx.orderId}">1</td>
+                <td th:text="${tx.amount}">0.00</td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(transactions)}"><td colspan="4">Nessuna transazione.</td></tr>
+            </tbody>
+        </table>
+    </section>
+</main>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

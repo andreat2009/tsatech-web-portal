@@ -421,25 +421,66 @@ main.container {
 
 .checkout-layout {
   display: grid;
-  grid-template-columns: 1.4fr 1fr;
-  gap: 20px;
+  grid-template-columns: minmax(0, 1.45fr) minmax(320px, 420px);
+  gap: 22px;
+  align-items: start;
+}
+
+.checkout-form-wrap {
+  padding: 18px;
+}
+
+.checkout-summary {
+  padding: 16px;
+  align-self: start;
+}
+
+.checkout-summary-title {
+  margin: 0 0 12px;
+  font-size: 26px;
+  line-height: 1.2;
+}
+
+.checkout-summary-table-wrap {
+  margin-bottom: 14px;
+}
+
+.checkout-items-table th,
+.checkout-items-table td {
+  padding: 11px 12px;
+}
+
+.checkout-items-table .qty-col,
+.checkout-items-table .amount-col {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 .summary-grid {
   display: grid;
-  gap: 8px;
+  gap: 10px;
+  border-top: 1px solid #e5e5e5;
+  padding-top: 12px;
 }
 
 .summary-row {
   display: flex;
   justify-content: space-between;
-  font-size: 14px;
+  align-items: baseline;
+  font-size: 16px;
+}
+
+.summary-row .amount {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
 }
 
 .summary-row.total {
-  border-top: 1px solid #e5e5e5;
-  padding-top: 8px;
-  font-size: 18px;
+  border-top: 1px solid #d8d8d8;
+  margin-top: 6px;
+  padding-top: 10px;
+  font-size: 28px;
 }
 
 .page-header {
@@ -510,6 +551,14 @@ main.container {
   .checkout-layout,
   .product-detail {
     grid-template-columns: 1fr;
+  }
+
+  .checkout-summary-title {
+    font-size: 24px;
+  }
+
+  .summary-row.total {
+    font-size: 24px;
   }
 
   .header-row {

@@ -119,22 +119,23 @@
             </form>
         </section>
 
-        <aside class="checkout-summary">
-            <h3>Riepilogo ordine</h3>
-            <div class="table-wrap">
-                <table class="table compact">
+        <aside class="checkout-summary" aria-label="Riepilogo ordine">
+            <h2 class="checkout-summary-title">Riepilogo ordine</h2>
+            <div class="table-wrap checkout-summary-table-wrap">
+                <table class="table compact checkout-items-table">
                     <thead>
                     <tr>
                         <th>Prodotto</th>
-                        <th>Q.tà</th>
-                        <th>Totale</th>
+                        <th class="qty-col">Q.tà</th>
+                        <th class="amount-col">Totale</th>
                     </tr>
                     </thead>
                     <tbody>
                     <tr th:each="item : ${items}">
                         <td th:text="${item.productName}">Prodotto</td>
-                        <td th:text="${item.quantity}">1</td>
-                        <td th:text="${item.lineTotal}">0.00</td>
+                        <td class="qty-col" th:text="${item.quantity}">1</td>
+                        <td class="amount-col"
+                            th:text="${item.lineTotal != null ? #numbers.formatDecimal(item.lineTotal, 1, 'POINT', 2, 'POINT') : '0.00'}">0.00</td>
                     </tr>
                     </tbody>
                 </table>
@@ -142,19 +143,19 @@
             <div class="summary-grid">
                 <div class="summary-row">
                     <span>Subtotale</span>
-                    <strong th:text="${subtotal}">0.00</strong>
+                    <strong class="amount" th:text="${subtotal != null ? #numbers.formatDecimal(subtotal, 1, 'POINT', 2, 'POINT') : '0.00'}">0.00</strong>
                 </div>
                 <div class="summary-row">
                     <span>Spedizione</span>
-                    <strong th:text="${shipping}">0.00</strong>
+                    <strong class="amount" th:text="${shipping != null ? #numbers.formatDecimal(shipping, 1, 'POINT', 2, 'POINT') : '0.00'}">0.00</strong>
                 </div>
                 <div class="summary-row" th:if="${discount != null}">
                     <span>Sconto</span>
-                    <strong th:text="'-' + ${discount}">0.00</strong>
+                    <strong class="amount" th:text="${#numbers.formatDecimal(discount, 1, 'POINT', 2, 'POINT')}">0.00</strong>
                 </div>
                 <div class="summary-row total">
                     <span>Totale</span>
-                    <strong th:text="${total}">0.00</strong>
+                    <strong class="amount" th:text="${total != null ? #numbers.formatDecimal(total, 1, 'POINT', 2, 'POINT') : '0.00'}">0.00</strong>
                 </div>
             </div>
         </aside>

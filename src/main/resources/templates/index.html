@@ -2,7 +2,10 @@
 <html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8" />
-    <title>TSATech Commerce</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Catalogo prodotti | TSATech Commerce</title>
+    <meta name="description" content="Catalogo e-commerce con ricerca prodotti, categorie e offerte aggiornate." />
+    <link rel="canonical" th:href="@{/catalogo}" />
     <link rel="stylesheet" th:href="@{/css/app.css}" />
 </head>
 <body>
@@ -20,20 +23,20 @@
             <h3>Refine Search</h3>
             <a class="category-link"
                th:classappend="${selectedCategoryId == null} ? ' active'"
-               th:href="@{/shop(q=${searchQuery},sort=${selectedSort})}">Tutte le categorie</a>
+               th:href="@{/catalogo(q=${searchQuery},sort=${selectedSort})}">Tutte le categorie</a>
 
             <ul class="category-tree" th:if="${!categoryTree.isEmpty()}">
                 <li th:each="category : ${categoryTree}">
                     <a class="category-link"
                        th:classappend="${selectedCategoryId == category.id} ? ' active'"
                        th:text="${category.name}"
-                       th:href="@{/shop(q=${searchQuery},categoryId=${category.id},sort=${selectedSort})}">Categoria</a>
+                       th:href="@{/catalogo(q=${searchQuery},categoryId=${category.id},sort=${selectedSort})}">Categoria</a>
                     <ul th:if="${!category.children.isEmpty()}">
                         <li th:each="child : ${category.children}">
                             <a class="category-link child"
                                th:classappend="${selectedCategoryId == child.id} ? ' active'"
                                th:text="${child.name}"
-                               th:href="@{/shop(q=${searchQuery},categoryId=${child.id},sort=${selectedSort})}">Sotto categoria</a>
+                               th:href="@{/catalogo(q=${searchQuery},categoryId=${child.id},sort=${selectedSort})}">Sotto categoria</a>
                         </li>
                     </ul>
                 </li>
@@ -41,7 +44,7 @@
         </aside>
 
         <div class="catalog-main">
-            <form class="filters" method="get" th:action="@{/shop}">
+            <form class="filters" method="get" th:action="@{/catalogo}">
                 <input type="text" name="q" placeholder="Cerca prodotto" th:value="${searchQuery}" />
                 <input type="hidden" name="categoryId" th:value="${selectedCategoryId}" />
                 <select name="sort">
@@ -59,13 +62,18 @@
             <section class="product-grid" th:if="${!products.isEmpty()}">
                 <article class="product-thumb" th:each="product : ${products}">
                     <div class="image">
-                        <a th:href="@{/shop/products/{id}(id=${product.id})}">
-                            <div class="image-placeholder" th:text="${product.sku != null ? product.sku : 'SKU'}">SKU</div>
+                        <a th:href="${product.seoPath}">
+                            <img class="product-thumb-image"
+                                 th:if="${product.primaryImageUrl != null and !product.primaryImageUrl.isBlank()}"
+                                 th:src="${product.primaryImageUrl}"
+                                 th:alt="${product.name}" loading="lazy" />
+                            <div class="image-placeholder" th:if="${product.primaryImageUrl == null or product.primaryImageUrl.isBlank()}"
+                                 th:text="${product.sku != null ? product.sku : 'SKU'}">SKU</div>
                         </a>
                     </div>
                     <div class="description">
                         <h4>
-                            <a th:href="@{/shop/products/{id}(id=${product.id})}" th:text="${product.name}">Product</a>
+                            <a th:href="${product.seoPath}" th:text="${product.name}">Product</a>
                         </h4>
                         <p class="desc" th:text="${product.description}">Description</p>
                         <p class="price" th:text="${product.price}">0.00</p>
@@ -83,17 +91,18 @@
                                     th:disabled="${product.quantity != null and product.quantity <= 0}"
                                     th:text="${product.quantity != null and product.quantity <= 0} ? 'Esaurito' : 'Aggiungi'">Aggiungi</button>
                         </form>
-                        <form th:action="@{/account/wishlist/add}" method="post" sec:authorize="isAuthenticated()">
+                        <form th:action="@{/account/lista-desideri/aggiungi}" method="post" sec:authorize="isAuthenticated()">
                             <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                             <input type="hidden" name="productId" th:value="${product.id}" />
                             <button type="submit"
                                     th:text="${wishlistProductIds.contains(product.id)} ? 'In wishlist' : 'Wishlist'">Wishlist</button>
                         </form>
-                        <form th:action="@{/product/compare/add}" method="post">
+                        <form th:action="@{/catalogo/confronta/aggiungi}" method="post">
+                            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                             <input type="hidden" name="productId" th:value="${product.id}" />
                             <button type="submit">Confronta</button>
                         </form>
-                        <a class="btn-link" th:href="@{/shop/products/{id}(id=${product.id})}">Dettagli</a>
+                        <a class="btn-link" th:href="${product.seoPath}">Dettagli</a>
                     </div>
                 </article>
             </section>

@@ -9,7 +9,7 @@
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
 <main class="container">
-    <section class="form" style="padding:16px; margin-bottom:16px;">
+    <section class="form section-pad block">
         <h1>Nuovo abbonamento</h1>
         <form method="post" th:action="@{/account/subscriptions}" th:object="${subscriptionForm}">
             <div class="field"><label>Piano</label><input type="text" th:field="*{planName}" /></div>
@@ -20,7 +20,7 @@
         </form>
     </section>
 
-    <section class="card" style="padding:16px;">
+    <section class="card section-pad">
         <h2>Abbonamenti attivi/storico</h2>
         <table class="table">
             <thead>
@@ -34,7 +34,7 @@
                 <td th:text="${s.amount} + ' ' + ${s.currency}">9.90 EUR</td>
                 <td th:text="${s.nextBillingAt}">2026-01-01</td>
                 <td>
-                    <form method="post" th:action="@{/account/subscriptions/{id}/status(id=${s.id})}" style="display:inline;">
+                    <form method="post" th:action="@{/account/subscriptions/{id}/status(id=${s.id})}" class="inline-form-action">
                         <input type="hidden" name="status" value="CANCELLED" />
                         <button class="btn" type="submit" th:if="${s.status != 'CANCELLED'}">Annulla</button>
                     </form>

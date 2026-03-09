@@ -2,7 +2,9 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Carrello</title>
+    <link rel="canonical" th:href="@{/carrello}" />
     <link rel="stylesheet" th:href="@{/css/app.css}" />
 </head>
 <body>
@@ -15,40 +17,42 @@
         <span>Carrello</span>
     </div>
 
-    <h1>Shopping Cart</h1>
+    <h1>Carrello</h1>
     <div th:if="${items.isEmpty()}" class="empty">Il carrello è vuoto.</div>
 
-    <table class="table" th:if="${!items.isEmpty()}">
-        <thead>
-            <tr>
-                <th>Prodotto</th>
-                <th>Quantità</th>
-                <th>Prezzo</th>
-                <th>Totale</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr th:each="item : ${items}">
-                <td th:text="${item.productName}">Name</td>
-                <td>
-                    <form class="qty-form" th:action="@{/cart/items/{id}/quantity(id=${item.id})}" method="post">
-                        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                        <input type="number" name="quantity" min="1" th:value="${item.quantity}" />
-                        <button class="btn" type="submit">Aggiorna</button>
-                    </form>
-                </td>
-                <td th:text="${item.unitPrice}">0.00</td>
-                <td th:text="${item.lineTotal}">0.00</td>
-                <td>
-                    <form th:action="@{/cart/items/{id}/delete(id=${item.id})}" method="post">
-                        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                        <button class="btn btn-link" type="submit">Rimuovi</button>
-                    </form>
-                </td>
-            </tr>
-        </tbody>
-    </table>
+    <div class="table-wrap" th:if="${!items.isEmpty()}">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Prodotto</th>
+                    <th>Quantità</th>
+                    <th>Prezzo</th>
+                    <th>Totale</th>
+                    <th>Azioni</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="item : ${items}">
+                    <td th:text="${item.productName}">Name</td>
+                    <td>
+                        <form class="qty-form" th:action="@{/cart/items/{id}/quantity(id=${item.id})}" method="post">
+                            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                            <input type="number" name="quantity" min="1" th:value="${item.quantity}" />
+                            <button class="btn" type="submit">Aggiorna</button>
+                        </form>
+                    </td>
+                    <td th:text="${item.unitPrice}">0.00</td>
+                    <td th:text="${item.lineTotal}">0.00</td>
+                    <td>
+                        <form th:action="@{/cart/items/{id}/delete(id=${item.id})}" method="post">
+                            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                            <button class="btn btn-link" type="submit">Rimuovi</button>
+                        </form>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 
     <div class="checkout" th:if="${!items.isEmpty()}">
         <div class="summary-grid">
@@ -66,8 +70,8 @@
             </div>
         </div>
         <div class="actions-row">
-            <a class="btn" th:href="@{/shop}">Continua acquisti</a>
-            <a class="btn btn-primary" th:href="@{/checkout}">Procedi al checkout</a>
+            <a class="btn" th:href="@{/catalogo}">Continua acquisti</a>
+            <a class="btn btn-primary" th:href="@{/checkout-rapido}">Procedi al checkout</a>
         </div>
     </div>
 </main>

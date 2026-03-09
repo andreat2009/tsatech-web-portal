@@ -11,7 +11,7 @@
 <main class="container">
     <div class="page-header">
         <h1 th:text="${formTitle}">Coupon</h1>
-        <a class="btn" th:href="@{/admin/coupons}">Torna all'elenco</a>
+        <a class="btn" th:href="@{/admin/marketing/coupon}">Torna all'elenco</a>
     </div>
 
     <form class="form" th:action="${formAction}" method="post" th:object="${coupon}">

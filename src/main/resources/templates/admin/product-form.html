@@ -2,6 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title th:text="${formTitle}">Prodotto</title>
     <link rel="stylesheet" th:href="@{/css/app.css}" />
 </head>
@@ -9,54 +10,111 @@
 <div th:replace="fragments/header :: header"></div>
 
 <main class="container admin">
-    <h1 th:text="${formTitle}">Prodotto</h1>
-    <form class="form" th:action="${formAction}" method="post">
+    <div class="page-header">
+        <h1 th:text="${formTitle}">Prodotto</h1>
+        <a class="btn" th:href="@{/admin/catalogo/prodotti}">Torna alla lista</a>
+    </div>
+
+    <form class="form" th:action="${formAction}" method="post" enctype="multipart/form-data">
         <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-        <div class="field">
-            <label>SKU</label>
-            <input type="text" name="sku" th:value="${product.sku}" />
+
+        <div class="field-grid">
+            <div class="field">
+                <label>SKU</label>
+                <input type="text" name="sku" th:value="${product.sku}" />
+            </div>
+            <div class="field">
+                <label>Modello</label>
+                <input type="text" name="model" th:value="${product.model}" />
+            </div>
         </div>
+
         <div class="field">
-            <label>Nome</label>
+            <label>Nome prodotto</label>
             <input type="text" name="name" th:value="${product.name}" required />
         </div>
-        <div class="field">
-            <label>Modello</label>
-            <input type="text" name="model" th:value="${product.model}" />
-        </div>
+
         <div class="field">
             <label>Descrizione</label>
-            <textarea name="description" rows="4" th:text="${product.description}"></textarea>
+            <textarea name="description" rows="5" th:text="${product.description}"></textarea>
         </div>
-        <div class="field grid-2">
-            <div>
+
+        <div class="field-grid two">
+            <div class="field">
                 <label>Prezzo</label>
-                <input type="number" step="0.01" name="price" th:value="${product.price}" required />
+                <input type="number" step="0.01" min="0" name="price" th:value="${product.price}" required />
             </div>
-            <div>
+            <div class="field">
                 <label>Quantità</label>
-                <input type="number" name="quantity" th:value="${product.quantity}" required />
+                <input type="number" min="0" name="quantity" th:value="${product.quantity}" required />
             </div>
         </div>
+
         <div class="field">
             <label>Categorie</label>
-            <select name="categoryIds" multiple size="6">
+            <select name="categoryIds" multiple size="8">
                 <option th:each="category : ${categories}"
                         th:value="${category.id}"
                         th:text="${category.name}"
                         th:selected="${product.categoryIds != null and product.categoryIds.contains(category.id)}">Category</option>
             </select>
         </div>
+
         <div class="field">
-            <label>Attivo</label>
+            <label>Stato</label>
             <select name="active">
-                <option value="true" th:selected="${product.active}">Sì</option>
-                <option value="false" th:selected="${product.active == false}">No</option>
+                <option value="true" th:selected="${product.active}">Attivo</option>
+                <option value="false" th:selected="${product.active == false}">Disattivo</option>
             </select>
         </div>
-        <div class="actions">
-            <button class="btn btn-primary" type="submit">Salva</button>
-            <a class="btn" th:href="@{/admin/products}">Annulla</a>
+
+        <section class="media-section">
+            <h2>Immagini prodotto</h2>
+
+            <div class="media-current" th:if="${productView != null}">
+                <div class="field" th:if="${productView.primaryImageUrl != null and !productView.primaryImageUrl.isBlank()}">
+                    <label>Immagine principale attuale</label>
+                    <div class="media-cover-preview">
+                        <img th:src="${productView.primaryImageUrl}" th:alt="${productView.name}" />
+                    </div>
+                </div>
+
+                <div class="field" th:if="${productView.galleryImages != null and !productView.galleryImages.isEmpty()}">
+                    <label>Galleria attuale</label>
+                    <div class="admin-gallery-grid">
+                        <div class="admin-gallery-item" th:each="img : ${productView.galleryImages}">
+                            <img th:src="${img.url}" th:alt="${img.originalFilename}" />
+                            <div class="media-item-actions">
+                                <label class="inline-control">
+                                    <input type="radio" name="selectedCoverImageId" th:value="${img.id}" />
+                                    Usa come cover
+                                </label>
+                                <label class="inline-control danger">
+                                    <input type="checkbox" name="deleteImageIds" th:value="${img.id}" />
+                                    Elimina
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field">
+                <label>Nuova immagine principale</label>
+                <input type="file" name="coverImageFile" accept="image/jpeg,image/png,image/webp,image/gif" />
+                <small class="muted">JPG/PNG/WEBP/GIF, max 5MB.</small>
+            </div>
+
+            <div class="field">
+                <label>Nuove immagini galleria</label>
+                <input type="file" name="galleryImageFiles" multiple accept="image/jpeg,image/png,image/webp,image/gif" />
+                <small class="muted">Puoi caricare piu file insieme.</small>
+            </div>
+        </section>
+
+        <div class="actions space-top">
+            <button class="btn btn-primary" type="submit">Salva prodotto</button>
+            <a class="btn" th:href="@{/admin/catalogo/prodotti}">Annulla</a>
         </div>
     </form>
 </main>

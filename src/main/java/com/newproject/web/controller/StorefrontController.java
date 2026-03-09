@@ -56,7 +56,7 @@ public class StorefrontController {
         this.currency = currency;
     }
 
-    @GetMapping({"/", "/shop"})
+    @GetMapping({"/", "/shop", "/catalogo"})
     public String home(
         @RequestParam(required = false) String q,
         @RequestParam(required = false) Long categoryId,
@@ -109,11 +109,11 @@ public class StorefrontController {
         return "index";
     }
 
-    @GetMapping("/shop/products/{id}")
-    public String product(@PathVariable Long id, Model model, Authentication authentication) {
+    @GetMapping({"/shop/products/{id}", "/shop/prodotto/{id}-{slug}", "/catalogo/prodotto/{id}-{slug}"})
+    public String product(@PathVariable Long id, @PathVariable(required = false) String slug, Model model, Authentication authentication) {
         Optional<Product> productOpt = gatewayClient.getProductSafe(id);
         if (productOpt.isEmpty()) {
-            return "redirect:/shop";
+            return "redirect:/catalogo";
         }
         Product product = productOpt.get();
         List<ProductReview> reviews = gatewayClient.listProductReviews(id).stream()
@@ -141,18 +141,18 @@ public class StorefrontController {
         return "shop/product";
     }
 
-    @PostMapping("/shop/products/{id}/reviews")
-    public String addReview(@PathVariable Long id, @ModelAttribute ProductReviewRequest reviewForm, Authentication authentication) {
+    @PostMapping({"/shop/products/{id}/reviews", "/shop/prodotto/{id}-{slug}/recensioni", "/catalogo/prodotto/{id}-{slug}/recensioni"})
+    public String addReview(@PathVariable Long id, @PathVariable(required = false) String slug, @ModelAttribute ProductReviewRequest reviewForm, Authentication authentication) {
         if (!isAuthenticated(authentication)) {
             return "redirect:/oauth2/authorization/keycloak";
         }
 
         if (reviewForm.getRating() == null || reviewForm.getRating() < 1 || reviewForm.getRating() > 5) {
-            return "redirect:/shop/products/" + id;
+            return "redirect:" + productDetailsPath(id);
         }
 
         if (reviewForm.getText() == null || reviewForm.getText().isBlank()) {
-            return "redirect:/shop/products/" + id;
+            return "redirect:" + productDetailsPath(id);
         }
 
         OidcUser user = authentication.getPrincipal() instanceof OidcUser oidc ? oidc : null;
@@ -169,7 +169,7 @@ public class StorefrontController {
         }
 
         gatewayClient.addProductReview(id, reviewForm);
-        return "redirect:/shop/products/" + id;
+        return "redirect:" + productDetailsPath(id);
     }
 
     @PostMapping("/cart/add")
@@ -181,7 +181,7 @@ public class StorefrontController {
     ) {
         Optional<Product> productOpt = gatewayClient.getProductSafe(productId);
         if (productOpt.isEmpty()) {
-            return "redirect:/shop";
+            return "redirect:/catalogo";
         }
 
         int normalizedQuantity = quantity != null && quantity > 0 ? quantity : 1;
@@ -190,7 +190,7 @@ public class StorefrontController {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
             addGuestCartItem(session, productId, normalizedQuantity);
-            return "redirect:/cart";
+            return "redirect:/carrello";
         }
 
         mergeGuestCartIntoCustomerIfPresent(customerId, session);
@@ -202,10 +202,10 @@ public class StorefrontController {
         request.setUnitPrice(product.getPrice() != null ? product.getPrice() : BigDecimal.ZERO);
         gatewayClient.addCartItem(cart.getId(), request);
 
-        return "redirect:/cart";
+        return "redirect:/carrello";
     }
 
-    @GetMapping("/cart")
+    @GetMapping({"/cart", "/carrello"})
     public String viewCart(Model model, Authentication authentication, HttpSession session) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
@@ -244,18 +244,18 @@ public class StorefrontController {
             } else {
                 updateGuestCartItemQuantity(session, id, quantity);
             }
-            return "redirect:/cart";
+            return "redirect:/carrello";
         }
 
         mergeGuestCartIntoCustomerIfPresent(customerId, session);
 
         if (quantity == null || quantity <= 0) {
             gatewayClient.deleteCartItem(id);
-            return "redirect:/cart";
+            return "redirect:/carrello";
         }
 
         gatewayClient.updateCartItemQuantity(id, quantity);
-        return "redirect:/cart";
+        return "redirect:/carrello";
     }
 
     @PostMapping("/cart/items/{id}/delete")
@@ -263,15 +263,15 @@ public class StorefrontController {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
             removeGuestCartItem(session, id);
-            return "redirect:/cart";
+            return "redirect:/carrello";
         }
 
         mergeGuestCartIntoCustomerIfPresent(customerId, session);
         gatewayClient.deleteCartItem(id);
-        return "redirect:/cart";
+        return "redirect:/carrello";
     }
 
-    @GetMapping("/checkout")
+    @GetMapping({"/checkout", "/checkout-rapido"})
     public String checkoutPage(
         @RequestParam(required = false) String error,
         Model model,
@@ -284,12 +284,12 @@ public class StorefrontController {
 
             Optional<Cart> cartOpt = resolveCart(customerId);
             if (cartOpt.isEmpty()) {
-                return "redirect:/cart";
+                return "redirect:/carrello";
             }
 
             CartSummary summary = buildCartSummary(cartOpt.get());
             if (summary.items().isEmpty()) {
-                return "redirect:/cart";
+                return "redirect:/carrello";
             }
 
             List<Address> addresses = gatewayClient.listCustomerAddresses(customerId);
@@ -331,7 +331,7 @@ public class StorefrontController {
 
         CartSummary summary = buildGuestCartSummary(session);
         if (summary.items().isEmpty()) {
-            return "redirect:/cart";
+            return "redirect:/carrello";
         }
 
         CheckoutForm guestForm = guestCheckoutFormFromSession(session);
@@ -371,20 +371,20 @@ public class StorefrontController {
     private String checkoutConfirmAuthenticated(Long customerId, CheckoutForm checkoutForm) {
         Optional<Cart> cartOpt = resolveCart(customerId);
         if (cartOpt.isEmpty()) {
-            return "redirect:/cart";
+            return "redirect:/carrello";
         }
 
         Cart cart = cartOpt.get();
         List<CartItem> cartItems = gatewayClient.listCartItems(cart.getId());
         if (cartItems.isEmpty()) {
-            return "redirect:/cart";
+            return "redirect:/carrello";
         }
 
         List<Address> addresses = gatewayClient.listCustomerAddresses(customerId);
         boolean addressValid = checkoutForm.getAddressId() != null
             && addresses.stream().anyMatch(address -> checkoutForm.getAddressId().equals(address.getId()));
         if (!addressValid) {
-            return "redirect:/checkout";
+            return "redirect:/checkout-rapido";
         }
 
         String shippingMethod = normalizeShippingMethod(checkoutForm.getShippingMethod());
@@ -436,21 +436,21 @@ public class StorefrontController {
             shipmentRequest.setStatus("CREATED");
             gatewayClient.createShipment(shipmentRequest);
 
-            return "redirect:/checkout/success?orderId=" + order.getId();
+            return "redirect:/checkout/confermato?orderId=" + order.getId();
         } catch (Exception ex) {
             logger.warn("Checkout flow failed for customer {}: {}", customerId, ex.getMessage());
-            return "redirect:/checkout?error=processing";
+            return "redirect:/checkout-rapido?error=processing";
         }
     }
 
     private String checkoutConfirmGuest(CheckoutForm checkoutForm, HttpSession session) {
         CartSummary summary = buildGuestCartSummary(session);
         if (summary.items().isEmpty()) {
-            return "redirect:/cart";
+            return "redirect:/carrello";
         }
 
         if (!isGuestCheckoutFormValid(checkoutForm)) {
-            return "redirect:/checkout";
+            return "redirect:/checkout-rapido";
         }
 
         String shippingMethod = normalizeShippingMethod(checkoutForm.getShippingMethod());
@@ -504,23 +504,23 @@ public class StorefrontController {
 
             saveGuestOrderSummary(session, order, summary.items());
             clearGuestCart(session);
-            return "redirect:/checkout/success?orderId=" + order.getId();
+            return "redirect:/checkout/confermato?orderId=" + order.getId();
         } catch (Exception ex) {
             logger.warn("Guest checkout flow failed: {}", ex.getMessage());
-            return "redirect:/checkout?error=processing";
+            return "redirect:/checkout-rapido?error=processing";
         }
     }
 
-    @GetMapping("/checkout/success")
+    @GetMapping({"/checkout/success", "/checkout/confermato"})
     public String checkoutSuccess(@RequestParam(required = false) Long orderId, Model model, Authentication authentication, HttpSession session) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
             GuestOrderSummary guestSummary = readGuestOrderSummary(session);
             if (guestSummary == null) {
-                return "redirect:/shop";
+                return "redirect:/catalogo";
             }
             if (orderId != null && !orderId.equals(guestSummary.orderId())) {
-                return "redirect:/shop";
+                return "redirect:/catalogo";
             }
 
             Order order = new Order();
@@ -538,13 +538,13 @@ public class StorefrontController {
         }
 
         if (orderId == null) {
-            return "redirect:/account/orders";
+            return "redirect:/account/ordini";
         }
 
         Optional<Order> orderOpt = gatewayClient.getOrderSafe(orderId)
             .filter(order -> customerId.equals(order.getCustomerId()));
         if (orderOpt.isEmpty()) {
-            return "redirect:/account/orders";
+            return "redirect:/account/ordini";
         }
 
         model.addAttribute("order", orderOpt.get());
@@ -555,7 +555,7 @@ public class StorefrontController {
         return "checkout/success";
     }
 
-    @GetMapping("/account/orders")
+    @GetMapping({"/account/orders", "/account/ordini"})
     public String accountOrders(Model model, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
@@ -567,7 +567,7 @@ public class StorefrontController {
         return "account/orders";
     }
 
-    @GetMapping("/account/orders/{id}")
+    @GetMapping({"/account/orders/{id}", "/account/ordini/{id}"})
     public String accountOrderDetail(@PathVariable Long id, Model model, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
@@ -578,7 +578,7 @@ public class StorefrontController {
             .filter(order -> customerId.equals(order.getCustomerId()));
 
         if (orderOpt.isEmpty()) {
-            return "redirect:/account/orders";
+            return "redirect:/account/ordini";
         }
 
         OrderReturnRequest returnForm = new OrderReturnRequest();
@@ -592,7 +592,7 @@ public class StorefrontController {
         return "account/order-detail";
     }
 
-    @GetMapping("/account/addresses")
+    @GetMapping({"/account/addresses", "/account/indirizzi"})
     public String accountAddresses(Model model, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
@@ -607,7 +607,7 @@ public class StorefrontController {
         return "account/addresses";
     }
 
-    @PostMapping("/account/addresses")
+    @PostMapping({"/account/addresses", "/account/indirizzi"})
     public String createAddress(@ModelAttribute AddressRequest addressForm, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
@@ -618,7 +618,7 @@ public class StorefrontController {
             || addressForm.getCity() == null || addressForm.getCity().isBlank()
             || addressForm.getCountry() == null || addressForm.getCountry().isBlank()
             || addressForm.getPostalCode() == null || addressForm.getPostalCode().isBlank()) {
-            return "redirect:/account/addresses";
+            return "redirect:/account/indirizzi";
         }
 
         if (addressForm.getIsDefault() == null) {
@@ -626,10 +626,10 @@ public class StorefrontController {
         }
 
         gatewayClient.createCustomerAddress(customerId, addressForm);
-        return "redirect:/account/addresses";
+        return "redirect:/account/indirizzi";
     }
 
-    @GetMapping("/account/returns")
+    @GetMapping({"/account/returns", "/account/resi"})
     public String accountReturns(Model model, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
@@ -642,7 +642,7 @@ public class StorefrontController {
         return "account/returns";
     }
 
-    @PostMapping("/account/returns")
+    @PostMapping({"/account/returns", "/account/resi"})
     public String createReturn(@ModelAttribute OrderReturnRequest returnForm, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
@@ -650,15 +650,15 @@ public class StorefrontController {
         }
 
         if (returnForm.getOrderId() == null || returnForm.getReason() == null || returnForm.getReason().isBlank()) {
-            return "redirect:/account/returns";
+            return "redirect:/account/resi";
         }
 
         returnForm.setCustomerId(customerId);
         gatewayClient.createReturn(returnForm);
-        return "redirect:/account/returns";
+        return "redirect:/account/resi";
     }
 
-    @GetMapping("/account/wishlist")
+    @GetMapping({"/account/wishlist", "/account/lista-desideri"})
     public String wishlist(Model model, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
@@ -670,7 +670,7 @@ public class StorefrontController {
         return "account/wishlist";
     }
 
-    @PostMapping("/account/wishlist/add")
+    @PostMapping({"/account/wishlist/add", "/account/lista-desideri/aggiungi"})
     public String addWishlist(@RequestParam Long productId, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
@@ -678,10 +678,10 @@ public class StorefrontController {
         }
 
         gatewayClient.addWishlistItem(customerId, productId);
-        return "redirect:/account/wishlist";
+        return "redirect:/account/lista-desideri";
     }
 
-    @PostMapping("/account/wishlist/{productId}/delete")
+    @PostMapping({"/account/wishlist/{productId}/delete", "/account/lista-desideri/{productId}/elimina"})
     public String removeWishlist(@PathVariable Long productId, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
@@ -689,7 +689,7 @@ public class StorefrontController {
         }
 
         gatewayClient.removeWishlistItem(customerId, productId);
-        return "redirect:/account/wishlist";
+        return "redirect:/account/lista-desideri";
     }
 
     private List<WishlistEntry> buildWishlist(Long customerId) {
@@ -979,6 +979,12 @@ public class StorefrontController {
             orderItems.add(orderItem);
         }
         return orderItems;
+    }
+
+    private String productDetailsPath(Long productId) {
+        return gatewayClient.getProductSafe(productId)
+            .map(Product::getSeoPath)
+            .orElse("/catalogo");
     }
 
     private Map<String, String> sortOptions() {

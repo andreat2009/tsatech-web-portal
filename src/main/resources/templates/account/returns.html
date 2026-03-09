@@ -11,7 +11,7 @@
 <main class="container">
     <div class="page-header">
         <h1>I miei resi</h1>
-        <a class="btn" th:href="@{/account/orders}">Torna agli ordini</a>
+        <a class="btn" th:href="@{/account/ordini}">Torna agli ordini</a>
     </div>
 
     <div class="grid-2">
@@ -42,7 +42,7 @@
 
         <div>
             <h2>Nuovo reso</h2>
-            <form class="form" th:action="@{/account/returns}" method="post" th:object="${returnForm}">
+            <form class="form" th:action="@{/account/resi}" method="post" th:object="${returnForm}">
                 <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                 <div class="field">
                     <label>Ordine</label>

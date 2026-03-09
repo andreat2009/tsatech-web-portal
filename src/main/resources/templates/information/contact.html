@@ -4,16 +4,16 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Contatti</title>
-    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css" />
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
 </head>
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
 <main class="container">
-    <section class="form" style="padding:16px; max-width:800px; margin:0 auto;">
+    <section class="form section-pad contact-form">
         <h1>Contattaci</h1>
-        <p th:if="${param.success}" style="color:green;">Messaggio inviato con successo.</p>
-        <p th:if="${param.error}" style="color:#d9534f;">Compila tutti i campi richiesti.</p>
-        <form method="post" th:action="@{/information/contact}" th:object="${contactForm}">
+        <p th:if="${param.success}" class="alert-success">Messaggio inviato con successo.</p>
+        <p th:if="${param.error}" class="alert-error">Compila tutti i campi richiesti.</p>
+        <form method="post" th:action="@{/contatti}" th:object="${contactForm}">
             <div class="field"><label>Nome</label><input type="text" th:field="*{name}" /></div>
             <div class="field"><label>Email</label><input type="email" th:field="*{email}" /></div>
             <div class="field"><label>Oggetto</label><input type="text" th:field="*{subject}" /></div>

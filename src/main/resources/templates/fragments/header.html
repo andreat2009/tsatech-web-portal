@@ -2,13 +2,13 @@
     <div id="top">
         <div class="container top-row">
             <div class="top-left">
-                <span><i class="icon-phone"></i> Supporto: +39 800 000 000</span>
+                <span>Supporto: +39 800 000 000</span>
             </div>
             <ul class="top-links">
-                <li><a th:href="@{/account/wishlist}" sec:authorize="isAuthenticated()">Wishlist</a></li>
-                <li><a th:href="@{/product/compare}">Confronta</a></li>
-                <li><a th:href="@{/cart}">Carrello</a></li>
-                <li><a th:href="@{/checkout}">Checkout</a></li>
+                <li><a th:href="@{/account/lista-desideri}" sec:authorize="isAuthenticated()">Wishlist</a></li>
+                <li><a th:href="@{/catalogo/confronta}">Confronta</a></li>
+                <li><a th:href="@{/carrello}">Carrello</a></li>
+                <li><a th:href="@{/checkout-rapido}">Checkout</a></li>
                 <li sec:authorize="!isAuthenticated()"><a th:href="@{/oauth2/authorization/keycloak}">Login</a></li>
                 <li sec:authorize="isAuthenticated()" class="user-pill" th:text="${#authentication.name}">user</li>
                 <li sec:authorize="isAuthenticated()"><a th:href="@{/logout}">Logout</a></li>
@@ -21,27 +21,27 @@
             <div id="logo">
                 <a th:href="@{/}">TSATech Store</a>
             </div>
-            <form class="header-search" method="get" th:action="@{/shop}">
+            <form class="header-search" method="get" th:action="@{/catalogo}">
                 <input type="text" name="q" placeholder="Cerca prodotti" />
                 <button type="submit" class="btn btn-search">Cerca</button>
             </form>
-            <a class="header-cart" th:href="@{/cart}">Vai al carrello</a>
+            <a class="header-cart" th:href="@{/carrello}">Vai al carrello</a>
         </div>
     </div>
 
     <nav id="menu">
         <div class="container menu-links">
             <a th:href="@{/}">Home</a>
-            <a th:href="@{/shop}">Catalogo</a>
-            <a th:href="@{/product/special}">Offerte</a>
-            <a th:href="@{/product/manufacturer}">Produttori</a>
-            <a th:href="@{/blog}">Blog</a>
-            <a th:href="@{/information/contact}">Contatti</a>
-            <a th:href="@{/information/sitemap}">Sitemap</a>
+            <a th:href="@{/catalogo}">Catalogo</a>
+            <a th:href="@{/catalogo/offerte}">Offerte</a>
+            <a th:href="@{/catalogo/produttori}">Produttori</a>
+            <a th:href="@{/news}">Blog</a>
+            <a th:href="@{/contatti}">Contatti</a>
+            <a th:href="@{/mappa-sito}">Sitemap</a>
             <a th:href="@{/account}" sec:authorize="isAuthenticated()">Account</a>
-            <a th:href="@{/account/orders}" sec:authorize="isAuthenticated()">Ordini</a>
-            <a th:href="@{/account/returns}" sec:authorize="isAuthenticated()">Resi</a>
-            <a th:href="@{/account/addresses}" sec:authorize="isAuthenticated()">Indirizzi</a>
+            <a th:href="@{/account/ordini}" sec:authorize="isAuthenticated()">Ordini</a>
+            <a th:href="@{/account/resi}" sec:authorize="isAuthenticated()">Resi</a>
+            <a th:href="@{/account/indirizzi}" sec:authorize="isAuthenticated()">Indirizzi</a>
             <a th:href="@{/admin}" sec:authorize="hasRole('ADMIN')">Admin</a>
         </div>
     </nav>

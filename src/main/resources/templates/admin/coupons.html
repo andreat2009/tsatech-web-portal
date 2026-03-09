@@ -11,7 +11,7 @@
 <main class="container">
     <div class="page-header">
         <h1>Coupon</h1>
-        <a class="btn btn-primary" th:href="@{/admin/coupons/new}">Nuovo coupon</a>
+        <a class="btn btn-primary" th:href="@{/admin/marketing/coupon/new}">Nuovo coupon</a>
     </div>
 
     <table class="table">
@@ -37,8 +37,8 @@
             <td th:text="${coupon.minTotal}">0</td>
             <td th:text="${coupon.active}">true</td>
             <td class="actions">
-                <a class="btn" th:href="@{/admin/coupons/{id}/edit(id=${coupon.id})}">Modifica</a>
-                <form th:action="@{/admin/coupons/{id}/delete(id=${coupon.id})}" method="post">
+                <a class="btn" th:href="@{/admin/marketing/coupon/{id}/edit(id=${coupon.id})}">Modifica</a>
+                <form th:action="@{/admin/marketing/coupon/{id}/delete(id=${coupon.id})}" method="post">
                     <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                     <button class="btn btn-link" type="submit">Elimina</button>
                 </form>

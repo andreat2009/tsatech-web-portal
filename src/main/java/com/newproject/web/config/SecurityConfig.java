@@ -40,18 +40,25 @@ public class SecurityConfig {
                 .requestMatchers(
                     "/",
                     "/shop/**",
+                    "/catalogo/**",
                     "/product/**",
                     "/information/**",
+                    "/contatti",
+                    "/mappa-sito",
                     "/blog/**",
+                    "/news/**",
                     "/cart/**",
+                    "/carrello",
                     "/checkout/**",
+                    "/checkout-rapido",
+                    "/checkout/confermato",
                     "/css/**",
                     "/js/**",
                     "/images/**",
                     "/actuator/health",
                     "/actuator/info"
                 ).permitAll()
-                .requestMatchers("/admin/**").hasRole("ADMIN")
+                .requestMatchers("/admin/**", "/amministrazione/**").hasRole("ADMIN")
                 .requestMatchers("/account/**").authenticated()
                 .anyRequest().permitAll()
             )

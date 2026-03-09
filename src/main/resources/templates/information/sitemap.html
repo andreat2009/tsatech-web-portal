@@ -9,10 +9,10 @@
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
 <main class="container">
-    <section class="card" style="padding:16px; margin-bottom:16px;">
+    <section class="card section-pad block">
         <h1>Sitemap</h1>
     </section>
-    <section class="card" style="padding:16px; margin-bottom:16px;">
+    <section class="card section-pad block">
         <h2>Pagine informative</h2>
         <ul>
             <li th:each="p : ${informationPages}">
@@ -20,16 +20,16 @@
             </li>
         </ul>
     </section>
-    <section class="card" style="padding:16px; margin-bottom:16px;">
+    <section class="card section-pad block">
         <h2>Blog</h2>
         <ul>
-            <li th:each="post : ${blogPosts}"><a th:href="@{/blog/{slug}(slug=${post.slug})}" th:text="${post.title}">Post</a></li>
+            <li th:each="post : ${blogPosts}"><a th:href="@{/news/{slug}(slug=${post.slug})}" th:text="${post.title}">Post</a></li>
         </ul>
     </section>
-    <section class="card" style="padding:16px;">
+    <section class="card section-pad">
         <h2>Categorie</h2>
         <ul>
-            <li th:each="c : ${categories}"><a th:href="@{/(categoryId=${c.id})}" th:text="${c.name}">Categoria</a></li>
+            <li th:each="c : ${categories}"><a th:href="@{/catalogo(categoryId=${c.id})}" th:text="${c.name}">Categoria</a></li>
         </ul>
     </section>
 </main>

@@ -9,7 +9,7 @@
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
 <main class="container">
-    <section class="card" style="padding:16px;">
+    <section class="card section-pad">
         <h1>Articoli blog</h1>
         <p><a class="btn btn-primary" th:href="@{/admin/blog/posts/new}">Nuovo articolo</a></p>
         <table class="table">
@@ -23,7 +23,7 @@
                 <td th:text="${p.active}">true</td>
                 <td>
                     <a th:href="@{/admin/blog/posts/{id}/edit(id=${p.id})}">Modifica</a>
-                    <form method="post" th:action="@{/admin/blog/posts/{id}/delete(id=${p.id})}" style="display:inline;">
+                    <form method="post" th:action="@{/admin/blog/posts/{id}/delete(id=${p.id})}" class="inline-form-action">
                         <button class="btn" type="submit">Elimina</button>
                     </form>
                 </td>

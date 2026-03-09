@@ -9,7 +9,7 @@
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
 <main class="container">
-    <section class="card" style="padding:16px; margin-bottom:16px;">
+    <section class="card section-pad block">
         <h1>Il tuo account</h1>
         <p th:text="${customer.firstName} + ' ' + ${customer.lastName} + ' - ' + ${customer.email}">Profilo</p>
         <p>
@@ -22,7 +22,7 @@
         </form>
     </section>
 
-    <section class="card" style="padding:16px; margin-bottom:16px;">
+    <section class="card section-pad block">
         <h2>Riepilogo rapido</h2>
         <ul>
             <li>Punti reward: <strong th:text="${rewardSummary.pointsBalance}">0</strong></li>
@@ -39,7 +39,7 @@
         </p>
     </section>
 
-    <section class="card" style="padding:16px;">
+    <section class="card section-pad">
         <h2>Ultimi ordini</h2>
         <table class="table">
             <thead>
@@ -50,7 +50,7 @@
                 <td th:text="${order.id}">1</td>
                 <td th:text="${order.status}">PENDING</td>
                 <td th:text="${order.total}">0.00</td>
-                <td><a th:href="@{/account/orders/{id}(id=${order.id})}">Dettaglio</a></td>
+                <td><a th:href="@{/account/ordini/{id}(id=${order.id})}">Dettaglio</a></td>
             </tr>
             <tr th:if="${#lists.isEmpty(latestOrders)}"><td colspan="4">Nessun ordine.</td></tr>
             </tbody>

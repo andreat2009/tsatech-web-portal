@@ -2,7 +2,10 @@
 <html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8" />
-    <title th:text="${product.name}">Prodotto</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title th:text="${product.name} + ' | TSATech Store'">Prodotto</title>
+    <meta name="description" th:content="${product.description != null ? product.description : 'Scheda prodotto'}" />
+    <link rel="canonical" th:href="${product.seoPath}" />
     <link rel="stylesheet" th:href="@{/css/app.css}" />
 </head>
 <body>
@@ -12,14 +15,28 @@
     <div class="breadcrumbs">
         <a th:href="@{/}">Home</a>
         <span>/</span>
-        <a th:href="@{/shop}">Catalogo</a>
+        <a th:href="@{/catalogo}">Catalogo</a>
         <span>/</span>
         <span th:text="${product.name}">Product</span>
     </div>
 
     <div class="product-detail">
         <div class="product-info card-lite">
-            <div class="image-placeholder" th:text="${product.sku != null ? product.sku : 'SKU'}">SKU</div>
+            <div class="product-media-main">
+                <img class="product-main-image"
+                     th:if="${product.primaryImageUrl != null and !product.primaryImageUrl.isBlank()}"
+                     th:src="${product.primaryImageUrl}"
+                     th:alt="${product.name}" />
+                <div class="image-placeholder" th:if="${product.primaryImageUrl == null or product.primaryImageUrl.isBlank()}"
+                     th:text="${product.sku != null ? product.sku : 'SKU'}">SKU</div>
+            </div>
+
+            <div class="product-gallery" th:if="${product.galleryImages != null and !product.galleryImages.isEmpty()}">
+                <a class="gallery-thumb" th:each="img : ${product.galleryImages}" th:href="${img.url}" target="_blank" rel="noopener">
+                    <img th:src="${img.url}" th:alt="${img.originalFilename}" loading="lazy" />
+                </a>
+            </div>
+
             <h1 th:text="${product.name}">Product</h1>
             <div class="muted" th:text="${product.sku}">SKU</div>
             <p class="desc" th:text="${product.description}">Description</p>
@@ -39,18 +56,21 @@
                 <input type="number" name="quantity" min="1" value="1" />
                 <button class="btn btn-primary" type="submit">Aggiungi al carrello</button>
             </form>
-            <form th:action="@{/account/wishlist/add}" method="post" sec:authorize="isAuthenticated()">
-                <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                <input type="hidden" name="productId" th:value="${product.id}" />
-                <button class="btn" type="submit"
-                        th:text="${wishlistProductIds.contains(product.id)} ? 'In wishlist' : 'Aggiungi wishlist'">Wishlist</button>
-            </form>
-            <form th:action="@{/product/compare/add}" method="post">
-                <input type="hidden" name="productId" th:value="${product.id}" />
-                <button class="btn" type="submit">Confronta prodotto</button>
-            </form>
-            <a class="btn" th:href="@{/cart}">Vai al carrello</a>
-            <a class="btn" th:href="@{/oauth2/authorization/keycloak}" sec:authorize="!isAuthenticated()">Login (opzionale)</a>
+            <div class="stack-actions">
+                <form th:action="@{/account/lista-desideri/aggiungi}" method="post" sec:authorize="isAuthenticated()">
+                    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                    <input type="hidden" name="productId" th:value="${product.id}" />
+                    <button class="btn" type="submit"
+                            th:text="${wishlistProductIds.contains(product.id)} ? 'In wishlist' : 'Aggiungi wishlist'">Wishlist</button>
+                </form>
+                <form th:action="@{/catalogo/confronta/aggiungi}" method="post">
+                    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                    <input type="hidden" name="productId" th:value="${product.id}" />
+                    <button class="btn" type="submit">Confronta prodotto</button>
+                </form>
+                <a class="btn" th:href="@{/carrello}">Vai al carrello</a>
+                <a class="btn" th:href="@{/oauth2/authorization/keycloak}" sec:authorize="!isAuthenticated()">Login (opzionale)</a>
+            </div>
         </div>
     </div>
 
@@ -69,7 +89,7 @@
 
         <div sec:authorize="isAuthenticated()" class="review-form-wrap">
             <h3>Scrivi una recensione</h3>
-            <form class="form" th:action="@{/shop/products/{id}/reviews(id=${product.id})}" method="post" th:object="${reviewForm}">
+            <form class="form" th:action="${product.seoReviewsPath}" method="post" th:object="${reviewForm}">
                 <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                 <div class="field">
                     <label>Titolo</label>

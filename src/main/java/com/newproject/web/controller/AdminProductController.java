@@ -1,19 +1,28 @@
 package com.newproject.web.controller;
 
-import com.newproject.web.dto.Category;
 import com.newproject.web.dto.Product;
 import com.newproject.web.dto.ProductRequest;
 import com.newproject.web.service.GatewayClient;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 
 @Controller
-@RequestMapping("/admin/products")
+@RequestMapping({"/admin/products", "/admin/catalogo/prodotti"})
 public class AdminProductController {
     private final GatewayClient gatewayClient;
 
@@ -28,26 +37,37 @@ public class AdminProductController {
         return "admin/products";
     }
 
-    @GetMapping("/new")
+    @GetMapping({"/new", "/nuovo"})
     public String createForm(Model model) {
         ProductRequest product = new ProductRequest();
         product.setActive(true);
         product.setCategoryIds(new HashSet<>());
         model.addAttribute("product", product);
+        model.addAttribute("productView", null);
         model.addAttribute("categories", gatewayClient.listCategories(true));
         model.addAttribute("formTitle", "Nuovo prodotto");
-        model.addAttribute("formAction", "/admin/products");
+        model.addAttribute("formAction", "/admin/catalogo/prodotti");
         return "admin/product-form";
     }
 
-    @PostMapping
-    public String create(@ModelAttribute ProductRequest request) {
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public String create(
+        @ModelAttribute ProductRequest request,
+        @RequestParam(name = "coverImageFile", required = false) MultipartFile coverImageFile,
+        @RequestParam(name = "galleryImageFiles", required = false) MultipartFile[] galleryImageFiles
+    ) {
         normalizeProductRequest(request);
-        gatewayClient.createProduct(request);
-        return "redirect:/admin/products";
+        Product created = gatewayClient.createProduct(request);
+
+        if (created != null && created.getId() != null) {
+            uploadImages(created.getId(), coverImageFile, galleryImageFiles);
+            return "redirect:/admin/catalogo/prodotti/" + created.getId() + "/modifica";
+        }
+
+        return "redirect:/admin/catalogo/prodotti";
     }
 
-    @GetMapping("/{id}/edit")
+    @GetMapping({"/{id}/edit", "/{id}/modifica"})
     public String editForm(@PathVariable Long id, Model model) {
         Product product = gatewayClient.getProduct(id);
         ProductRequest request = new ProductRequest();
@@ -63,23 +83,61 @@ public class AdminProductController {
         request.setCategoryIds(product.getCategoryIds());
 
         model.addAttribute("product", request);
+        model.addAttribute("productView", product);
         model.addAttribute("categories", gatewayClient.listCategories(true));
         model.addAttribute("formTitle", "Modifica prodotto");
-        model.addAttribute("formAction", "/admin/products/" + id);
+        model.addAttribute("formAction", "/admin/catalogo/prodotti/" + id);
         return "admin/product-form";
     }
 
-    @PostMapping("/{id}")
-    public String update(@PathVariable Long id, @ModelAttribute ProductRequest request) {
+    @PostMapping(path = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public String update(
+        @PathVariable Long id,
+        @ModelAttribute ProductRequest request,
+        @RequestParam(name = "coverImageFile", required = false) MultipartFile coverImageFile,
+        @RequestParam(name = "galleryImageFiles", required = false) MultipartFile[] galleryImageFiles,
+        @RequestParam(name = "deleteImageIds", required = false) List<Long> deleteImageIds,
+        @RequestParam(name = "selectedCoverImageId", required = false) Long selectedCoverImageId
+    ) {
         normalizeProductRequest(request);
         gatewayClient.updateProduct(id, request);
-        return "redirect:/admin/products";
+
+        Set<Long> removedIds = Set.of();
+        if (deleteImageIds != null && !deleteImageIds.isEmpty()) {
+            removedIds = deleteImageIds.stream().collect(Collectors.toSet());
+            for (Long imageId : removedIds) {
+                gatewayClient.deleteProductImage(id, imageId);
+            }
+        }
+
+        uploadImages(id, coverImageFile, galleryImageFiles);
+
+        if (selectedCoverImageId != null && !removedIds.contains(selectedCoverImageId)) {
+            gatewayClient.setProductCoverImage(id, selectedCoverImageId);
+        }
+
+        return "redirect:/admin/catalogo/prodotti/" + id + "/modifica";
     }
 
     @PostMapping("/{id}/delete")
     public String delete(@PathVariable Long id) {
         gatewayClient.deleteProduct(id);
-        return "redirect:/admin/products";
+        return "redirect:/admin/catalogo/prodotti";
+    }
+
+    private void uploadImages(Long productId, MultipartFile coverImageFile, MultipartFile[] galleryImageFiles) {
+        if (coverImageFile != null && !coverImageFile.isEmpty()) {
+            gatewayClient.uploadProductCover(productId, coverImageFile);
+        }
+
+        if (galleryImageFiles != null && galleryImageFiles.length > 0) {
+            List<MultipartFile> files = Arrays.stream(galleryImageFiles)
+                .filter(file -> file != null && !file.isEmpty())
+                .collect(Collectors.toList());
+            if (!files.isEmpty()) {
+                gatewayClient.uploadProductGallery(productId, files);
+            }
+        }
     }
 
     private void normalizeProductRequest(ProductRequest request) {

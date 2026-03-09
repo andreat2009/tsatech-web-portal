@@ -9,10 +9,10 @@
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
 <main class="container">
-    <section class="card" style="padding:16px;">
+    <section class="card section-pad">
         <h1>Blog</h1>
-        <div th:each="post : ${posts}" style="padding:12px 0; border-bottom:1px solid #eee;">
-            <h3><a th:href="@{/blog/{slug}(slug=${post.slug})}" th:text="${post.title}">Titolo</a></h3>
+        <div th:each="post : ${posts}" class="list-divider">
+            <h3><a th:href="@{/news/{slug}(slug=${post.slug})}" th:text="${post.title}">Titolo</a></h3>
             <p th:text="${post.excerpt}">Estratto</p>
             <small th:text="${post.publishedAt}">2026-01-01</small>
         </div>

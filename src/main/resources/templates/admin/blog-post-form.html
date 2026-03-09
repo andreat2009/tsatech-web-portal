@@ -9,7 +9,7 @@
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
 <main class="container">
-    <section class="form" style="padding:16px; max-width:900px; margin:0 auto;">
+    <section class="form section-pad centered-form">
         <h1 th:text="${formTitle}">Form blog</h1>
         <form method="post" th:action="${formAction}" th:object="${postForm}">
             <div class="field"><label>Titolo</label><input type="text" th:field="*{title}" /></div>

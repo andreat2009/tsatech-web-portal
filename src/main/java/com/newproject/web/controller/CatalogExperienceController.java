@@ -14,7 +14,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 @Controller
-@RequestMapping("/product")
+@RequestMapping({"/product", "/catalogo"})
 public class CatalogExperienceController {
     private static final String COMPARE_SESSION_KEY = "compareProductIds";
 
@@ -24,7 +24,7 @@ public class CatalogExperienceController {
         this.gatewayClient = gatewayClient;
     }
 
-    @GetMapping("/manufacturer")
+    @GetMapping({"/manufacturer", "/produttori"})
     public String byManufacturer(@RequestParam(required = false) Long manufacturerId, Model model) {
         List<Manufacturer> manufacturers = gatewayClient.listManufacturers();
         List<Product> products = gatewayClient.listProducts(null, null, true, null, null, "name_asc");
@@ -40,7 +40,7 @@ public class CatalogExperienceController {
         return "shop/manufacturer";
     }
 
-    @GetMapping("/special")
+    @GetMapping({"/special", "/offerte"})
     public String specials(Model model) {
         List<Product> products = gatewayClient.listProducts(null, null, true, null, null, "price_asc").stream()
             .filter(product -> product.getPrice() != null)
@@ -51,7 +51,7 @@ public class CatalogExperienceController {
         return "shop/special";
     }
 
-    @GetMapping("/compare")
+    @GetMapping({"/compare", "/confronta"})
     public String compare(HttpSession session, Model model) {
         Set<Long> ids = getCompareIds(session);
         List<Product> products = new ArrayList<>();
@@ -62,20 +62,20 @@ public class CatalogExperienceController {
         return "shop/compare";
     }
 
-    @PostMapping("/compare/add")
+    @PostMapping({"/compare/add", "/confronta/aggiungi"})
     public String compareAdd(@RequestParam Long productId, HttpSession session) {
         Set<Long> ids = getCompareIds(session);
         ids.add(productId);
         session.setAttribute(COMPARE_SESSION_KEY, ids);
-        return "redirect:/product/compare";
+        return "redirect:/catalogo/confronta";
     }
 
-    @PostMapping("/compare/{productId}/remove")
+    @PostMapping({"/compare/{productId}/remove", "/confronta/{productId}/rimuovi"})
     public String compareRemove(@PathVariable Long productId, HttpSession session) {
         Set<Long> ids = getCompareIds(session);
         ids.remove(productId);
         session.setAttribute(COMPARE_SESSION_KEY, ids);
-        return "redirect:/product/compare";
+        return "redirect:/catalogo/confronta";
     }
 
     @SuppressWarnings("unchecked")

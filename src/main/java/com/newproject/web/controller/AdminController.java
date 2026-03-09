@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
-@RequestMapping("/admin")
+@RequestMapping({"/admin", "/amministrazione"})
 public class AdminController {
     private final GatewayClient gatewayClient;
 

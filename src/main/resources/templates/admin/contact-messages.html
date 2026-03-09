@@ -9,7 +9,7 @@
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
 <main class="container">
-    <section class="card" style="padding:16px;">
+    <section class="card section-pad">
         <h1>Messaggi contatto</h1>
         <table class="table">
             <thead><tr><th>ID</th><th>Nome</th><th>Email</th><th>Oggetto</th><th>Messaggio</th><th>Stato</th><th>Azioni</th></tr></thead>
@@ -22,11 +22,11 @@
                 <td th:text="${m.message}">Messaggio</td>
                 <td th:text="${m.status}">NEW</td>
                 <td>
-                    <form method="post" th:action="@{/admin/contact-messages/{id}/status(id=${m.id})}" style="display:inline;">
+                    <form method="post" th:action="@{/admin/contact-messages/{id}/status(id=${m.id})}" class="inline-form-action">
                         <input type="hidden" name="status" value="READ" />
                         <button class="btn" type="submit">Segna letto</button>
                     </form>
-                    <form method="post" th:action="@{/admin/contact-messages/{id}/status(id=${m.id})}" style="display:inline;">
+                    <form method="post" th:action="@{/admin/contact-messages/{id}/status(id=${m.id})}" class="inline-form-action">
                         <input type="hidden" name="status" value="DONE" />
                         <button class="btn" type="submit">Chiudi</button>
                     </form>

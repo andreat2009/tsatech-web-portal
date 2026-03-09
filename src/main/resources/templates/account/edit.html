@@ -9,7 +9,7 @@
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
 <main class="container">
-    <section class="form" style="padding:16px; max-width:700px; margin:0 auto;">
+    <section class="form section-pad centered-form">
         <h1>Modifica profilo</h1>
         <form method="post" th:action="@{/account/edit}" th:object="${profileForm}">
             <div class="field"><label>Nome</label><input type="text" th:field="*{firstName}" /></div>

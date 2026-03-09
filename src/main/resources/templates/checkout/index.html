@@ -2,7 +2,9 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Checkout</title>
+    <link rel="canonical" th:href="@{/checkout-rapido}" />
     <link rel="stylesheet" th:href="@{/css/app.css}" />
 </head>
 <body>
@@ -12,7 +14,7 @@
     <div class="breadcrumbs">
         <a th:href="@{/}">Home</a>
         <span>/</span>
-        <a th:href="@{/cart}">Carrello</a>
+        <a th:href="@{/carrello}">Carrello</a>
         <span>/</span>
         <span>Checkout</span>
     </div>
@@ -38,10 +40,10 @@
                                 th:text="${address.line1 + ', ' + address.city + ' (' + address.country + ')'}">Address</option>
                     </select>
                     <div th:if="${addresses.isEmpty()}" class="empty">Aggiungi almeno un indirizzo prima di completare il checkout.</div>
-                    <a class="inline-link" th:href="@{/account/addresses}">Gestisci indirizzi</a>
+                    <a class="inline-link" th:href="@{/account/indirizzi}">Gestisci indirizzi</a>
                 </div>
 
-                <div th:if="${guestCheckout}" class="field-grid">
+                <div th:if="${guestCheckout}" class="field-grid two">
                     <div class="field">
                         <label>Email</label>
                         <input th:field="*{guestEmail}" type="email" required />
@@ -84,20 +86,22 @@
                     </div>
                 </div>
 
-                <div class="field">
-                    <label>Metodo di spedizione</label>
-                    <select th:field="*{shippingMethod}" required>
-                        <option th:each="entry : ${shippingMethods.entrySet()}" th:value="${entry.key}"
-                                th:text="${entry.key + ' - ' + entry.value}">flat.flat</option>
-                    </select>
-                </div>
+                <div class="field-grid two">
+                    <div class="field">
+                        <label>Metodo di spedizione</label>
+                        <select th:field="*{shippingMethod}" required>
+                            <option th:each="entry : ${shippingMethods.entrySet()}" th:value="${entry.key}"
+                                    th:text="${entry.key + ' - ' + entry.value}">flat.flat</option>
+                        </select>
+                    </div>
 
-                <div class="field">
-                    <label>Metodo di pagamento</label>
-                    <select th:field="*{paymentMethod}" required>
-                        <option th:each="entry : ${paymentMethods.entrySet()}" th:value="${entry.key}"
-                                th:text="${entry.value}">Pagamento</option>
-                    </select>
+                    <div class="field">
+                        <label>Metodo di pagamento</label>
+                        <select th:field="*{paymentMethod}" required>
+                            <option th:each="entry : ${paymentMethods.entrySet()}" th:value="${entry.key}"
+                                    th:text="${entry.value}">Pagamento</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="field">
@@ -117,22 +121,24 @@
 
         <aside class="checkout-summary">
             <h3>Riepilogo ordine</h3>
-            <table class="table compact">
-                <thead>
-                <tr>
-                    <th>Prodotto</th>
-                    <th>Q.tà</th>
-                    <th>Totale</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:each="item : ${items}">
-                    <td th:text="${item.productName}">Prodotto</td>
-                    <td th:text="${item.quantity}">1</td>
-                    <td th:text="${item.lineTotal}">0.00</td>
-                </tr>
-                </tbody>
-            </table>
+            <div class="table-wrap">
+                <table class="table compact">
+                    <thead>
+                    <tr>
+                        <th>Prodotto</th>
+                        <th>Q.tà</th>
+                        <th>Totale</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="item : ${items}">
+                        <td th:text="${item.productName}">Prodotto</td>
+                        <td th:text="${item.quantity}">1</td>
+                        <td th:text="${item.lineTotal}">0.00</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
             <div class="summary-grid">
                 <div class="summary-row">
                     <span>Subtotale</span>

@@ -7,10 +7,14 @@ import java.math.BigDecimal;
 import java.util.List;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
-@RequestMapping("/admin/coupons")
+@RequestMapping({"/admin/coupons", "/admin/marketing/coupon"})
 public class AdminCouponController {
     private final GatewayClient gatewayClient;
 
@@ -35,7 +39,7 @@ public class AdminCouponController {
         coupon.setActive(true);
         model.addAttribute("coupon", coupon);
         model.addAttribute("formTitle", "Nuovo coupon");
-        model.addAttribute("formAction", "/admin/coupons");
+        model.addAttribute("formAction", "/admin/marketing/coupon");
         return "admin/coupon-form";
     }
 
@@ -43,7 +47,7 @@ public class AdminCouponController {
     public String create(@ModelAttribute CouponRequest request) {
         normalize(request);
         gatewayClient.createCoupon(request);
-        return "redirect:/admin/coupons";
+        return "redirect:/admin/marketing/coupon";
     }
 
     @GetMapping("/{id}/edit")
@@ -54,7 +58,7 @@ public class AdminCouponController {
             .orElse(null);
 
         if (coupon == null) {
-            return "redirect:/admin/coupons";
+            return "redirect:/admin/marketing/coupon";
         }
 
         CouponRequest request = new CouponRequest();
@@ -70,7 +74,7 @@ public class AdminCouponController {
 
         model.addAttribute("coupon", request);
         model.addAttribute("formTitle", "Modifica coupon");
-        model.addAttribute("formAction", "/admin/coupons/" + id);
+        model.addAttribute("formAction", "/admin/marketing/coupon/" + id);
         return "admin/coupon-form";
     }
 
@@ -78,13 +82,13 @@ public class AdminCouponController {
     public String update(@PathVariable Long id, @ModelAttribute CouponRequest request) {
         normalize(request);
         gatewayClient.updateCoupon(id, request);
-        return "redirect:/admin/coupons";
+        return "redirect:/admin/marketing/coupon";
     }
 
     @PostMapping("/{id}/delete")
     public String delete(@PathVariable Long id) {
         gatewayClient.deleteCoupon(id);
-        return "redirect:/admin/coupons";
+        return "redirect:/admin/marketing/coupon";
     }
 
     private void normalize(CouponRequest request) {

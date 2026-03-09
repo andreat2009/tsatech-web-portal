@@ -18,20 +18,20 @@ public class ContentController {
         this.gatewayClient = gatewayClient;
     }
 
-    @GetMapping("/information/contact")
+    @GetMapping({"/information/contact", "/contatti"})
     public String contactForm(Model model) {
         ContactMessageRequest form = new ContactMessageRequest();
         model.addAttribute("contactForm", form);
         return "information/contact";
     }
 
-    @PostMapping("/information/contact")
+    @PostMapping({"/information/contact", "/contatti"})
     public String submitContact(@ModelAttribute ContactMessageRequest form, Authentication authentication) {
         if (form.getName() == null || form.getName().isBlank()
             || form.getEmail() == null || form.getEmail().isBlank()
             || form.getSubject() == null || form.getSubject().isBlank()
             || form.getMessage() == null || form.getMessage().isBlank()) {
-            return "redirect:/information/contact?error=1";
+            return "redirect:/contatti?error=1";
         }
 
         if (authentication != null && authentication.getPrincipal() instanceof OidcUser oidcUser) {
@@ -44,10 +44,10 @@ public class ContentController {
         }
 
         gatewayClient.createContactMessage(form);
-        return "redirect:/information/contact?success=1";
+        return "redirect:/contatti?success=1";
     }
 
-    @GetMapping("/information/sitemap")
+    @GetMapping({"/information/sitemap", "/mappa-sito"})
     public String sitemap(Model model) {
         model.addAttribute("informationPages", gatewayClient.listInformationPages(true));
         model.addAttribute("blogPosts", gatewayClient.listBlogPosts(true));
@@ -59,23 +59,23 @@ public class ContentController {
     public String information(@PathVariable String slug, Model model) {
         Optional<InformationPage> page = gatewayClient.getInformationBySlug(slug);
         if (page.isEmpty()) {
-            return "redirect:/information/sitemap";
+            return "redirect:/mappa-sito";
         }
         model.addAttribute("page", page.get());
         return "information/page";
     }
 
-    @GetMapping("/blog")
+    @GetMapping({"/blog", "/news"})
     public String blog(Model model) {
         model.addAttribute("posts", gatewayClient.listBlogPosts(true));
         return "blog/list";
     }
 
-    @GetMapping("/blog/{slug}")
+    @GetMapping({"/blog/{slug}", "/news/{slug}"})
     public String blogPost(@PathVariable String slug, Model model) {
         Optional<BlogPost> post = gatewayClient.getBlogPostBySlug(slug);
         if (post.isEmpty()) {
-            return "redirect:/blog";
+            return "redirect:/news";
         }
 
         BlogCommentRequest form = new BlogCommentRequest();
@@ -85,15 +85,15 @@ public class ContentController {
         return "blog/post";
     }
 
-    @PostMapping("/blog/{slug}/comments")
+    @PostMapping({"/blog/{slug}/comments", "/news/{slug}/commenti"})
     public String addComment(@PathVariable String slug, @ModelAttribute BlogCommentRequest form, Authentication authentication) {
         Optional<BlogPost> post = gatewayClient.getBlogPostBySlug(slug);
         if (post.isEmpty()) {
-            return "redirect:/blog";
+            return "redirect:/news";
         }
 
         if (form.getComment() == null || form.getComment().isBlank()) {
-            return "redirect:/blog/" + slug;
+            return "redirect:/news/" + slug;
         }
 
         if (authentication != null && authentication.getPrincipal() instanceof OidcUser oidcUser) {
@@ -111,6 +111,6 @@ public class ContentController {
         }
 
         gatewayClient.createBlogComment(post.get().getId(), form);
-        return "redirect:/blog/" + slug;
+        return "redirect:/news/" + slug;
     }
 }

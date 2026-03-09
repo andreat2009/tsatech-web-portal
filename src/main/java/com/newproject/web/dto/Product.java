@@ -1,7 +1,10 @@
 package com.newproject.web.dto;
 
 import java.math.BigDecimal;
+import java.text.Normalizer;
 import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 public class Product {
@@ -14,6 +17,8 @@ public class Product {
     private Integer quantity;
     private Boolean active;
     private String image;
+    private String coverImageUrl;
+    private List<ProductImage> galleryImages;
     private Long manufacturerId;
     private Set<Long> categoryIds;
     private OffsetDateTime createdAt;
@@ -37,6 +42,23 @@ public class Product {
     public void setActive(Boolean active) { this.active = active; }
     public String getImage() { return image; }
     public void setImage(String image) { this.image = image; }
+
+    public String getCoverImageUrl() {
+        return coverImageUrl;
+    }
+
+    public void setCoverImageUrl(String coverImageUrl) {
+        this.coverImageUrl = coverImageUrl;
+    }
+
+    public List<ProductImage> getGalleryImages() {
+        return galleryImages;
+    }
+
+    public void setGalleryImages(List<ProductImage> galleryImages) {
+        this.galleryImages = galleryImages;
+    }
+
     public Long getManufacturerId() { return manufacturerId; }
     public void setManufacturerId(Long manufacturerId) { this.manufacturerId = manufacturerId; }
     public Set<Long> getCategoryIds() { return categoryIds; }
@@ -45,4 +67,41 @@ public class Product {
     public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
     public OffsetDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(OffsetDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    public String getPrimaryImageUrl() {
+        if (coverImageUrl != null && !coverImageUrl.isBlank()) {
+            return coverImageUrl;
+        }
+        if (image != null && !image.isBlank()) {
+            return image;
+        }
+        return null;
+    }
+
+    public String getSeoSlug() {
+        String source = (name != null && !name.isBlank()) ? name : (sku != null ? sku : "prodotto");
+        String normalized = Normalizer.normalize(source, Normalizer.Form.NFD)
+            .replaceAll("\\p{M}", "")
+            .toLowerCase(Locale.ROOT)
+            .replaceAll("[^a-z0-9]+", "-")
+            .replaceAll("(^-|-$)", "");
+        if (normalized.isBlank()) {
+            return "prodotto";
+        }
+        return normalized;
+    }
+
+    public String getSeoPath() {
+        if (id == null) {
+            return "/catalogo";
+        }
+        return "/catalogo/prodotto/" + id + "-" + getSeoSlug();
+    }
+
+    public String getSeoReviewsPath() {
+        if (id == null) {
+            return "/catalogo";
+        }
+        return "/catalogo/prodotto/" + id + "-" + getSeoSlug() + "/recensioni";
+    }
 }

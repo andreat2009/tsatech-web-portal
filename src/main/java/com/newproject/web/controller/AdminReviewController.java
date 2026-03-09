@@ -8,7 +8,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 @Controller
-@RequestMapping("/admin/reviews")
+@RequestMapping({"/admin/reviews", "/admin/catalogo/recensioni"})
 public class AdminReviewController {
     private final GatewayClient gatewayClient;
 
@@ -27,6 +27,6 @@ public class AdminReviewController {
     @PostMapping("/{id}/approve")
     public String approve(@PathVariable Long id, @RequestParam(defaultValue = "true") boolean approved) {
         gatewayClient.setReviewApproval(id, approved);
-        return "redirect:/admin/reviews";
+        return "redirect:/admin/catalogo/recensioni";
     }
 }

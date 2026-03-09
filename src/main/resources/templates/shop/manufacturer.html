@@ -4,13 +4,19 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Produttori</title>
-    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css" />
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
 </head>
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
 <main class="container">
-    <section class="filters" style="margin-bottom:16px;">
-        <form method="get" th:action="@{/product/manufacturer}">
+    <div class="breadcrumbs">
+        <a th:href="@{/}">Home</a>
+        <span>/</span>
+        <span>Produttori</span>
+    </div>
+
+    <section class="filters block">
+        <form class="inline-form" method="get" th:action="@{/catalogo/produttori}">
             <label>Produttore</label>
             <select name="manufacturerId">
                 <option value="">Tutti</option>
@@ -19,15 +25,22 @@
             <button class="btn btn-primary" type="submit">Filtra</button>
         </form>
     </section>
-    <section class="card" style="padding:16px;">
+
+    <section class="card section-pad">
         <h1>Prodotti per produttore</h1>
         <div class="product-grid">
             <article class="product-card" th:each="p : ${products}">
-                <h3><a th:href="@{/shop/products/{id}(id=${p.id})}" th:text="${p.name}">Prodotto</a></h3>
+                <div class="product-media-small">
+                    <img th:if="${p.primaryImageUrl != null and !p.primaryImageUrl.isBlank()}" th:src="${p.primaryImageUrl}" th:alt="${p.name}" loading="lazy" />
+                    <div class="image-placeholder" th:if="${p.primaryImageUrl == null or p.primaryImageUrl.isBlank()}" th:text="${p.sku != null ? p.sku : 'SKU'}">SKU</div>
+                </div>
+                <h3><a th:href="${p.seoPath}" th:text="${p.name}">Prodotto</a></h3>
                 <p th:text="${p.description}">Descrizione</p>
                 <p><strong th:text="${p.price}">0.00</strong></p>
                 <form method="post" th:action="@{/cart/add}">
+                    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                     <input type="hidden" name="productId" th:value="${p.id}" />
+                    <input type="hidden" name="quantity" value="1" />
                     <button class="btn btn-primary" type="submit">Aggiungi al carrello</button>
                 </form>
             </article>

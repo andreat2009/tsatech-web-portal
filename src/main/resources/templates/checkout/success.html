@@ -86,8 +86,8 @@
     </section>
 
     <div class="actions-row">
-        <a class="btn" th:href="@{/account/orders}" th:if="${!guestCheckout}">Vai agli ordini</a>
-        <a class="btn btn-primary" th:href="@{/shop}">Continua acquisti</a>
+        <a class="btn" th:href="@{/account/ordini}" th:if="${!guestCheckout}">Vai agli ordini</a>
+        <a class="btn btn-primary" th:href="@{/catalogo}">Continua acquisti</a>
         <a class="btn" th:href="@{/oauth2/authorization/keycloak}" th:if="${guestCheckout}">Crea account / Login</a>
     </div>
 </main>

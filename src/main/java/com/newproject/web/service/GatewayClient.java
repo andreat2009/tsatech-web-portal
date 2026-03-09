@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
+import org.springframework.http.MediaType;
+import org.springframework.http.client.MultipartBodyBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -15,6 +17,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 
 @Service
@@ -24,6 +28,7 @@ public class GatewayClient {
     private final WebClient oauth2WebClient;
     private final WebClient defaultWebClient;
     private final String baseUrl;
+    private final String gatewayPublicBaseUrl;
 
     public GatewayClient(
         @Qualifier("oauth2WebClient") WebClient oauth2WebClient,
@@ -34,6 +39,7 @@ public class GatewayClient {
         this.oauth2WebClient = oauth2WebClient.mutate().baseUrl(normalizedBaseUrl).build();
         this.defaultWebClient = defaultWebClient.mutate().baseUrl(normalizedBaseUrl).build();
         this.baseUrl = "";
+        this.gatewayPublicBaseUrl = normalizedBaseUrl;
     }
 
     private String normalizeBaseUrl(String rawUrl) {
@@ -68,30 +74,36 @@ public class GatewayClient {
         String sort
     ) {
         return safeList(
-            () -> client().get()
-                .uri(uriBuilder -> uriBuilder
-                    .path(baseUrl + "/api/catalog/products")
-                    .queryParamIfPresent("q", Optional.ofNullable(query))
-                    .queryParamIfPresent("categoryId", Optional.ofNullable(categoryId))
-                    .queryParamIfPresent("active", Optional.ofNullable(active))
-                    .queryParamIfPresent("minPrice", Optional.ofNullable(minPrice))
-                    .queryParamIfPresent("maxPrice", Optional.ofNullable(maxPrice))
-                    .queryParamIfPresent("sort", Optional.ofNullable(sort))
-                    .build())
-                .retrieve()
-                .bodyToMono(new ParameterizedTypeReference<List<Product>>() {})
-                .blockOptional()
-                .orElse(List.of()),
+            () -> {
+                List<Product> products = client().get()
+                    .uri(uriBuilder -> uriBuilder
+                        .path(baseUrl + "/api/catalog/products")
+                        .queryParamIfPresent("q", Optional.ofNullable(query))
+                        .queryParamIfPresent("categoryId", Optional.ofNullable(categoryId))
+                        .queryParamIfPresent("active", Optional.ofNullable(active))
+                        .queryParamIfPresent("minPrice", Optional.ofNullable(minPrice))
+                        .queryParamIfPresent("maxPrice", Optional.ofNullable(maxPrice))
+                        .queryParamIfPresent("sort", Optional.ofNullable(sort))
+                        .build())
+                    .retrieve()
+                    .bodyToMono(new ParameterizedTypeReference<List<Product>>() {})
+                    .blockOptional()
+                    .orElse(List.of());
+                products.forEach(this::normalizeProductMedia);
+                return products;
+            },
             "/api/catalog/products"
         );
     }
 
     public Product getProduct(Long id) {
-        return client().get()
+        Product product = client().get()
             .uri(baseUrl + "/api/catalog/products/{id}", id)
             .retrieve()
             .bodyToMono(Product.class)
             .block();
+        normalizeProductMedia(product);
+        return product;
     }
 
 
@@ -238,21 +250,25 @@ public class GatewayClient {
             .block();
     }
     public Product createProduct(ProductRequest request) {
-        return client().post()
+        Product product = client().post()
             .uri(baseUrl + "/api/catalog/products")
             .bodyValue(request)
             .retrieve()
             .bodyToMono(Product.class)
             .block();
+        normalizeProductMedia(product);
+        return product;
     }
 
     public Product updateProduct(Long id, ProductRequest request) {
-        return client().put()
+        Product product = client().put()
             .uri(baseUrl + "/api/catalog/products/{id}", id)
             .bodyValue(request)
             .retrieve()
             .bodyToMono(Product.class)
             .block();
+        normalizeProductMedia(product);
+        return product;
     }
 
     public void deleteProduct(Long id) {
@@ -262,6 +278,69 @@ public class GatewayClient {
             .toBodilessEntity()
             .block();
     }
+
+    public void uploadProductCover(Long productId, MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            return;
+        }
+        MultipartBodyBuilder bodyBuilder = new MultipartBodyBuilder();
+        bodyBuilder.part("file", file.getResource())
+            .filename(file.getOriginalFilename())
+            .contentType(resolveContentType(file));
+
+        client().post()
+            .uri(baseUrl + "/api/catalog/products/{productId}/images/cover", productId)
+            .contentType(MediaType.MULTIPART_FORM_DATA)
+            .body(BodyInserters.fromMultipartData(bodyBuilder.build()))
+            .retrieve()
+            .toBodilessEntity()
+            .block();
+    }
+
+    public void uploadProductGallery(Long productId, List<MultipartFile> files) {
+        if (files == null || files.isEmpty()) {
+            return;
+        }
+        MultipartBodyBuilder bodyBuilder = new MultipartBodyBuilder();
+        boolean hasValidFile = false;
+        for (MultipartFile file : files) {
+            if (file == null || file.isEmpty()) {
+                continue;
+            }
+            hasValidFile = true;
+            bodyBuilder.part("files", file.getResource())
+                .filename(file.getOriginalFilename())
+                .contentType(resolveContentType(file));
+        }
+        if (!hasValidFile) {
+            return;
+        }
+
+        client().post()
+            .uri(baseUrl + "/api/catalog/products/{productId}/images/gallery", productId)
+            .contentType(MediaType.MULTIPART_FORM_DATA)
+            .body(BodyInserters.fromMultipartData(bodyBuilder.build()))
+            .retrieve()
+            .toBodilessEntity()
+            .block();
+    }
+
+    public void deleteProductImage(Long productId, Long imageId) {
+        client().delete()
+            .uri(baseUrl + "/api/catalog/products/{productId}/images/{imageId}", productId, imageId)
+            .retrieve()
+            .toBodilessEntity()
+            .block();
+    }
+
+    public void setProductCoverImage(Long productId, Long imageId) {
+        client().patch()
+            .uri(baseUrl + "/api/catalog/products/{productId}/images/{imageId}/cover", productId, imageId)
+            .retrieve()
+            .toBodilessEntity()
+            .block();
+    }
+
 
     public List<Order> listOrders(Long customerId) {
         return safeList(
@@ -1033,6 +1112,45 @@ public class GatewayClient {
 
     private <T> List<T> safeList(Supplier<List<T>> supplier, String endpoint) {
         return safeCall(supplier, endpoint, List.of());
+    }
+
+    private void normalizeProductMedia(Product product) {
+        if (product == null) {
+            return;
+        }
+
+        product.setImage(normalizeMediaUrl(product.getImage()));
+        product.setCoverImageUrl(normalizeMediaUrl(product.getCoverImageUrl()));
+
+        if (product.getGalleryImages() != null) {
+            for (ProductImage image : product.getGalleryImages()) {
+                image.setUrl(normalizeMediaUrl(image.getUrl()));
+            }
+        }
+    }
+
+    private String normalizeMediaUrl(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return raw;
+        }
+        if (raw.startsWith("http://") || raw.startsWith("https://")) {
+            return raw;
+        }
+        if (raw.startsWith("/")) {
+            return gatewayPublicBaseUrl + raw;
+        }
+        return gatewayPublicBaseUrl + "/" + raw;
+    }
+
+    private MediaType resolveContentType(MultipartFile file) {
+        if (file == null || file.getContentType() == null || file.getContentType().isBlank()) {
+            return MediaType.APPLICATION_OCTET_STREAM;
+        }
+        try {
+            return MediaType.parseMediaType(file.getContentType());
+        } catch (Exception ex) {
+            return MediaType.APPLICATION_OCTET_STREAM;
+        }
     }
 
     private <T> T safeCall(Supplier<T> supplier, String endpoint, T fallback) {

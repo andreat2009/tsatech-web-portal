@@ -9,15 +9,15 @@
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
 <main class="container">
-    <article class="card" style="padding:16px; margin-bottom:16px;">
+    <article class="card section-pad block">
         <h1 th:text="${post.title}">Titolo</h1>
         <p><small th:text="${post.publishedAt}">2026-01-01</small></p>
         <div th:utext="${post.content}"></div>
     </article>
 
-    <section class="card" style="padding:16px; margin-bottom:16px;">
+    <section class="card section-pad block">
         <h2>Commenti</h2>
-        <div th:each="c : ${comments}" style="padding:8px 0; border-bottom:1px solid #eee;">
+        <div th:each="c : ${comments}" class="list-divider-sm">
             <strong th:text="${c.authorName}">Autore</strong>
             <small th:text="${c.createdAt}">2026-01-01</small>
             <p th:text="${c.comment}">Commento</p>
@@ -25,9 +25,9 @@
         <p th:if="${#lists.isEmpty(comments)}">Nessun commento approvato.</p>
     </section>
 
-    <section class="form" style="padding:16px;">
+    <section class="form section-pad">
         <h3>Aggiungi commento</h3>
-        <form method="post" th:action="@{/blog/{slug}/comments(slug=${post.slug})}" th:object="${commentForm}">
+        <form method="post" th:action="@{/news/{slug}/commenti(slug=${post.slug})}" th:object="${commentForm}">
             <div class="field"><label>Nome</label><input type="text" th:field="*{authorName}" /></div>
             <div class="field"><label>Email</label><input type="email" th:field="*{authorEmail}" /></div>
             <div class="field"><label>Commento</label><textarea th:field="*{comment}"></textarea></div>

@@ -9,11 +9,11 @@
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
 <main class="container">
-    <section class="card" style="padding:16px; margin-bottom:16px;">
+    <section class="card section-pad block">
         <h1>Punti Reward</h1>
         <p>Saldo attuale: <strong th:text="${rewardSummary.pointsBalance}">0</strong></p>
     </section>
-    <section class="card" style="padding:16px;">
+    <section class="card section-pad">
         <h2>Movimenti punti</h2>
         <table class="table">
             <thead>

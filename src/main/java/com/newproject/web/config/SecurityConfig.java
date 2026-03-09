@@ -1,6 +1,14 @@
 package com.newproject.web.config;
 
-import java.util.*;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -8,15 +16,17 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
-import org.springframework.security.oauth2.core.oidc.user.OidcUser;
-import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
 import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 public class SecurityConfig {
+
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -55,25 +65,71 @@ public class SecurityConfig {
             OidcUser oidcUser = delegate.loadUser(userRequest);
             Set<GrantedAuthority> mapped = new HashSet<>(oidcUser.getAuthorities());
 
-            Map<String, Object> realmAccess = oidcUser.getClaim("realm_access");
-            if (realmAccess != null && realmAccess.get("roles") instanceof Collection<?> roles) {
+            // Primary source: ID token/UserInfo claims.
+            extractRoles(oidcUser.getClaims(), mapped);
+
+            // Fallback source: access token payload (Keycloak often stores roles here).
+            Map<String, Object> accessClaims = decodeAccessTokenClaims(userRequest.getAccessToken().getTokenValue());
+            extractRoles(accessClaims, mapped);
+
+            return new DefaultOidcUser(mapped, oidcUser.getIdToken(), oidcUser.getUserInfo());
+        };
+    }
+
+    private void extractRoles(Map<String, Object> claims, Set<GrantedAuthority> mapped) {
+        if (claims == null || claims.isEmpty()) {
+            return;
+        }
+
+        Object realmAccessObj = claims.get("realm_access");
+        if (realmAccessObj instanceof Map<?, ?> realmAccess) {
+            Object rolesObj = realmAccess.get("roles");
+            if (rolesObj instanceof Collection<?> roles) {
                 for (Object role : roles) {
-                    mapped.add(new SimpleGrantedAuthority("ROLE_" + role));
+                    addRoleAuthority(mapped, role);
                 }
             }
+        }
 
-            Map<String, Object> resourceAccess = oidcUser.getClaim("resource_access");
-            if (resourceAccess != null) {
-                for (Object access : resourceAccess.values()) {
-                    if (access instanceof Map<?, ?> accessMap && accessMap.get("roles") instanceof Collection<?> roles) {
+        Object resourceAccessObj = claims.get("resource_access");
+        if (resourceAccessObj instanceof Map<?, ?> resourceAccess) {
+            for (Object access : resourceAccess.values()) {
+                if (access instanceof Map<?, ?> accessMap) {
+                    Object rolesObj = accessMap.get("roles");
+                    if (rolesObj instanceof Collection<?> roles) {
                         for (Object role : roles) {
-                            mapped.add(new SimpleGrantedAuthority("ROLE_" + role));
+                            addRoleAuthority(mapped, role);
                         }
                     }
                 }
             }
+        }
+    }
 
-            return new DefaultOidcUser(mapped, oidcUser.getIdToken(), oidcUser.getUserInfo());
-        };
+    private void addRoleAuthority(Set<GrantedAuthority> mapped, Object roleObj) {
+        if (roleObj == null) {
+            return;
+        }
+        String role = roleObj.toString().trim();
+        if (role.isEmpty()) {
+            return;
+        }
+
+        mapped.add(new SimpleGrantedAuthority("ROLE_" + role));
+        mapped.add(new SimpleGrantedAuthority("ROLE_" + role.toUpperCase(Locale.ROOT)));
+    }
+
+    private Map<String, Object> decodeAccessTokenClaims(String jwtTokenValue) {
+        try {
+            String[] parts = jwtTokenValue.split("\\.");
+            if (parts.length < 2) {
+                return Map.of();
+            }
+            byte[] decoded = Base64.getUrlDecoder().decode(parts[1]);
+            String payload = new String(decoded, StandardCharsets.UTF_8);
+            return OBJECT_MAPPER.readValue(payload, new TypeReference<Map<String, Object>>() {});
+        } catch (Exception ex) {
+            return Map.of();
+        }
     }
 }

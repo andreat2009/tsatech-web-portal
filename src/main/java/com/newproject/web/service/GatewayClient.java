@@ -1136,6 +1136,14 @@ public class GatewayClient {
         if (raw.startsWith("http://") || raw.startsWith("https://")) {
             return raw;
         }
+
+        // Legacy seeded products store image paths like /img/products/*.png,
+        // but those files are not published by services. Return null to trigger
+        // UI placeholders instead of broken images.
+        if (raw.startsWith("/img/")) {
+            return null;
+        }
+
         if (raw.startsWith("/")) {
             return gatewayPublicBaseUrl + raw;
         }

@@ -7,8 +7,8 @@
             <ul class="top-links">
                 <li><a th:href="@{/account/wishlist}" sec:authorize="isAuthenticated()">Wishlist</a></li>
                 <li><a th:href="@{/product/compare}">Confronta</a></li>
-                <li><a th:href="@{/cart}" sec:authorize="isAuthenticated()">Carrello</a></li>
-                <li><a th:href="@{/checkout}" sec:authorize="isAuthenticated()">Checkout</a></li>
+                <li><a th:href="@{/cart}">Carrello</a></li>
+                <li><a th:href="@{/checkout}">Checkout</a></li>
                 <li sec:authorize="!isAuthenticated()"><a th:href="@{/oauth2/authorization/keycloak}">Login</a></li>
                 <li sec:authorize="isAuthenticated()" class="user-pill" th:text="${#authentication.name}">user</li>
                 <li sec:authorize="isAuthenticated()"><a th:href="@{/logout}">Logout</a></li>
@@ -25,8 +25,7 @@
                 <input type="text" name="q" placeholder="Cerca prodotti" />
                 <button type="submit" class="btn btn-search">Cerca</button>
             </form>
-            <a class="header-cart" th:href="@{/cart}" sec:authorize="isAuthenticated()">Vai al carrello</a>
-            <a class="header-cart" th:href="@{/oauth2/authorization/keycloak}" sec:authorize="!isAuthenticated()">Accedi</a>
+            <a class="header-cart" th:href="@{/cart}">Vai al carrello</a>
         </div>
     </div>
 

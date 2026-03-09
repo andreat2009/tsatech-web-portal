@@ -29,6 +29,8 @@ public class SecurityConfig {
                     "/product/**",
                     "/information/**",
                     "/blog/**",
+                    "/cart/**",
+                    "/checkout/**",
                     "/css/**",
                     "/js/**",
                     "/images/**",
@@ -36,8 +38,8 @@ public class SecurityConfig {
                     "/actuator/info"
                 ).permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
-                .requestMatchers("/cart/**", "/checkout/**", "/account/**").authenticated()
-                .anyRequest().authenticated()
+                .requestMatchers("/account/**").authenticated()
+                .anyRequest().permitAll()
             )
             .oauth2Login(oauth2 -> oauth2.userInfoEndpoint(userInfo -> userInfo.oidcUserService(oidcUserService())))
             .oauth2Client(Customizer.withDefaults())

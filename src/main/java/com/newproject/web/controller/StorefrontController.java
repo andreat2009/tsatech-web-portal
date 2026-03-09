@@ -3,12 +3,15 @@ package com.newproject.web.controller;
 import com.newproject.web.dto.*;
 import com.newproject.web.service.CustomerResolver;
 import com.newproject.web.service.GatewayClient;
+import jakarta.servlet.http.HttpSession;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -27,11 +30,17 @@ import org.springframework.web.bind.annotation.*;
 @Controller
 public class StorefrontController {
     private static final Logger logger = LoggerFactory.getLogger(StorefrontController.class);
+
     private static final String SHIPPING_FLAT = "flat.flat";
     private static final String SHIPPING_PICKUP = "pickup.pickup";
 
     private static final String PAYMENT_COD = "cod";
     private static final String PAYMENT_BANK = "bank_transfer";
+
+    private static final String GUEST_CART_SESSION_KEY = "GUEST_CART_ITEMS";
+    private static final String GUEST_CUSTOMER_ID_SESSION_KEY = "GUEST_CUSTOMER_ID";
+    private static final String GUEST_CUSTOMER_EMAIL_SESSION_KEY = "GUEST_CUSTOMER_EMAIL";
+    private static final String GUEST_ORDER_SUMMARY_SESSION_KEY = "GUEST_ORDER_SUMMARY";
 
     private final GatewayClient gatewayClient;
     private final CustomerResolver customerResolver;
@@ -53,13 +62,17 @@ public class StorefrontController {
         @RequestParam(required = false) Long categoryId,
         @RequestParam(required = false, defaultValue = "name_asc") String sort,
         Model model,
-        Authentication authentication
+        Authentication authentication,
+        HttpSession session
     ) {
         List<Product> products = gatewayClient.listProducts(q, categoryId, true, null, null, sort);
 
         Long customerId = null;
         if (isAuthenticated(authentication)) {
             customerId = customerResolver.resolveCustomerId(authentication);
+            if (customerId != null) {
+                mergeGuestCartIntoCustomerIfPresent(customerId, session);
+            }
 
             Map<Long, ProductPrice> pricesByProductId = gatewayClient.listPrices().stream()
                 .filter(price -> price.getProductId() != null)
@@ -163,24 +176,29 @@ public class StorefrontController {
     public String addToCart(
         @RequestParam Long productId,
         @RequestParam(defaultValue = "1") Integer quantity,
-        Authentication authentication
+        Authentication authentication,
+        HttpSession session
     ) {
-        Long customerId = customerResolver.resolveCustomerId(authentication);
-        if (customerId == null) {
-            return "redirect:/oauth2/authorization/keycloak";
-        }
-
         Optional<Product> productOpt = gatewayClient.getProductSafe(productId);
         if (productOpt.isEmpty()) {
             return "redirect:/shop";
         }
 
-        Cart cart = resolveOrCreateCart(customerId);
+        int normalizedQuantity = quantity != null && quantity > 0 ? quantity : 1;
         Product product = productOpt.get();
 
+        Long customerId = customerResolver.resolveCustomerId(authentication);
+        if (customerId == null) {
+            addGuestCartItem(session, productId, normalizedQuantity);
+            return "redirect:/cart";
+        }
+
+        mergeGuestCartIntoCustomerIfPresent(customerId, session);
+
+        Cart cart = resolveOrCreateCart(customerId);
         CartItemRequest request = new CartItemRequest();
         request.setProductId(productId);
-        request.setQuantity(quantity != null && quantity > 0 ? quantity : 1);
+        request.setQuantity(normalizedQuantity);
         request.setUnitPrice(product.getPrice() != null ? product.getPrice() : BigDecimal.ZERO);
         gatewayClient.addCartItem(cart.getId(), request);
 
@@ -188,29 +206,49 @@ public class StorefrontController {
     }
 
     @GetMapping("/cart")
-    public String viewCart(Model model, Authentication authentication) {
+    public String viewCart(Model model, Authentication authentication, HttpSession session) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
-            applyEmptyCartModel(model);
+            CartSummary summary = buildGuestCartSummary(session);
+            applyCartModel(model, summary);
+            model.addAttribute("guestCheckout", true);
             return "cart/view";
         }
+
+        mergeGuestCartIntoCustomerIfPresent(customerId, session);
 
         Optional<Cart> cartOpt = resolveCart(customerId);
         if (cartOpt.isEmpty()) {
             applyEmptyCartModel(model);
+            model.addAttribute("guestCheckout", false);
             return "cart/view";
         }
 
         CartSummary summary = buildCartSummary(cartOpt.get());
-        model.addAttribute("items", summary.items());
-        model.addAttribute("subtotal", summary.subtotal());
-        model.addAttribute("shipping", summary.shipping());
-        model.addAttribute("total", summary.total());
+        applyCartModel(model, summary);
+        model.addAttribute("guestCheckout", false);
         return "cart/view";
     }
 
     @PostMapping("/cart/items/{id}/quantity")
-    public String updateCartItemQuantity(@PathVariable Long id, @RequestParam Integer quantity) {
+    public String updateCartItemQuantity(
+        @PathVariable Long id,
+        @RequestParam Integer quantity,
+        Authentication authentication,
+        HttpSession session
+    ) {
+        Long customerId = customerResolver.resolveCustomerId(authentication);
+        if (customerId == null) {
+            if (quantity == null || quantity <= 0) {
+                removeGuestCartItem(session, id);
+            } else {
+                updateGuestCartItemQuantity(session, id, quantity);
+            }
+            return "redirect:/cart";
+        }
+
+        mergeGuestCartIntoCustomerIfPresent(customerId, session);
+
         if (quantity == null || quantity <= 0) {
             gatewayClient.deleteCartItem(id);
             return "redirect:/cart";
@@ -221,7 +259,14 @@ public class StorefrontController {
     }
 
     @PostMapping("/cart/items/{id}/delete")
-    public String deleteCartItem(@PathVariable Long id) {
+    public String deleteCartItem(@PathVariable Long id, Authentication authentication, HttpSession session) {
+        Long customerId = customerResolver.resolveCustomerId(authentication);
+        if (customerId == null) {
+            removeGuestCartItem(session, id);
+            return "redirect:/cart";
+        }
+
+        mergeGuestCartIntoCustomerIfPresent(customerId, session);
         gatewayClient.deleteCartItem(id);
         return "redirect:/cart";
     }
@@ -230,41 +275,70 @@ public class StorefrontController {
     public String checkoutPage(
         @RequestParam(required = false) String error,
         Model model,
-        Authentication authentication
+        Authentication authentication,
+        HttpSession session
     ) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
-        if (customerId == null) {
-            return "redirect:/oauth2/authorization/keycloak";
+        if (customerId != null) {
+            mergeGuestCartIntoCustomerIfPresent(customerId, session);
+
+            Optional<Cart> cartOpt = resolveCart(customerId);
+            if (cartOpt.isEmpty()) {
+                return "redirect:/cart";
+            }
+
+            CartSummary summary = buildCartSummary(cartOpt.get());
+            if (summary.items().isEmpty()) {
+                return "redirect:/cart";
+            }
+
+            List<Address> addresses = gatewayClient.listCustomerAddresses(customerId);
+
+            CheckoutForm checkoutForm = new CheckoutForm();
+            checkoutForm.setShippingMethod(SHIPPING_FLAT);
+            checkoutForm.setPaymentMethod(PAYMENT_COD);
+            checkoutForm.setCouponCode("");
+            if (!addresses.isEmpty()) {
+                checkoutForm.setAddressId(addresses.stream()
+                    .filter(address -> Boolean.TRUE.equals(address.getIsDefault()))
+                    .map(Address::getId)
+                    .findFirst()
+                    .orElse(addresses.get(0).getId()));
+            }
+
+            PriceQuoteRequest initialQuoteRequest = new PriceQuoteRequest();
+            initialQuoteRequest.setSubtotal(summary.subtotal());
+            initialQuoteRequest.setShipping(shippingMethods().get(SHIPPING_FLAT));
+            initialQuoteRequest.setCouponCode(checkoutForm.getCouponCode());
+            PriceQuoteResponse initialQuote = gatewayClient.quote(initialQuoteRequest);
+
+            model.addAttribute("items", summary.items());
+            model.addAttribute("subtotal", summary.subtotal());
+            model.addAttribute("shipping", initialQuote.getShipping());
+            model.addAttribute("discount", initialQuote.getDiscount());
+            model.addAttribute("total", initialQuote.getTotal());
+            model.addAttribute("quoteMessage", initialQuote.getMessage());
+            model.addAttribute("addresses", addresses);
+            model.addAttribute("shippingMethods", shippingMethods());
+            model.addAttribute("paymentMethods", paymentMethods());
+            model.addAttribute("checkoutForm", checkoutForm);
+            model.addAttribute("guestCheckout", false);
+            model.addAttribute("checkoutError", "processing".equalsIgnoreCase(error)
+                ? "Checkout non completato. Verifica i servizi e riprova."
+                : null);
+            return "checkout/index";
         }
 
-        Optional<Cart> cartOpt = resolveCart(customerId);
-        if (cartOpt.isEmpty()) {
-            return "redirect:/cart";
-        }
-
-        CartSummary summary = buildCartSummary(cartOpt.get());
+        CartSummary summary = buildGuestCartSummary(session);
         if (summary.items().isEmpty()) {
             return "redirect:/cart";
         }
 
-        List<Address> addresses = gatewayClient.listCustomerAddresses(customerId);
-
-        CheckoutForm checkoutForm = new CheckoutForm();
-        checkoutForm.setShippingMethod(SHIPPING_FLAT);
-        checkoutForm.setPaymentMethod(PAYMENT_COD);
-        checkoutForm.setCouponCode("");
-        if (!addresses.isEmpty()) {
-            checkoutForm.setAddressId(addresses.stream()
-                .filter(address -> Boolean.TRUE.equals(address.getIsDefault()))
-                .map(Address::getId)
-                .findFirst()
-                .orElse(addresses.get(0).getId()));
-        }
-
+        CheckoutForm guestForm = guestCheckoutFormFromSession(session);
         PriceQuoteRequest initialQuoteRequest = new PriceQuoteRequest();
         initialQuoteRequest.setSubtotal(summary.subtotal());
         initialQuoteRequest.setShipping(shippingMethods().get(SHIPPING_FLAT));
-        initialQuoteRequest.setCouponCode(checkoutForm.getCouponCode());
+        initialQuoteRequest.setCouponCode(guestForm.getCouponCode());
         PriceQuoteResponse initialQuote = gatewayClient.quote(initialQuoteRequest);
 
         model.addAttribute("items", summary.items());
@@ -273,23 +347,28 @@ public class StorefrontController {
         model.addAttribute("discount", initialQuote.getDiscount());
         model.addAttribute("total", initialQuote.getTotal());
         model.addAttribute("quoteMessage", initialQuote.getMessage());
-        model.addAttribute("addresses", addresses);
+        model.addAttribute("addresses", List.of());
         model.addAttribute("shippingMethods", shippingMethods());
         model.addAttribute("paymentMethods", paymentMethods());
-        model.addAttribute("checkoutForm", checkoutForm);
+        model.addAttribute("checkoutForm", guestForm);
+        model.addAttribute("guestCheckout", true);
         model.addAttribute("checkoutError", "processing".equalsIgnoreCase(error)
-            ? "Checkout non completato. Verifica i servizi e riprova."
+            ? "Checkout non completato. Verifica i dati e riprova."
             : null);
         return "checkout/index";
     }
 
     @PostMapping("/checkout/confirm")
-    public String checkoutConfirm(@ModelAttribute CheckoutForm checkoutForm, Authentication authentication) {
+    public String checkoutConfirm(@ModelAttribute CheckoutForm checkoutForm, Authentication authentication, HttpSession session) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
-        if (customerId == null) {
-            return "redirect:/oauth2/authorization/keycloak";
+        if (customerId != null) {
+            mergeGuestCartIntoCustomerIfPresent(customerId, session);
+            return checkoutConfirmAuthenticated(customerId, checkoutForm);
         }
+        return checkoutConfirmGuest(checkoutForm, session);
+    }
 
+    private String checkoutConfirmAuthenticated(Long customerId, CheckoutForm checkoutForm) {
         Optional<Cart> cartOpt = resolveCart(customerId);
         if (cartOpt.isEmpty()) {
             return "redirect:/cart";
@@ -347,7 +426,7 @@ public class StorefrontController {
             paymentRequest.setAmount(total);
             paymentRequest.setCurrency(currency);
             paymentRequest.setStatus("CREATED");
-            paymentRequest.setProvider((quote.getAppliedCoupon() != null ? paymentMethod + ":" + quote.getAppliedCoupon() : paymentMethod));
+            paymentRequest.setProvider(quote.getAppliedCoupon() != null ? paymentMethod + ":" + quote.getAppliedCoupon() : paymentMethod);
             gatewayClient.createPayment(paymentRequest);
 
             ShipmentRequest shipmentRequest = new ShipmentRequest();
@@ -364,10 +443,101 @@ public class StorefrontController {
         }
     }
 
+    private String checkoutConfirmGuest(CheckoutForm checkoutForm, HttpSession session) {
+        CartSummary summary = buildGuestCartSummary(session);
+        if (summary.items().isEmpty()) {
+            return "redirect:/cart";
+        }
+
+        if (!isGuestCheckoutFormValid(checkoutForm)) {
+            return "redirect:/checkout";
+        }
+
+        String shippingMethod = normalizeShippingMethod(checkoutForm.getShippingMethod());
+        String paymentMethod = normalizePaymentMethod(checkoutForm.getPaymentMethod());
+
+        BigDecimal shippingCost = shippingMethods().get(shippingMethod);
+        PriceQuoteRequest quoteRequest = new PriceQuoteRequest();
+        quoteRequest.setSubtotal(summary.subtotal());
+        quoteRequest.setShipping(shippingCost);
+        quoteRequest.setCouponCode(checkoutForm.getCouponCode());
+        PriceQuoteResponse quote = gatewayClient.quote(quoteRequest);
+
+        BigDecimal total = quote.getTotal() != null ? quote.getTotal() : summary.subtotal().add(shippingCost);
+
+        try {
+            Long guestCustomerId = ensureGuestCustomer(checkoutForm, session);
+            createGuestAddress(guestCustomerId, checkoutForm);
+
+            OrderRequest orderRequest = new OrderRequest();
+            orderRequest.setCustomerId(guestCustomerId);
+            orderRequest.setCurrency(currency);
+            orderRequest.setTotal(total);
+            orderRequest.setStatus("PENDING_PAYMENT");
+            Order order = gatewayClient.createOrder(orderRequest);
+
+            for (CartItemView item : summary.items()) {
+                Product product = gatewayClient.getProductSafe(item.getProductId()).orElse(null);
+                OrderItemRequest request = new OrderItemRequest();
+                request.setProductId(item.getProductId());
+                request.setSku(product != null ? product.getSku() : "N/A");
+                request.setName(product != null ? product.getName() : item.getProductName());
+                request.setQuantity(item.getQuantity());
+                request.setUnitPrice(item.getUnitPrice());
+                gatewayClient.addOrderItem(order.getId(), request);
+            }
+
+            PaymentRequest paymentRequest = new PaymentRequest();
+            paymentRequest.setOrderId(order.getId());
+            paymentRequest.setAmount(total);
+            paymentRequest.setCurrency(currency);
+            paymentRequest.setStatus("CREATED");
+            paymentRequest.setProvider(quote.getAppliedCoupon() != null ? paymentMethod + ":" + quote.getAppliedCoupon() : paymentMethod);
+            gatewayClient.createPayment(paymentRequest);
+
+            ShipmentRequest shipmentRequest = new ShipmentRequest();
+            shipmentRequest.setOrderId(order.getId());
+            shipmentRequest.setCarrier(shippingMethod.startsWith("pickup") ? "PICKUP" : "FLAT_RATE");
+            shipmentRequest.setTrackingNumber("INIT-" + order.getId() + "-" + OffsetDateTime.now().toEpochSecond());
+            shipmentRequest.setStatus("CREATED");
+            gatewayClient.createShipment(shipmentRequest);
+
+            saveGuestOrderSummary(session, order, summary.items());
+            clearGuestCart(session);
+            return "redirect:/checkout/success?orderId=" + order.getId();
+        } catch (Exception ex) {
+            logger.warn("Guest checkout flow failed: {}", ex.getMessage());
+            return "redirect:/checkout?error=processing";
+        }
+    }
+
     @GetMapping("/checkout/success")
-    public String checkoutSuccess(@RequestParam(required = false) Long orderId, Model model, Authentication authentication) {
+    public String checkoutSuccess(@RequestParam(required = false) Long orderId, Model model, Authentication authentication, HttpSession session) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
-        if (customerId == null || orderId == null) {
+        if (customerId == null) {
+            GuestOrderSummary guestSummary = readGuestOrderSummary(session);
+            if (guestSummary == null) {
+                return "redirect:/shop";
+            }
+            if (orderId != null && !orderId.equals(guestSummary.orderId())) {
+                return "redirect:/shop";
+            }
+
+            Order order = new Order();
+            order.setId(guestSummary.orderId());
+            order.setTotal(guestSummary.total());
+            order.setStatus(guestSummary.status());
+            order.setCurrency(currency);
+
+            model.addAttribute("order", order);
+            model.addAttribute("orderItems", toOrderItems(guestSummary.orderId(), guestSummary.items()));
+            model.addAttribute("payments", List.of());
+            model.addAttribute("shipments", List.of());
+            model.addAttribute("guestCheckout", true);
+            return "checkout/success";
+        }
+
+        if (orderId == null) {
             return "redirect:/account/orders";
         }
 
@@ -381,6 +551,7 @@ public class StorefrontController {
         model.addAttribute("orderItems", gatewayClient.listOrderItems(orderId));
         model.addAttribute("payments", gatewayClient.listPayments(orderId));
         model.addAttribute("shipments", gatewayClient.listShipments(orderId));
+        model.addAttribute("guestCheckout", false);
         return "checkout/success";
     }
 
@@ -458,8 +629,6 @@ public class StorefrontController {
         return "redirect:/account/addresses";
     }
 
-
-
     @GetMapping("/account/returns")
     public String accountReturns(Model model, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
@@ -488,6 +657,7 @@ public class StorefrontController {
         gatewayClient.createReturn(returnForm);
         return "redirect:/account/returns";
     }
+
     @GetMapping("/account/wishlist")
     public String wishlist(Model model, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
@@ -549,6 +719,35 @@ public class StorefrontController {
         return gatewayClient.createCart(request);
     }
 
+    private void mergeGuestCartIntoCustomerIfPresent(Long customerId, HttpSession session) {
+        Map<Long, Integer> guestItems = getGuestCartItems(session);
+        if (guestItems.isEmpty()) {
+            return;
+        }
+
+        Cart cart = resolveOrCreateCart(customerId);
+        for (Map.Entry<Long, Integer> entry : guestItems.entrySet()) {
+            Long productId = entry.getKey();
+            Integer quantity = entry.getValue();
+            if (productId == null || quantity == null || quantity <= 0) {
+                continue;
+            }
+
+            Product product = gatewayClient.getProductSafe(productId).orElse(null);
+            if (product == null) {
+                continue;
+            }
+
+            CartItemRequest request = new CartItemRequest();
+            request.setProductId(productId);
+            request.setQuantity(quantity);
+            request.setUnitPrice(product.getPrice() != null ? product.getPrice() : BigDecimal.ZERO);
+            gatewayClient.addCartItem(cart.getId(), request);
+        }
+
+        clearGuestCart(session);
+    }
+
     private CartSummary buildCartSummary(Cart cart) {
         List<CartItem> cartItems = gatewayClient.listCartItems(cart.getId());
         List<CartItemView> items = new ArrayList<>();
@@ -578,6 +777,42 @@ public class StorefrontController {
         return new CartSummary(items, subtotal, shipping, total);
     }
 
+    private CartSummary buildGuestCartSummary(HttpSession session) {
+        return buildGuestCartSummary(getGuestCartItems(session));
+    }
+
+    private CartSummary buildGuestCartSummary(Map<Long, Integer> guestCart) {
+        List<CartItemView> items = new LinkedList<>();
+
+        for (Map.Entry<Long, Integer> entry : guestCart.entrySet()) {
+            Long productId = entry.getKey();
+            int quantity = entry.getValue() != null && entry.getValue() > 0 ? entry.getValue() : 1;
+            Product product = gatewayClient.getProductSafe(productId).orElse(null);
+            if (product == null) {
+                continue;
+            }
+
+            BigDecimal unitPrice = product.getPrice() != null ? product.getPrice() : BigDecimal.ZERO;
+            CartItemView item = new CartItemView();
+            item.setId(productId);
+            item.setProductId(productId);
+            item.setProductName(product.getName() != null ? product.getName() : "Product #" + productId);
+            item.setQuantity(quantity);
+            item.setUnitPrice(unitPrice);
+            item.setLineTotal(unitPrice.multiply(BigDecimal.valueOf(quantity)));
+            items.add(item);
+        }
+
+        BigDecimal subtotal = items.stream()
+            .map(CartItemView::getLineTotal)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal shipping = items.isEmpty() ? BigDecimal.ZERO : shippingMethods().get(SHIPPING_FLAT);
+        BigDecimal total = subtotal.add(shipping);
+
+        return new CartSummary(items, subtotal, shipping, total);
+    }
+
     private BigDecimal calculateSubtotal(List<CartItem> cartItems) {
         return cartItems.stream()
             .map(item -> {
@@ -593,6 +828,157 @@ public class StorefrontController {
         model.addAttribute("subtotal", BigDecimal.ZERO);
         model.addAttribute("shipping", BigDecimal.ZERO);
         model.addAttribute("total", BigDecimal.ZERO);
+    }
+
+    private void applyCartModel(Model model, CartSummary summary) {
+        model.addAttribute("items", summary.items());
+        model.addAttribute("subtotal", summary.subtotal());
+        model.addAttribute("shipping", summary.shipping());
+        model.addAttribute("total", summary.total());
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<Long, Integer> getGuestCartItems(HttpSession session) {
+        Object raw = session.getAttribute(GUEST_CART_SESSION_KEY);
+        if (raw instanceof Map<?, ?> map) {
+            Map<Long, Integer> normalized = new LinkedHashMap<>();
+            for (Map.Entry<?, ?> entry : map.entrySet()) {
+                Long productId = asLong(entry.getKey());
+                Integer quantity = asInteger(entry.getValue());
+                if (productId != null && quantity != null && quantity > 0) {
+                    normalized.put(productId, quantity);
+                }
+            }
+            session.setAttribute(GUEST_CART_SESSION_KEY, normalized);
+            return normalized;
+        }
+
+        Map<Long, Integer> empty = new LinkedHashMap<>();
+        session.setAttribute(GUEST_CART_SESSION_KEY, empty);
+        return empty;
+    }
+
+    private void addGuestCartItem(HttpSession session, Long productId, int quantity) {
+        Map<Long, Integer> guestCart = getGuestCartItems(session);
+        guestCart.put(productId, guestCart.getOrDefault(productId, 0) + quantity);
+        session.setAttribute(GUEST_CART_SESSION_KEY, guestCart);
+    }
+
+    private void updateGuestCartItemQuantity(HttpSession session, Long productId, int quantity) {
+        Map<Long, Integer> guestCart = getGuestCartItems(session);
+        if (quantity <= 0) {
+            guestCart.remove(productId);
+        } else {
+            guestCart.put(productId, quantity);
+        }
+        session.setAttribute(GUEST_CART_SESSION_KEY, guestCart);
+    }
+
+    private void removeGuestCartItem(HttpSession session, Long productId) {
+        Map<Long, Integer> guestCart = getGuestCartItems(session);
+        guestCart.remove(productId);
+        session.setAttribute(GUEST_CART_SESSION_KEY, guestCart);
+    }
+
+    private void clearGuestCart(HttpSession session) {
+        session.removeAttribute(GUEST_CART_SESSION_KEY);
+    }
+
+    private CheckoutForm guestCheckoutFormFromSession(HttpSession session) {
+        CheckoutForm form = new CheckoutForm();
+        form.setShippingMethod(SHIPPING_FLAT);
+        form.setPaymentMethod(PAYMENT_COD);
+        form.setCouponCode("");
+        String previousEmail = asString(session.getAttribute(GUEST_CUSTOMER_EMAIL_SESSION_KEY));
+        if (previousEmail != null) {
+            form.setGuestEmail(previousEmail);
+        }
+        return form;
+    }
+
+    private boolean isGuestCheckoutFormValid(CheckoutForm form) {
+        return !isBlank(form.getGuestEmail())
+            && !isBlank(form.getGuestFirstName())
+            && !isBlank(form.getGuestLastName())
+            && !isBlank(form.getGuestAddressLine1())
+            && !isBlank(form.getGuestCity())
+            && !isBlank(form.getGuestCountry())
+            && !isBlank(form.getGuestPostalCode());
+    }
+
+    private Long ensureGuestCustomer(CheckoutForm checkoutForm, HttpSession session) {
+        String requestedEmail = normalizeGuestEmail(checkoutForm.getGuestEmail());
+        Long existingCustomerId = asLong(session.getAttribute(GUEST_CUSTOMER_ID_SESSION_KEY));
+        String existingEmail = asString(session.getAttribute(GUEST_CUSTOMER_EMAIL_SESSION_KEY));
+        if (existingCustomerId != null && existingEmail != null && requestedEmail.equalsIgnoreCase(existingEmail)) {
+            return existingCustomerId;
+        }
+
+        CustomerRequest request = new CustomerRequest();
+        request.setKeycloakUserId(null);
+        request.setEmail(requestedEmail);
+        request.setFirstName(checkoutForm.getGuestFirstName().trim());
+        request.setLastName(checkoutForm.getGuestLastName().trim());
+        request.setPhone(safeTrim(checkoutForm.getGuestPhone()));
+        request.setNewsletter(false);
+        request.setActive(true);
+
+        Customer created = gatewayClient.createCustomer(request);
+        if (created == null || created.getId() == null) {
+            throw new IllegalStateException("Unable to create or resolve guest customer");
+        }
+
+        session.setAttribute(GUEST_CUSTOMER_ID_SESSION_KEY, created.getId());
+        session.setAttribute(GUEST_CUSTOMER_EMAIL_SESSION_KEY, requestedEmail);
+        return created.getId();
+    }
+
+    private void createGuestAddress(Long customerId, CheckoutForm checkoutForm) {
+        AddressRequest addressRequest = new AddressRequest();
+        addressRequest.setLine1(checkoutForm.getGuestAddressLine1().trim());
+        addressRequest.setLine2(safeTrim(checkoutForm.getGuestAddressLine2()));
+        addressRequest.setCity(checkoutForm.getGuestCity().trim());
+        addressRequest.setRegion(safeTrim(checkoutForm.getGuestRegion()));
+        addressRequest.setCountry(checkoutForm.getGuestCountry().trim());
+        addressRequest.setPostalCode(checkoutForm.getGuestPostalCode().trim());
+        addressRequest.setIsDefault(true);
+        gatewayClient.createCustomerAddress(customerId, addressRequest);
+    }
+
+    private void saveGuestOrderSummary(HttpSession session, Order order, List<CartItemView> items) {
+        List<CartItemView> copy = items.stream().map(item -> {
+            CartItemView cloned = new CartItemView();
+            cloned.setId(item.getId());
+            cloned.setProductId(item.getProductId());
+            cloned.setProductName(item.getProductName());
+            cloned.setQuantity(item.getQuantity());
+            cloned.setUnitPrice(item.getUnitPrice());
+            cloned.setLineTotal(item.getLineTotal());
+            return cloned;
+        }).collect(Collectors.toList());
+
+        GuestOrderSummary summary = new GuestOrderSummary(order.getId(), order.getTotal(), order.getStatus(), copy);
+        session.setAttribute(GUEST_ORDER_SUMMARY_SESSION_KEY, summary);
+    }
+
+    private GuestOrderSummary readGuestOrderSummary(HttpSession session) {
+        Object raw = session.getAttribute(GUEST_ORDER_SUMMARY_SESSION_KEY);
+        return raw instanceof GuestOrderSummary summary ? summary : null;
+    }
+
+    private List<OrderItem> toOrderItems(Long orderId, List<CartItemView> items) {
+        List<OrderItem> orderItems = new ArrayList<>();
+        for (CartItemView item : items) {
+            OrderItem orderItem = new OrderItem();
+            orderItem.setOrderId(orderId);
+            orderItem.setProductId(item.getProductId());
+            orderItem.setSku("SKU-" + item.getProductId());
+            orderItem.setName(item.getProductName());
+            orderItem.setQuantity(item.getQuantity());
+            orderItem.setUnitPrice(item.getUnitPrice());
+            orderItems.add(orderItem);
+        }
+        return orderItems;
     }
 
     private Map<String, String> sortOptions() {
@@ -627,6 +1013,64 @@ public class StorefrontController {
         return paymentMethods().containsKey(method) ? method : PAYMENT_COD;
     }
 
+    private String normalizeGuestEmail(String email) {
+        String normalized = safeTrim(email);
+        if (normalized == null || !normalized.contains("@")) {
+            throw new IllegalArgumentException("Invalid guest email");
+        }
+        return normalized.toLowerCase(Locale.ROOT);
+    }
+
+    private String safeTrim(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.isBlank();
+    }
+
+    private Long asLong(Object value) {
+        if (value instanceof Long longValue) {
+            return longValue;
+        }
+        if (value instanceof Number number) {
+            return number.longValue();
+        }
+        if (value instanceof String text) {
+            try {
+                return Long.parseLong(text);
+            } catch (NumberFormatException ignored) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    private Integer asInteger(Object value) {
+        if (value instanceof Integer intValue) {
+            return intValue;
+        }
+        if (value instanceof Number number) {
+            return number.intValue();
+        }
+        if (value instanceof String text) {
+            try {
+                return Integer.parseInt(text);
+            } catch (NumberFormatException ignored) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    private String asString(Object value) {
+        return value instanceof String text ? text : null;
+    }
+
     private boolean isAuthenticated(Authentication authentication) {
         return authentication != null
             && authentication.isAuthenticated()
@@ -637,5 +1081,8 @@ public class StorefrontController {
     }
 
     private record WishlistEntry(Product product, OffsetDateTime addedAt) {
+    }
+
+    private record GuestOrderSummary(Long orderId, BigDecimal total, String status, List<CartItemView> items) {
     }
 }

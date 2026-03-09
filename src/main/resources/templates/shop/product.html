@@ -32,7 +32,7 @@
         </div>
         <div class="product-buy">
             <p class="price" th:text="${product.price}">0.00</p>
-            <form th:action="@{/cart/add}" method="post" class="buy-form" sec:authorize="isAuthenticated()">
+            <form th:action="@{/cart/add}" method="post" class="buy-form">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                 <input type="hidden" name="productId" th:value="${product.id}" />
                 <label>Quantità</label>
@@ -49,8 +49,8 @@
                 <input type="hidden" name="productId" th:value="${product.id}" />
                 <button class="btn" type="submit">Confronta prodotto</button>
             </form>
-            <a class="btn" th:href="@{/cart}" sec:authorize="isAuthenticated()">Vai al carrello</a>
-            <a class="btn" th:href="@{/oauth2/authorization/keycloak}" sec:authorize="!isAuthenticated()">Login per acquistare</a>
+            <a class="btn" th:href="@{/cart}">Vai al carrello</a>
+            <a class="btn" th:href="@{/oauth2/authorization/keycloak}" sec:authorize="!isAuthenticated()">Login (opzionale)</a>
         </div>
     </div>
 

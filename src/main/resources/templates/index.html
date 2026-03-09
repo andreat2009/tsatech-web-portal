@@ -75,7 +75,7 @@
                         </p>
                     </div>
                     <div class="button">
-                        <form th:action="@{/cart/add}" method="post" sec:authorize="isAuthenticated()">
+                        <form th:action="@{/cart/add}" method="post">
                             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                             <input type="hidden" name="productId" th:value="${product.id}" />
                             <input type="hidden" name="quantity" value="1" />

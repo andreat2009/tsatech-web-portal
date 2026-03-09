@@ -29,7 +29,7 @@
         <div>
             <h2>Nuovo indirizzo</h2>
             <form class="form" th:action="@{/account/addresses}" method="post" th:object="${addressForm}">
-                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                 <div class="field">
                     <label>Indirizzo riga 1</label>
                     <input th:field="*{line1}" required />

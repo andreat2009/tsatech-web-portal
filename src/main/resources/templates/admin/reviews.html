@@ -40,12 +40,12 @@
             <td th:text="${review.approved} ? 'APPROVATA' : 'IN ATTESA'">STATE</td>
             <td class="actions">
                 <form th:if="${!review.approved}" th:action="@{/admin/reviews/{id}/approve(id=${review.id})}" method="post">
-                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                     <input type="hidden" name="approved" value="true" />
                     <button class="btn btn-primary" type="submit">Approva</button>
                 </form>
                 <form th:if="${review.approved}" th:action="@{/admin/reviews/{id}/approve(id=${review.id})}" method="post">
-                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                     <input type="hidden" name="approved" value="false" />
                     <button class="btn" type="submit">Disapprova</button>
                 </form>

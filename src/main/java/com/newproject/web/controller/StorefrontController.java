@@ -109,13 +109,21 @@ public class StorefrontController {
         return "index";
     }
 
-    @GetMapping({"/shop/products/{id}", "/shop/prodotto/{id}-{slug}", "/catalogo/prodotto/{id}-{slug}"})
+    @GetMapping({
+        "/shop/products/{id}",
+        "/shop/prodotto/{id:\\d+}-{slug}",
+        "/catalogo/prodotto/{id:\\d+}-{slug}",
+        "/catalogo/prodotto/{id}"
+    })
     public String product(@PathVariable Long id, @PathVariable(required = false) String slug, Model model, Authentication authentication) {
         Optional<Product> productOpt = gatewayClient.getProductSafe(id);
         if (productOpt.isEmpty()) {
             return "redirect:/catalogo";
         }
         Product product = productOpt.get();
+        if (slug == null || !product.getSeoSlug().equals(slug)) {
+            return "redirect:" + product.getSeoPath();
+        }
         List<ProductReview> reviews = gatewayClient.listProductReviews(id).stream()
             .filter(review -> Boolean.TRUE.equals(review.getApproved()))
             .collect(Collectors.toList());
@@ -141,7 +149,12 @@ public class StorefrontController {
         return "shop/product";
     }
 
-    @PostMapping({"/shop/products/{id}/reviews", "/shop/prodotto/{id}-{slug}/recensioni", "/catalogo/prodotto/{id}-{slug}/recensioni"})
+    @PostMapping({
+        "/shop/products/{id}/reviews",
+        "/shop/prodotto/{id:\\d+}-{slug}/recensioni",
+        "/catalogo/prodotto/{id:\\d+}-{slug}/recensioni",
+        "/catalogo/prodotto/{id}/recensioni"
+    })
     public String addReview(@PathVariable Long id, @PathVariable(required = false) String slug, @ModelAttribute ProductReviewRequest reviewForm, Authentication authentication) {
         if (!isAuthenticated(authentication)) {
             return "redirect:/oauth2/authorization/keycloak";

@@ -113,7 +113,7 @@ public class StorefrontController {
         "/shop/products/{id}",
         "/shop/prodotto/{id:\\d+}-{slug}",
         "/catalogo/prodotto/{id:\\d+}-{slug}",
-        "/catalogo/prodotto/{id}"
+        "/catalogo/prodotto/{id:\\d+}"
     })
     public String product(@PathVariable Long id, @PathVariable(required = false) String slug, Model model, Authentication authentication) {
         Optional<Product> productOpt = gatewayClient.getProductSafe(id);
@@ -153,7 +153,7 @@ public class StorefrontController {
         "/shop/products/{id}/reviews",
         "/shop/prodotto/{id:\\d+}-{slug}/recensioni",
         "/catalogo/prodotto/{id:\\d+}-{slug}/recensioni",
-        "/catalogo/prodotto/{id}/recensioni"
+        "/catalogo/prodotto/{id:\\d+}/recensioni"
     })
     public String addReview(@PathVariable Long id, @PathVariable(required = false) String slug, @ModelAttribute ProductReviewRequest reviewForm, Authentication authentication) {
         if (!isAuthenticated(authentication)) {

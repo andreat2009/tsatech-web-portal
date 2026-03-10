@@ -20,7 +20,7 @@
     <section class="order-meta card-lite">
         <div><strong>Stato:</strong> <span th:text="${order.status}">NEW</span></div>
         <div><strong>Data:</strong> <span th:text="${order.createdAt}">-</span></div>
-        <div><strong>Totale:</strong> <span th:text="${order.total}">0.00</span></div>
+        <div><strong>Totale:</strong> <span th:text="${order.total != null ? #numbers.formatDecimal(order.total, 1, 'POINT', 2, 'POINT') : '0.00'}">0.00</span></div>
     </section>
 
     <section>
@@ -39,7 +39,7 @@
                 <td th:text="${item.sku}">SKU</td>
                 <td th:text="${item.name}">Name</td>
                 <td th:text="${item.quantity}">1</td>
-                <td th:text="${item.unitPrice}">0.00</td>
+                <td th:text="${item.unitPrice != null ? #numbers.formatDecimal(item.unitPrice, 1, 'POINT', 2, 'POINT') : '0.00'}">0.00</td>
             </tr>
             </tbody>
         </table>

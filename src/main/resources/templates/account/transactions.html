@@ -20,7 +20,7 @@
                 <td th:text="${tx.createdAt}">2026-01-01</td>
                 <td th:text="${tx.description}">Rimborso</td>
                 <td th:text="${tx.orderId}">1</td>
-                <td th:text="${tx.amount}">0.00</td>
+                <td th:text="${tx.amount != null ? #numbers.formatDecimal(tx.amount, 1, 'POINT', 2, 'POINT') : '0.00'}">0.00</td>
             </tr>
             <tr th:if="${#lists.isEmpty(transactions)}"><td colspan="4">Nessuna transazione.</td></tr>
             </tbody>

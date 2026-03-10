@@ -32,7 +32,7 @@
                 <tr th:each="p : ${products}">
                     <td><a th:href="${p.seoPath}" th:text="${p.name}">Prodotto</a></td>
                     <td th:text="${p.sku}">SKU</td>
-                    <td th:text="${p.price}">0.00</td>
+                    <td th:text="${p.price != null ? #numbers.formatDecimal(p.price, 1, 'POINT', 2, 'POINT') : '0.00'}">0.00</td>
                     <td th:text="${p.quantity}">0</td>
                     <td>
                         <form method="post" th:action="@{/catalogo/confronta/{id}/rimuovi(id=${p.id})}">

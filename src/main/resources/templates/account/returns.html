@@ -48,7 +48,7 @@
                     <label>Ordine</label>
                     <select th:field="*{orderId}" required>
                         <option value="">Seleziona ordine</option>
-                        <option th:each="order : ${orders}" th:value="${order.id}" th:text="${'Ordine #' + order.id + ' - ' + order.total}">Order</option>
+                        <option th:each="order : ${orders}" th:value="${order.id}" th:text="${'Ordine #' + order.id + ' - ' + (order.total != null ? #numbers.formatDecimal(order.total, 1, 'POINT', 2, 'POINT') : '0.00')}">Order</option>
                     </select>
                 </div>
                 <div class="field">

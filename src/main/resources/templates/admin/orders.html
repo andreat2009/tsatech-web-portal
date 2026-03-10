@@ -25,7 +25,7 @@
                 <td th:text="${order.id}">1</td>
                 <td th:text="${order.customerId}">1</td>
                 <td th:text="${order.createdAt}">-</td>
-                <td th:text="${order.total}">0.00</td>
+                <td th:text="${order.total != null ? #numbers.formatDecimal(order.total, 1, 'POINT', 2, 'POINT') : '0.00'}">0.00</td>
                 <td th:text="${order.status}">NEW</td>
             </tr>
         </tbody>

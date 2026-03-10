@@ -30,7 +30,7 @@
             <td>
                 <a th:href="${entry.product.seoPath}" th:text="${entry.product.name}">Prodotto</a>
             </td>
-            <td th:text="${entry.product.price}">0.00</td>
+            <td th:text="${entry.product.price != null ? #numbers.formatDecimal(entry.product.price, 1, 'POINT', 2, 'POINT') : '0.00'}">0.00</td>
             <td th:text="${entry.addedAt}">-</td>
             <td class="actions">
                 <form th:action="@{/cart/add}" method="post">

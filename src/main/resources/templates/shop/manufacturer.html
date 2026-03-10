@@ -36,7 +36,7 @@
                 </div>
                 <h3><a th:href="${p.seoPath}" th:text="${p.name}">Prodotto</a></h3>
                 <p th:text="${p.description}">Descrizione</p>
-                <p><strong th:text="${p.price}">0.00</strong></p>
+                <p><strong th:text="${p.price != null ? #numbers.formatDecimal(p.price, 1, 'POINT', 2, 'POINT') : '0.00'}">0.00</strong></p>
                 <form method="post" th:action="@{/cart/add}">
                     <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                     <input type="hidden" name="productId" th:value="${p.id}" />

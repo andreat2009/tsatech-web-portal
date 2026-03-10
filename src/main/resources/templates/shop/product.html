@@ -48,7 +48,7 @@
             </div>
         </div>
         <div class="product-buy">
-            <p class="price" th:text="${product.price}">0.00</p>
+            <p class="price" th:text="${product.price != null ? #numbers.formatDecimal(product.price, 1, 'POINT', 2, 'POINT') : '0.00'}">0.00</p>
             <form th:action="@{/cart/add}" method="post" class="buy-form">
                 <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                 <input type="hidden" name="productId" th:value="${product.id}" />

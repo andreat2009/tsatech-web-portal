@@ -41,8 +41,8 @@
                             <button class="btn" type="submit">Aggiorna</button>
                         </form>
                     </td>
-                    <td th:text="${item.unitPrice}">0.00</td>
-                    <td th:text="${item.lineTotal}">0.00</td>
+                    <td th:text="${item.unitPrice != null ? #numbers.formatDecimal(item.unitPrice, 1, 'POINT', 2, 'POINT') : '0.00'}">0.00</td>
+                    <td th:text="${item.lineTotal != null ? #numbers.formatDecimal(item.lineTotal, 1, 'POINT', 2, 'POINT') : '0.00'}">0.00</td>
                     <td>
                         <form th:action="@{/cart/items/{id}/delete(id=${item.id})}" method="post">
                             <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
@@ -58,15 +58,15 @@
         <div class="summary-grid">
             <div class="summary-row">
                 <span>Subtotale</span>
-                <strong th:text="${subtotal}">0.00</strong>
+                <strong th:text="${subtotal != null ? #numbers.formatDecimal(subtotal, 1, 'POINT', 2, 'POINT') : '0.00'}">0.00</strong>
             </div>
             <div class="summary-row">
                 <span>Spedizione stimata</span>
-                <strong th:text="${shipping}">0.00</strong>
+                <strong th:text="${shipping != null ? #numbers.formatDecimal(shipping, 1, 'POINT', 2, 'POINT') : '0.00'}">0.00</strong>
             </div>
             <div class="summary-row total">
                 <span>Totale</span>
-                <strong th:text="${total}">0.00</strong>
+                <strong th:text="${total != null ? #numbers.formatDecimal(total, 1, 'POINT', 2, 'POINT') : '0.00'}">0.00</strong>
             </div>
         </div>
         <div class="actions-row">

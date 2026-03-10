@@ -28,7 +28,7 @@
             <tr th:each="price : ${prices}">
                 <td th:text="${price.id}">1</td>
                 <td th:text="${price.productId}">1001</td>
-                <td th:text="${price.amount}">0.00</td>
+                <td th:text="${price.amount != null ? #numbers.formatDecimal(price.amount, 1, 'POINT', 2, 'POINT') : '0.00'}">0.00</td>
                 <td th:text="${price.currency}">EUR</td>
                 <td th:text="${price.active}">true</td>
                 <td th:text="${price.updatedAt}">-</td>

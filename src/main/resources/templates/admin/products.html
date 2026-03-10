@@ -43,7 +43,7 @@
                     <td>
                         <a th:href="${product.seoPath}" th:text="${product.name}" target="_blank" rel="noopener">Name</a>
                     </td>
-                    <td th:text="${product.price}">0.00</td>
+                    <td th:text="${product.price != null ? #numbers.formatDecimal(product.price, 1, 'POINT', 2, 'POINT') : '0.00'}">0.00</td>
                     <td th:text="${product.quantity}">0</td>
                     <td>
                         <span class="badge" th:classappend="${product.active} ? ' badge-success' : ' badge-muted'"

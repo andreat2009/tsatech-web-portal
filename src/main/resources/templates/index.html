@@ -76,7 +76,7 @@
                             <a th:href="${product.seoPath}" th:text="${product.name}">Product</a>
                         </h4>
                         <p class="desc" th:text="${product.description}">Description</p>
-                        <p class="price" th:text="${product.price}">0.00</p>
+                        <p class="price" th:text="${product.price != null ? #numbers.formatDecimal(product.price, 1, 'POINT', 2, 'POINT') : '0.00'}">0.00</p>
                         <p class="price-tax"
                            th:text="${product.quantity != null} ? 'Disponibili: ' + product.quantity : 'Disponibilita: n/d'">
                             Disponibili: 0

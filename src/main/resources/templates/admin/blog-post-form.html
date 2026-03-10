@@ -12,12 +12,38 @@
     <section class="form section-pad centered-form">
         <h1 th:text="${formTitle}">Form blog</h1>
         <form method="post" th:action="${formAction}" th:object="${postForm}">
-            <div class="field"><label>Titolo</label><input type="text" th:field="*{title}" /></div>
             <div class="field"><label>Slug</label><input type="text" th:field="*{slug}" /></div>
             <div class="field"><label>Autore</label><input type="text" th:field="*{author}" /></div>
-            <div class="field"><label>Estratto</label><textarea th:field="*{excerpt}" rows="3"></textarea></div>
-            <div class="field"><label>Contenuto</label><textarea th:field="*{content}" rows="10"></textarea></div>
             <div class="field"><label><input type="checkbox" th:field="*{active}" /> Attivo</label></div>
+
+            <section class="translation-section">
+                <h2>Contenuti multilingua</h2>
+                <div class="translation-grid">
+                    <div class="translation-card" th:each="lang : ${languageOptions}">
+                        <h3><span class="lang-flag" th:text="${lang.flag}">IT</span> <span th:text="${lang.label}">Italiano</span></h3>
+                        <div class="field">
+                            <label>Titolo</label>
+                            <input type="text"
+                                   th:name="${'translations[' + lang.code + '].title'}"
+                                   th:value="${postForm.translations != null and postForm.translations[lang.code] != null ? postForm.translations[lang.code].title : ''}"
+                                   th:required="${lang.code == 'it'}" />
+                        </div>
+                        <div class="field">
+                            <label>Estratto</label>
+                            <textarea rows="3"
+                                      th:name="${'translations[' + lang.code + '].excerpt'}"
+                                      th:text="${postForm.translations != null and postForm.translations[lang.code] != null ? postForm.translations[lang.code].excerpt : ''}"></textarea>
+                        </div>
+                        <div class="field">
+                            <label>Contenuto</label>
+                            <textarea rows="8"
+                                      th:name="${'translations[' + lang.code + '].content'}"
+                                      th:text="${postForm.translations != null and postForm.translations[lang.code] != null ? postForm.translations[lang.code].content : ''}"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <button class="btn btn-primary" type="submit">Salva</button>
             <a class="btn" th:href="@{/admin/blog/posts}">Annulla</a>
         </form>

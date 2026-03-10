@@ -1,8 +1,15 @@
 package com.newproject.web.controller;
 
-import com.newproject.web.dto.*;
+import com.newproject.web.dto.BlogPost;
+import com.newproject.web.dto.BlogPostRequest;
+import com.newproject.web.dto.InformationPage;
+import com.newproject.web.dto.InformationRequest;
+import com.newproject.web.dto.LocalizedContent;
+import com.newproject.web.i18n.LanguageSupport;
 import com.newproject.web.service.GatewayClient;
 import java.time.OffsetDateTime;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -27,6 +34,7 @@ public class AdminCmsController {
         InformationRequest form = new InformationRequest();
         form.setActive(true);
         form.setSortOrder(0);
+        form.setTranslations(ensureInformationTranslations(null, null));
         model.addAttribute("pageForm", form);
         model.addAttribute("formAction", "/admin/information");
         model.addAttribute("formTitle", "Nuova pagina informativa");
@@ -52,6 +60,7 @@ public class AdminCmsController {
         form.setContent(page.getContent());
         form.setSortOrder(page.getSortOrder());
         form.setActive(page.getActive());
+        form.setTranslations(ensureInformationTranslations(page.getTranslations(), page));
 
         model.addAttribute("pageForm", form);
         model.addAttribute("formAction", "/admin/information/" + id);
@@ -83,6 +92,7 @@ public class AdminCmsController {
         BlogPostRequest form = new BlogPostRequest();
         form.setActive(true);
         form.setPublishedAt(OffsetDateTime.now());
+        form.setTranslations(ensureBlogTranslations(null, null));
         model.addAttribute("postForm", form);
         model.addAttribute("formAction", "/admin/blog/posts");
         model.addAttribute("formTitle", "Nuovo articolo");
@@ -111,6 +121,7 @@ public class AdminCmsController {
         form.setAuthor(post.getAuthor());
         form.setPublishedAt(post.getPublishedAt());
         form.setActive(post.getActive());
+        form.setTranslations(ensureBlogTranslations(post.getTranslations(), post));
 
         model.addAttribute("postForm", form);
         model.addAttribute("formAction", "/admin/blog/posts/" + id);
@@ -164,6 +175,19 @@ public class AdminCmsController {
         if (form.getActive() == null) {
             form.setActive(true);
         }
+
+        form.setTranslations(ensureInformationTranslations(form.getTranslations(), null));
+        LocalizedContent italian = form.getTranslations().get(LanguageSupport.DEFAULT_LANGUAGE);
+        form.setTitle(firstNonBlank(
+            italian != null ? italian.getTitle() : null,
+            form.getTitle(),
+            "Pagina"
+        ));
+        form.setContent(firstNonBlank(
+            italian != null ? italian.getContent() : null,
+            form.getContent(),
+            ""
+        ));
     }
 
     private void normalizePost(BlogPostRequest form) {
@@ -173,5 +197,66 @@ public class AdminCmsController {
         if (form.getPublishedAt() == null) {
             form.setPublishedAt(OffsetDateTime.now());
         }
+
+        form.setTranslations(ensureBlogTranslations(form.getTranslations(), null));
+        LocalizedContent italian = form.getTranslations().get(LanguageSupport.DEFAULT_LANGUAGE);
+        form.setTitle(firstNonBlank(
+            italian != null ? italian.getTitle() : null,
+            form.getTitle(),
+            "Articolo"
+        ));
+        form.setExcerpt(firstNonBlank(
+            italian != null ? italian.getExcerpt() : null,
+            form.getExcerpt(),
+            ""
+        ));
+        form.setContent(firstNonBlank(
+            italian != null ? italian.getContent() : null,
+            form.getContent(),
+            ""
+        ));
+    }
+
+    private Map<String, LocalizedContent> ensureInformationTranslations(Map<String, LocalizedContent> input, InformationPage sourcePage) {
+        Map<String, LocalizedContent> normalized = new LinkedHashMap<>();
+        String fallbackTitle = sourcePage != null ? sourcePage.getTitle() : null;
+        String fallbackContent = sourcePage != null ? sourcePage.getContent() : null;
+
+        for (String language : LanguageSupport.SUPPORTED_LANGUAGES) {
+            LocalizedContent src = input != null ? input.get(language) : null;
+            LocalizedContent content = new LocalizedContent();
+            content.setTitle(firstNonBlank(src != null ? src.getTitle() : null, fallbackTitle, ""));
+            content.setContent(firstNonBlank(src != null ? src.getContent() : null, fallbackContent, ""));
+            normalized.put(language, content);
+        }
+
+        return normalized;
+    }
+
+    private Map<String, LocalizedContent> ensureBlogTranslations(Map<String, LocalizedContent> input, BlogPost sourcePost) {
+        Map<String, LocalizedContent> normalized = new LinkedHashMap<>();
+        String fallbackTitle = sourcePost != null ? sourcePost.getTitle() : null;
+        String fallbackExcerpt = sourcePost != null ? sourcePost.getExcerpt() : null;
+        String fallbackContent = sourcePost != null ? sourcePost.getContent() : null;
+
+        for (String language : LanguageSupport.SUPPORTED_LANGUAGES) {
+            LocalizedContent src = input != null ? input.get(language) : null;
+            LocalizedContent content = new LocalizedContent();
+            content.setTitle(firstNonBlank(src != null ? src.getTitle() : null, fallbackTitle, ""));
+            content.setExcerpt(firstNonBlank(src != null ? src.getExcerpt() : null, fallbackExcerpt, ""));
+            content.setContent(firstNonBlank(src != null ? src.getContent() : null, fallbackContent, ""));
+            normalized.put(language, content);
+        }
+
+        return normalized;
+    }
+
+    private String firstNonBlank(String... values) {
+        for (String value : values) {
+            if (value != null && !value.isBlank()) {
+                return value;
+            }
+        }
+        return "";
     }
 }

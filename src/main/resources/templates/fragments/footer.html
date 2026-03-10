@@ -2,34 +2,34 @@
     <div class="container">
         <div class="footer-grid">
             <div>
-                <h5>Informazioni</h5>
+                <h5 th:text="#{footer.info}">Informazioni</h5>
                 <ul>
-                    <li><a th:href="@{/catalogo}">Catalogo</a></li>
-                    <li><a th:href="@{/catalogo/offerte}">Offerte</a></li>
-                    <li><a th:href="@{/news}">Blog</a></li>
-                    <li><a th:href="@{/mappa-sito}">Sitemap</a></li>
+                    <li><a th:href="@{/catalogo}" th:text="#{menu.catalog}">Catalogo</a></li>
+                    <li><a th:href="@{/catalogo/offerte}" th:text="#{menu.specials}">Offerte</a></li>
+                    <li><a th:href="@{/news}" th:text="#{menu.blog}">Blog</a></li>
+                    <li><a th:href="@{/mappa-sito}" th:text="#{menu.sitemap}">Sitemap</a></li>
                 </ul>
             </div>
             <div>
-                <h5>Servizi</h5>
+                <h5 th:text="#{footer.services}">Servizi</h5>
                 <ul>
-                    <li><a th:href="@{/carrello}">Carrello</a></li>
-                    <li><a th:href="@{/checkout-rapido}">Checkout</a></li>
-                    <li><a th:href="@{/catalogo/confronta}">Confronta</a></li>
-                    <li><a th:href="@{/contatti}">Contattaci</a></li>
+                    <li><a th:href="@{/carrello}" th:text="#{header.cart}">Carrello</a></li>
+                    <li><a th:href="@{/checkout-rapido}" th:text="#{header.checkout}">Checkout</a></li>
+                    <li><a th:href="@{/catalogo/confronta}" th:text="#{header.compare}">Confronta</a></li>
+                    <li><a th:href="@{/contatti}" th:text="#{footer.contact.us}">Contattaci</a></li>
                 </ul>
             </div>
             <div>
-                <h5>Account</h5>
+                <h5 th:text="#{menu.account}">Account</h5>
                 <ul>
-                    <li><a th:href="@{/oauth2/authorization/keycloak}" sec:authorize="!isAuthenticated()">Login</a></li>
-                    <li><a th:href="@{/account}" sec:authorize="isAuthenticated()">Area account</a></li>
-                    <li><a th:href="@{/logout}" sec:authorize="isAuthenticated()">Logout</a></li>
-                    <li><a th:href="@{/admin}" sec:authorize="hasRole('ADMIN')">Amministrazione</a></li>
+                    <li><a th:href="@{/oauth2/authorization/keycloak}" sec:authorize="!isAuthenticated()" th:text="#{header.login}">Login</a></li>
+                    <li><a th:href="@{/account}" sec:authorize="isAuthenticated()" th:text="#{footer.account.area}">Area account</a></li>
+                    <li><a th:href="@{/logout}" sec:authorize="isAuthenticated()" th:text="#{header.logout}">Logout</a></li>
+                    <li><a th:href="@{/admin}" sec:authorize="hasRole('ADMIN')" th:text="#{footer.admin}">Amministrazione</a></li>
                 </ul>
             </div>
             <div>
-                <h5>Contatti</h5>
+                <h5 th:text="#{menu.contact}">Contatti</h5>
                 <ul>
                     <li><a href="mailto:support@tsatech.local">support@tsatech.local</a></li>
                     <li><span>+39 800 000 000</span></li>
@@ -37,6 +37,6 @@
             </div>
         </div>
         <hr>
-        <p class="powered">TSATech Commerce - OpenCart-like experience su Spring Boot + OpenShift</p>
+        <p class="powered" th:text="#{footer.powered}">TSATech Commerce - OpenCart-like experience su Spring Boot + OpenShift</p>
     </div>
 </footer>

@@ -1,11 +1,15 @@
 package com.newproject.web.dto;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 public class InformationRequest {
     private String title;
     private String slug;
     private String content;
     private Integer sortOrder;
     private Boolean active;
+    private Map<String, LocalizedContent> translations = new LinkedHashMap<>();
 
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
@@ -17,4 +21,6 @@ public class InformationRequest {
     public void setSortOrder(Integer sortOrder) { this.sortOrder = sortOrder; }
     public Boolean getActive() { return active; }
     public void setActive(Boolean active) { this.active = active; }
+    public Map<String, LocalizedContent> getTranslations() { return translations; }
+    public void setTranslations(Map<String, LocalizedContent> translations) { this.translations = translations; }
 }

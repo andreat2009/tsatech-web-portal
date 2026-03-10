@@ -1148,3 +1148,77 @@ h1, h2, h3 {
   padding: 8px 0;
   border-bottom: 1px solid #eee;
 }
+
+
+.lang-switcher select {
+  border: 1px solid #cfcfcf;
+  border-radius: 3px;
+  background: #fff;
+  color: #444;
+  font-size: 12px;
+  padding: 5px 8px;
+  min-width: 128px;
+}
+
+.lang-flag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  padding: 2px 6px;
+  margin-right: 6px;
+  border-radius: 12px;
+  border: 1px solid #cfe6f2;
+  background: #f4fbff;
+  color: #2a7292;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.translation-section {
+  margin-top: 18px;
+}
+
+.translation-section h2 {
+  margin: 0 0 10px;
+  font-size: 18px;
+}
+
+.translation-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.translation-card {
+  border: 1px solid var(--oc-border);
+  border-radius: 3px;
+  padding: 12px;
+  background: #fafafa;
+}
+
+.translation-card h3 {
+  margin: 0 0 10px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+@media (max-width: 900px) {
+  .top-row {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 0;
+  }
+
+  .top-links {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .translation-grid {
+    grid-template-columns: 1fr;
+  }
+}

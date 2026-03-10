@@ -1,6 +1,8 @@
 package com.newproject.web.dto;
 
 import java.time.OffsetDateTime;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class BlogPostRequest {
     private String title;
@@ -10,6 +12,7 @@ public class BlogPostRequest {
     private String author;
     private OffsetDateTime publishedAt;
     private Boolean active;
+    private Map<String, LocalizedContent> translations = new LinkedHashMap<>();
 
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
@@ -25,4 +28,6 @@ public class BlogPostRequest {
     public void setPublishedAt(OffsetDateTime publishedAt) { this.publishedAt = publishedAt; }
     public Boolean getActive() { return active; }
     public void setActive(Boolean active) { this.active = active; }
+    public Map<String, LocalizedContent> getTranslations() { return translations; }
+    public void setTranslations(Map<String, LocalizedContent> translations) { this.translations = translations; }
 }

@@ -1,11 +1,15 @@
 package com.newproject.web.dto;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 public class CategoryRequest {
     private Long parentId;
     private String name;
     private String description;
     private Boolean active;
     private Integer sortOrder;
+    private Map<String, LocalizedContent> translations = new LinkedHashMap<>();
 
     public Long getParentId() {
         return parentId;
@@ -45,5 +49,13 @@ public class CategoryRequest {
 
     public void setSortOrder(Integer sortOrder) {
         this.sortOrder = sortOrder;
+    }
+
+    public Map<String, LocalizedContent> getTranslations() {
+        return translations;
+    }
+
+    public void setTranslations(Map<String, LocalizedContent> translations) {
+        this.translations = translations;
     }
 }

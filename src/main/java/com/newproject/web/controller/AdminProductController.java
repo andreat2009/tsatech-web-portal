@@ -1,13 +1,17 @@
 package com.newproject.web.controller;
 
+import com.newproject.web.dto.LocalizedContent;
 import com.newproject.web.dto.Product;
 import com.newproject.web.dto.ProductRequest;
+import com.newproject.web.i18n.LanguageSupport;
 import com.newproject.web.service.GatewayClient;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.http.MediaType;
@@ -42,6 +46,7 @@ public class AdminProductController {
         ProductRequest product = new ProductRequest();
         product.setActive(true);
         product.setCategoryIds(new HashSet<>());
+        product.setTranslations(ensureProductTranslations(null, null));
         model.addAttribute("product", product);
         model.addAttribute("productView", null);
         model.addAttribute("categories", gatewayClient.listCategories(true));
@@ -81,6 +86,7 @@ public class AdminProductController {
         request.setImage(product.getImage());
         request.setManufacturerId(product.getManufacturerId());
         request.setCategoryIds(product.getCategoryIds());
+        request.setTranslations(ensureProductTranslations(product.getTranslations(), product));
 
         model.addAttribute("product", request);
         model.addAttribute("productView", product);
@@ -140,6 +146,21 @@ public class AdminProductController {
         }
     }
 
+    private Map<String, LocalizedContent> ensureProductTranslations(Map<String, LocalizedContent> input, Product sourceProduct) {
+        Map<String, LocalizedContent> normalized = new LinkedHashMap<>();
+        String fallbackName = sourceProduct != null ? sourceProduct.getName() : null;
+        String fallbackDescription = sourceProduct != null ? sourceProduct.getDescription() : null;
+
+        for (String language : LanguageSupport.SUPPORTED_LANGUAGES) {
+            LocalizedContent src = input != null ? input.get(language) : null;
+            LocalizedContent content = new LocalizedContent();
+            content.setName(firstNonBlank(src != null ? src.getName() : null, fallbackName, ""));
+            content.setDescription(firstNonBlank(src != null ? src.getDescription() : null, fallbackDescription, ""));
+            normalized.put(language, content);
+        }
+        return normalized;
+    }
+
     private void normalizeProductRequest(ProductRequest request) {
         if (request.getSku() == null || request.getSku().isBlank()) {
             request.setSku("SKU-" + Instant.now().getEpochSecond());
@@ -156,5 +177,28 @@ public class AdminProductController {
         if (request.getCategoryIds() == null) {
             request.setCategoryIds(new HashSet<>());
         }
+
+        request.setTranslations(ensureProductTranslations(request.getTranslations(), null));
+
+        LocalizedContent italian = request.getTranslations().get(LanguageSupport.DEFAULT_LANGUAGE);
+        request.setName(firstNonBlank(
+            italian != null ? italian.getName() : null,
+            request.getName(),
+            request.getSku()
+        ));
+        request.setDescription(firstNonBlank(
+            italian != null ? italian.getDescription() : null,
+            request.getDescription(),
+            ""
+        ));
+    }
+
+    private String firstNonBlank(String... values) {
+        for (String value : values) {
+            if (value != null && !value.isBlank()) {
+                return value;
+            }
+        }
+        return "";
     }
 }

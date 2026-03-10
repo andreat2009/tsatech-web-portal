@@ -1,6 +1,7 @@
 package com.newproject.web.service;
 
 import com.newproject.web.dto.*;
+import com.newproject.web.i18n.LanguageSupport;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -61,6 +63,10 @@ public class GatewayClient {
         return defaultWebClient;
     }
 
+    private String currentLanguage() {
+        return LanguageSupport.fromLocale(LocaleContextHolder.getLocale());
+    }
+
     public List<Product> listProducts() {
         return listProducts(null, null, null, null, null, null);
     }
@@ -84,6 +90,7 @@ public class GatewayClient {
                         .queryParamIfPresent("minPrice", Optional.ofNullable(minPrice))
                         .queryParamIfPresent("maxPrice", Optional.ofNullable(maxPrice))
                         .queryParamIfPresent("sort", Optional.ofNullable(sort))
+                        .queryParam("lang", currentLanguage())
                         .build())
                     .retrieve()
                     .bodyToMono(new ParameterizedTypeReference<List<Product>>() {})
@@ -98,7 +105,10 @@ public class GatewayClient {
 
     public Product getProduct(Long id) {
         Product product = client().get()
-            .uri(baseUrl + "/api/catalog/products/{id}", id)
+            .uri(uriBuilder -> uriBuilder
+                .path(baseUrl + "/api/catalog/products/{id}")
+                .queryParam("lang", currentLanguage())
+                .build(id))
             .retrieve()
             .bodyToMono(Product.class)
             .block();
@@ -110,7 +120,10 @@ public class GatewayClient {
     public List<Manufacturer> listManufacturers() {
         return safeList(
             () -> client().get()
-                .uri(baseUrl + "/api/catalog/manufacturers")
+                .uri(uriBuilder -> uriBuilder
+                    .path(baseUrl + "/api/catalog/manufacturers")
+                    .queryParam("lang", currentLanguage())
+                    .build())
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<List<Manufacturer>>() {})
                 .blockOptional()
@@ -134,6 +147,7 @@ public class GatewayClient {
                 .uri(uriBuilder -> uriBuilder
                     .path(baseUrl + "/api/catalog/categories")
                     .queryParamIfPresent("active", Optional.ofNullable(active))
+                    .queryParam("lang", currentLanguage())
                     .build())
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<List<Category>>() {})
@@ -149,6 +163,7 @@ public class GatewayClient {
                 .uri(uriBuilder -> uriBuilder
                     .path(baseUrl + "/api/catalog/categories/tree")
                     .queryParamIfPresent("active", Optional.ofNullable(active))
+                    .queryParam("lang", currentLanguage())
                     .build())
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<List<CategoryTree>>() {})
@@ -163,7 +178,10 @@ public class GatewayClient {
         return safeCall(
             () -> Optional.ofNullable(
                 client().get()
-                    .uri(baseUrl + "/api/catalog/categories/{id}", id)
+                    .uri(uriBuilder -> uriBuilder
+                        .path(baseUrl + "/api/catalog/categories/{id}")
+                        .queryParam("lang", currentLanguage())
+                        .build(id))
                     .retrieve()
                     .bodyToMono(Category.class)
                     .block()
@@ -891,6 +909,7 @@ public class GatewayClient {
                 .uri(uriBuilder -> uriBuilder
                     .path(baseUrl + "/api/cms/information")
                     .queryParamIfPresent("active", Optional.ofNullable(active))
+                    .queryParam("lang", currentLanguage())
                     .build())
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<List<InformationPage>>() {})
@@ -905,7 +924,10 @@ public class GatewayClient {
         return safeCall(
             () -> Optional.ofNullable(
                 client().get()
-                    .uri(baseUrl + "/api/cms/information/{id}", id)
+                    .uri(uriBuilder -> uriBuilder
+                        .path(baseUrl + "/api/cms/information/{id}")
+                        .queryParam("lang", currentLanguage())
+                        .build(id))
                     .retrieve()
                     .bodyToMono(InformationPage.class)
                     .block()
@@ -919,7 +941,10 @@ public class GatewayClient {
         return safeCall(
             () -> Optional.ofNullable(
                 client().get()
-                    .uri(baseUrl + "/api/cms/information/slug/{slug}", slug)
+                    .uri(uriBuilder -> uriBuilder
+                        .path(baseUrl + "/api/cms/information/slug/{slug}")
+                        .queryParam("lang", currentLanguage())
+                        .build(slug))
                     .retrieve()
                     .bodyToMono(InformationPage.class)
                     .block()
@@ -961,6 +986,7 @@ public class GatewayClient {
                 .uri(uriBuilder -> uriBuilder
                     .path(baseUrl + "/api/cms/blog/posts")
                     .queryParamIfPresent("active", Optional.ofNullable(active))
+                    .queryParam("lang", currentLanguage())
                     .build())
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<List<BlogPost>>() {})
@@ -975,7 +1001,10 @@ public class GatewayClient {
         return safeCall(
             () -> Optional.ofNullable(
                 client().get()
-                    .uri(baseUrl + "/api/cms/blog/posts/{id}", id)
+                    .uri(uriBuilder -> uriBuilder
+                        .path(baseUrl + "/api/cms/blog/posts/{id}")
+                        .queryParam("lang", currentLanguage())
+                        .build(id))
                     .retrieve()
                     .bodyToMono(BlogPost.class)
                     .block()
@@ -989,7 +1018,10 @@ public class GatewayClient {
         return safeCall(
             () -> Optional.ofNullable(
                 client().get()
-                    .uri(baseUrl + "/api/cms/blog/posts/slug/{slug}", slug)
+                    .uri(uriBuilder -> uriBuilder
+                        .path(baseUrl + "/api/cms/blog/posts/slug/{slug}")
+                        .queryParam("lang", currentLanguage())
+                        .build(slug))
                     .retrieve()
                     .bodyToMono(BlogPost.class)
                     .block()

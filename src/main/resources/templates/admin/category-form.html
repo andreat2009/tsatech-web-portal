@@ -18,7 +18,7 @@
         <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 
         <div class="field">
-            <label>Parent category</label>
+            <label>Categoria padre</label>
             <select th:field="*{parentId}">
                 <option value="">Nessuna</option>
                 <option th:each="cat : ${allCategories}"
@@ -28,15 +28,27 @@
             </select>
         </div>
 
-        <div class="field">
-            <label>Nome</label>
-            <input th:field="*{name}" required />
-        </div>
-
-        <div class="field">
-            <label>Descrizione</label>
-            <textarea th:field="*{description}" rows="3"></textarea>
-        </div>
+        <section class="translation-section">
+            <h2>Contenuti multilingua</h2>
+            <div class="translation-grid">
+                <div class="translation-card" th:each="lang : ${languageOptions}">
+                    <h3><span class="lang-flag" th:text="${lang.flag}">IT</span> <span th:text="${lang.label}">Italiano</span></h3>
+                    <div class="field">
+                        <label>Nome</label>
+                        <input type="text"
+                               th:name="${'translations[' + lang.code + '].name'}"
+                               th:value="${category.translations != null and category.translations[lang.code] != null ? category.translations[lang.code].name : ''}"
+                               th:required="${lang.code == 'it'}" />
+                    </div>
+                    <div class="field">
+                        <label>Descrizione</label>
+                        <textarea rows="3"
+                                  th:name="${'translations[' + lang.code + '].description'}"
+                                  th:text="${category.translations != null and category.translations[lang.code] != null ? category.translations[lang.code].description : ''}"></textarea>
+                    </div>
+                </div>
+            </div>
+        </section>
 
         <div class="grid-2">
             <div class="field">

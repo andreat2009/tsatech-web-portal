@@ -29,15 +29,27 @@
             </div>
         </div>
 
-        <div class="field">
-            <label>Nome prodotto</label>
-            <input type="text" name="name" th:value="${product.name}" required />
-        </div>
-
-        <div class="field">
-            <label>Descrizione</label>
-            <textarea name="description" rows="5" th:text="${product.description}"></textarea>
-        </div>
+        <section class="translation-section">
+            <h2>Contenuti multilingua</h2>
+            <div class="translation-grid">
+                <div class="translation-card" th:each="lang : ${languageOptions}">
+                    <h3><span class="lang-flag" th:text="${lang.flag}">IT</span> <span th:text="${lang.label}">Italiano</span></h3>
+                    <div class="field">
+                        <label>Nome prodotto</label>
+                        <input type="text"
+                               th:name="${'translations[' + lang.code + '].name'}"
+                               th:value="${product.translations != null and product.translations[lang.code] != null ? product.translations[lang.code].name : ''}"
+                               th:required="${lang.code == 'it'}" />
+                    </div>
+                    <div class="field">
+                        <label>Descrizione</label>
+                        <textarea rows="4"
+                                  th:name="${'translations[' + lang.code + '].description'}"
+                                  th:text="${product.translations != null and product.translations[lang.code] != null ? product.translations[lang.code].description : ''}"></textarea>
+                    </div>
+                </div>
+            </div>
+        </section>
 
         <div class="field-grid two">
             <div class="field">
@@ -45,7 +57,7 @@
                 <input type="number" step="0.01" min="0" name="price" th:value="${product.price != null ? #numbers.formatDecimal(product.price, 1, 'POINT', 2, 'POINT') : ''}" required />
             </div>
             <div class="field">
-                <label>Quantità</label>
+                <label>Quantita</label>
                 <input type="number" min="0" name="quantity" th:value="${product.quantity}" required />
             </div>
         </div>

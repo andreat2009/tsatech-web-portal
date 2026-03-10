@@ -6,7 +6,7 @@
             </div>
             <ul class="top-links">
                 <li>
-                    <form class="lang-switcher" method="get" th:action="${#httpServletRequest.requestURI}">
+                    <form class="lang-switcher" method="get" th:action="${currentRequestUri}">
                         <select name="lang" onchange="this.form.submit()">
                             <option th:each="lang : ${languageOptions}"
                                     th:value="${lang.code}"

@@ -8,7 +8,7 @@
 <body>
 <div th:replace="fragments/header :: header"></div>
 
-<main class="container">
+<main class="container admin">
     <div class="page-header">
         <h1 th:text="${formTitle}">Coupon</h1>
         <a class="btn" th:href="@{/admin/marketing/coupon}">Torna all'elenco</a>
@@ -23,10 +23,26 @@
                 <input th:field="*{code}" required />
             </div>
             <div>
-                <label>Nome</label>
-                <input th:field="*{name}" required />
+                <label>Valuta</label>
+                <input th:field="*{currency}" required />
             </div>
         </div>
+
+        <section class="translation-section">
+            <h2>Contenuti multilingua</h2>
+            <div class="translation-grid">
+                <div class="translation-card" th:each="lang : ${languageOptions}">
+                    <h3><span class="lang-flag" th:text="${lang.flag}">IT</span> <span th:text="${lang.label}">Italiano</span></h3>
+                    <div class="field">
+                        <label>Nome coupon</label>
+                        <input type="text"
+                               th:name="${'translations[' + lang.code + '].name'}"
+                               th:value="${coupon.translations != null and coupon.translations[lang.code] != null ? coupon.translations[lang.code].name : ''}"
+                               th:required="${lang.code == 'it'}" />
+                    </div>
+                </div>
+            </div>
+        </section>
 
         <div class="field grid-2">
             <div>
@@ -55,24 +71,22 @@
 
         <div class="field grid-2">
             <div>
-                <label>Valuta</label>
-                <input th:field="*{currency}" required />
-            </div>
-            <div>
                 <label>Usage limit</label>
                 <input type="number" th:field="*{usageLimit}" />
             </div>
+            <div>
+                <label>Attivo</label>
+                <select th:field="*{active}">
+                    <option th:value="true">true</option>
+                    <option th:value="false">false</option>
+                </select>
+            </div>
         </div>
 
-        <div class="field">
-            <label>Attivo</label>
-            <select th:field="*{active}">
-                <option th:value="true">true</option>
-                <option th:value="false">false</option>
-            </select>
+        <div class="actions space-top">
+            <button class="btn btn-primary" type="submit">Salva</button>
+            <a class="btn" th:href="@{/admin/marketing/coupon}">Annulla</a>
         </div>
-
-        <button class="btn btn-primary" type="submit">Salva</button>
     </form>
 </main>
 

@@ -3,20 +3,11 @@ package com.newproject.web.dto;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class Manufacturer {
-    private Long id;
+public class ManufacturerRequest {
     private String name;
     private String image;
     private Boolean active;
     private Map<String, LocalizedContent> translations = new LinkedHashMap<>();
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public String getName() {
         return name;

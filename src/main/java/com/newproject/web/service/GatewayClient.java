@@ -132,6 +132,49 @@ public class GatewayClient {
         );
     }
 
+    public Manufacturer createManufacturer(ManufacturerRequest request) {
+        return client().post()
+            .uri(baseUrl + "/api/catalog/manufacturers")
+            .bodyValue(request)
+            .retrieve()
+            .bodyToMono(Manufacturer.class)
+            .block();
+    }
+
+    public Manufacturer updateManufacturer(Long id, ManufacturerRequest request) {
+        return client().put()
+            .uri(baseUrl + "/api/catalog/manufacturers/{id}", id)
+            .bodyValue(request)
+            .retrieve()
+            .bodyToMono(Manufacturer.class)
+            .block();
+    }
+
+    public void deleteManufacturer(Long id) {
+        client().delete()
+            .uri(baseUrl + "/api/catalog/manufacturers/{id}", id)
+            .retrieve()
+            .toBodilessEntity()
+            .block();
+    }
+
+    public Optional<Manufacturer> getManufacturerSafe(Long id) {
+        return safeCall(
+            () -> Optional.ofNullable(
+                client().get()
+                    .uri(uriBuilder -> uriBuilder
+                        .path(baseUrl + "/api/catalog/manufacturers/{id}")
+                        .queryParam("lang", currentLanguage())
+                        .build(id))
+                    .retrieve()
+                    .bodyToMono(Manufacturer.class)
+                    .block()
+            ),
+            "/api/catalog/manufacturers/" + id,
+            Optional.empty()
+        );
+    }
+
     public Optional<Product> getProductSafe(Long id) {
         try {
             return Optional.ofNullable(getProduct(id));
@@ -679,7 +722,10 @@ public class GatewayClient {
     public List<Coupon> listCoupons() {
         return safeList(
             () -> client().get()
-                .uri(baseUrl + "/api/pricing/coupons")
+                .uri(uriBuilder -> uriBuilder
+                    .path(baseUrl + "/api/pricing/coupons")
+                    .queryParam("lang", currentLanguage())
+                    .build())
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<List<Coupon>>() {})
                 .blockOptional()
@@ -717,7 +763,10 @@ public class GatewayClient {
     public PriceQuoteResponse quote(PriceQuoteRequest request) {
         return safeCall(
             () -> client().post()
-                .uri(baseUrl + "/api/pricing/quote")
+                .uri(uriBuilder -> uriBuilder
+                    .path(baseUrl + "/api/pricing/quote")
+                    .queryParam("lang", currentLanguage())
+                    .build())
                 .bodyValue(request)
                 .retrieve()
                 .bodyToMono(PriceQuoteResponse.class)

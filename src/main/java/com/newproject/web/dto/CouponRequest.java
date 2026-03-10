@@ -1,6 +1,8 @@
 package com.newproject.web.dto;
 
 import java.math.BigDecimal;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class CouponRequest {
     private String code;
@@ -12,6 +14,7 @@ public class CouponRequest {
     private String currency;
     private Boolean active;
     private Integer usageLimit;
+    private Map<String, LocalizedContent> translations = new LinkedHashMap<>();
 
     public String getCode() {
         return code;
@@ -83,5 +86,13 @@ public class CouponRequest {
 
     public void setUsageLimit(Integer usageLimit) {
         this.usageLimit = usageLimit;
+    }
+
+    public Map<String, LocalizedContent> getTranslations() {
+        return translations;
+    }
+
+    public void setTranslations(Map<String, LocalizedContent> translations) {
+        this.translations = translations;
     }
 }

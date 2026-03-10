@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title th:text="${formTitle}">Produttore</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+</head>
+<body>
+<div th:replace="fragments/header :: header"></div>
+
+<main class="container admin">
+    <div class="page-header">
+        <h1 th:text="${formTitle}">Produttore</h1>
+        <a class="btn" th:href="@{/admin/catalogo/produttori}">Torna all'elenco</a>
+    </div>
+
+    <form class="form" th:action="${formAction}" method="post" th:object="${manufacturer}">
+        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+        <section class="translation-section">
+            <h2>Contenuti multilingua</h2>
+            <div class="translation-grid">
+                <div class="translation-card" th:each="lang : ${languageOptions}">
+                    <h3><span class="lang-flag" th:text="${lang.flag}">IT</span> <span th:text="${lang.label}">Italiano</span></h3>
+                    <div class="field">
+                        <label>Nome produttore</label>
+                        <input type="text"
+                               th:name="${'translations[' + lang.code + '].name'}"
+                               th:value="${manufacturer.translations != null and manufacturer.translations[lang.code] != null ? manufacturer.translations[lang.code].name : ''}"
+                               th:required="${lang.code == 'it'}" />
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="field">
+            <label>URL immagine/logo</label>
+            <input type="url" th:field="*{image}" placeholder="https://..." />
+        </div>
+
+        <div class="field">
+            <label>Stato</label>
+            <select th:field="*{active}">
+                <option th:value="true">Attivo</option>
+                <option th:value="false">Disattivo</option>
+            </select>
+        </div>
+
+        <div class="actions space-top">
+            <button class="btn btn-primary" type="submit">Salva</button>
+            <a class="btn" th:href="@{/admin/catalogo/produttori}">Annulla</a>
+        </div>
+    </form>
+</main>
+
+<div th:replace="fragments/footer :: footer"></div>
+</body>
+</html>

@@ -22,6 +22,11 @@
             <a class="btn" th:href="@{/admin/catalogo/categorie}">Gestisci categorie</a>
         </div>
         <div class="card">
+            <div class="stat-label">Produttori</div>
+            <div class="stat-value" th:text="${manufacturerCount}">0</div>
+            <a class="btn" th:href="@{/admin/catalogo/produttori}">Gestisci produttori</a>
+        </div>
+        <div class="card">
             <div class="stat-label">Clienti</div>
             <div class="stat-value" th:text="${customerCount}">0</div>
             <a class="btn" th:href="@{/admin/customers}">Elenco clienti</a>

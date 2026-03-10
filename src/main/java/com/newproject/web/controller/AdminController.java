@@ -21,6 +21,7 @@ public class AdminController {
     public String dashboard(Model model) {
         List<Product> products = gatewayClient.listProducts();
         List<Category> categories = gatewayClient.listCategories(null);
+        List<Manufacturer> manufacturers = gatewayClient.listManufacturers();
         List<Customer> customers = gatewayClient.listCustomers();
         List<Cart> carts = gatewayClient.listCarts(null);
         List<Order> orders = gatewayClient.listOrders(null);
@@ -37,6 +38,7 @@ public class AdminController {
 
         model.addAttribute("productCount", products.size());
         model.addAttribute("categoryCount", categories.size());
+        model.addAttribute("manufacturerCount", manufacturers.size());
         model.addAttribute("customerCount", customers.size());
         model.addAttribute("cartCount", carts.size());
         model.addAttribute("orderCount", orders.size());

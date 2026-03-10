@@ -2,9 +2,13 @@ package com.newproject.web.controller;
 
 import com.newproject.web.dto.Coupon;
 import com.newproject.web.dto.CouponRequest;
+import com.newproject.web.dto.LocalizedContent;
+import com.newproject.web.i18n.LanguageSupport;
 import com.newproject.web.service.GatewayClient;
 import java.math.BigDecimal;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -37,6 +41,7 @@ public class AdminCouponController {
         coupon.setMinTotal(BigDecimal.ZERO);
         coupon.setCurrency("EUR");
         coupon.setActive(true);
+        coupon.setTranslations(ensureCouponTranslations(null, null));
         model.addAttribute("coupon", coupon);
         model.addAttribute("formTitle", "Nuovo coupon");
         model.addAttribute("formAction", "/admin/marketing/coupon");
@@ -71,6 +76,7 @@ public class AdminCouponController {
         request.setCurrency(coupon.getCurrency());
         request.setActive(coupon.getActive());
         request.setUsageLimit(coupon.getUsageLimit());
+        request.setTranslations(ensureCouponTranslations(coupon.getTranslations(), coupon));
 
         model.addAttribute("coupon", request);
         model.addAttribute("formTitle", "Modifica coupon");
@@ -107,5 +113,36 @@ public class AdminCouponController {
         if (request.getActive() == null) {
             request.setActive(true);
         }
+
+        request.setTranslations(ensureCouponTranslations(request.getTranslations(), null));
+        LocalizedContent italian = request.getTranslations().get(LanguageSupport.DEFAULT_LANGUAGE);
+        request.setName(firstNonBlank(
+            italian != null ? italian.getName() : null,
+            request.getName(),
+            request.getCode()
+        ));
+    }
+
+    private Map<String, LocalizedContent> ensureCouponTranslations(Map<String, LocalizedContent> input, Coupon sourceCoupon) {
+        Map<String, LocalizedContent> normalized = new LinkedHashMap<>();
+        String fallbackName = sourceCoupon != null ? sourceCoupon.getName() : null;
+
+        for (String language : LanguageSupport.SUPPORTED_LANGUAGES) {
+            LocalizedContent src = input != null ? input.get(language) : null;
+            LocalizedContent content = new LocalizedContent();
+            content.setName(firstNonBlank(src != null ? src.getName() : null, fallbackName, ""));
+            normalized.put(language, content);
+        }
+
+        return normalized;
+    }
+
+    private String firstNonBlank(String... values) {
+        for (String value : values) {
+            if (value != null && !value.isBlank()) {
+                return value;
+            }
+        }
+        return "";
     }
 }

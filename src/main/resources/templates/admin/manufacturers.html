@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>Produttori</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+</head>
+<body>
+<div th:replace="fragments/header :: header"></div>
+
+<main class="container admin">
+    <div class="page-header">
+        <h1>Produttori</h1>
+        <a class="btn btn-primary" th:href="@{/admin/catalogo/produttori/new}">Nuovo produttore</a>
+    </div>
+
+    <table class="table">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nome</th>
+            <th>Stato</th>
+            <th>Azioni</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:if="${#lists.isEmpty(manufacturers)}">
+            <td colspan="4">Nessun produttore configurato.</td>
+        </tr>
+        <tr th:each="manufacturer : ${manufacturers}">
+            <td th:text="${manufacturer.id}">1</td>
+            <td th:text="${manufacturer.name}">Produttore</td>
+            <td th:text="${manufacturer.active != null and manufacturer.active ? 'Attivo' : 'Disattivo'}">Attivo</td>
+            <td class="table-actions">
+                <a class="btn" th:href="@{|/admin/catalogo/produttori/${manufacturer.id}/edit|}">Modifica</a>
+                <form class="inline-form-action" th:action="@{|/admin/catalogo/produttori/${manufacturer.id}/delete|}" method="post">
+                    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                    <button class="btn btn-danger" type="submit">Elimina</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</main>
+
+<div th:replace="fragments/footer :: footer"></div>
+</body>
+</html>

@@ -1217,6 +1217,52 @@ public class GatewayClient {
             .block();
     }
 
+    public PublicStoreSettings getPublicStoreSettings() {
+        return safeCall(
+            () -> defaultWebClient.get()
+                .uri(baseUrl + "/api/cms/settings/public")
+                .retrieve()
+                .bodyToMono(PublicStoreSettings.class)
+                .block(),
+            "/api/cms/settings/public",
+            defaultPublicStoreSettings()
+        );
+    }
+
+    public StoreSettings getStoreSettings() {
+        return safeCall(
+            () -> client().get()
+                .uri(baseUrl + "/api/cms/settings")
+                .retrieve()
+                .bodyToMono(StoreSettings.class)
+                .block(),
+            "/api/cms/settings",
+            null
+        );
+    }
+
+    public StoreSettings updateStoreSettings(StoreSettings request) {
+        return client().put()
+            .uri(baseUrl + "/api/cms/settings")
+            .bodyValue(request)
+            .retrieve()
+            .bodyToMono(StoreSettings.class)
+            .block();
+    }
+
+    private PublicStoreSettings defaultPublicStoreSettings() {
+        PublicStoreSettings fallback = new PublicStoreSettings();
+        fallback.setSiteName("TSATech Store");
+        fallback.setContactEmail("andrea.terrasi78@gmail.com");
+        fallback.setSupportEmail("andrea.terrasi78@gmail.com");
+        fallback.setSupportPhone("+39 800 000 000");
+        fallback.setAddressLine1("Via Roma 1");
+        fallback.setCity("Milano");
+        fallback.setPostalCode("20100");
+        fallback.setCountry("IT");
+        return fallback;
+    }
+
     private <T> List<T> safeList(Supplier<List<T>> supplier, String endpoint) {
         return safeCall(supplier, endpoint, List.of());
     }

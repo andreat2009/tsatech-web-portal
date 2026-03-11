@@ -9,18 +9,27 @@
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
 <main class="container">
+    <div class="contact-layout">
     <section class="form section-pad contact-form">
         <h1 th:text="#{info.contact.heading}">Contact us</h1>
         <p th:if="${param.success}" class="alert-success" th:text="#{info.contact.success}">Message sent successfully.</p>
         <p th:if="${param.error}" class="alert-error" th:text="#{info.contact.error}">Fill all required fields.</p>
         <form method="post" th:action="@{/contatti}" th:object="${contactForm}">
             <div class="field"><label th:text="#{common.name}">Name</label><input type="text" th:field="*{name}" /></div>
-            <div class="field"><label>Email</label><input type="email" th:field="*{email}" /></div>
+            <div class="field"><label th:text="#{common.email}">Email</label><input type="email" th:field="*{email}" /></div>
             <div class="field"><label th:text="#{common.subject}">Subject</label><input type="text" th:field="*{subject}" /></div>
             <div class="field"><label th:text="#{common.message}">Message</label><textarea th:field="*{message}"></textarea></div>
             <button class="btn btn-primary" type="submit" th:text="#{blog.post.submit}">Submit</button>
         </form>
     </section>
+    <aside class="card-lite contact-details">
+        <h3 th:text="#{info.contact.details}">Contact details</h3>
+        <p><strong th:text="#{admin.settings.site.name}">Site name</strong><br><span th:text="${storeSettings.siteName}">TSATech Store</span></p>
+        <p th:if="${storeSettings.supportEmail != null}"><strong th:text="#{admin.settings.support.email}">Support email</strong><br><a th:href="${'mailto:' + storeSettings.supportEmail}" th:text="${storeSettings.supportEmail}">support@example.com</a></p>
+        <p th:if="${storeSettings.supportPhone != null}"><strong th:text="#{admin.settings.support.phone}">Support phone</strong><br><span th:text="${storeSettings.supportPhone}">+39 800 000 000</span></p>
+        <p th:if="${storeSettings.addressLine1 != null}"><strong th:text="#{admin.settings.address1}">Address</strong><br><span th:text="${storeSettings.addressLine1}">Via Roma 1</span><br><span th:text="${storeSettings.city + (storeSettings.postalCode != null ? ' ' + storeSettings.postalCode : '')}">Milano 20100</span></p>
+    </aside>
+    </div>
 </main>
 <div th:replace="~{fragments/footer :: footer}"></div>
 </body>

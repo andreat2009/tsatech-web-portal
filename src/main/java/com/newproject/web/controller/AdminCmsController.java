@@ -5,6 +5,8 @@ import com.newproject.web.dto.BlogPostRequest;
 import com.newproject.web.dto.InformationPage;
 import com.newproject.web.dto.InformationRequest;
 import com.newproject.web.dto.LocalizedContent;
+import com.newproject.web.dto.PublicStoreSettings;
+import com.newproject.web.dto.StoreSettings;
 import com.newproject.web.i18n.LanguageSupport;
 import com.newproject.web.service.GatewayClient;
 import java.time.OffsetDateTime;
@@ -23,6 +25,44 @@ public class AdminCmsController {
         this.gatewayClient = gatewayClient;
     }
 
+    @GetMapping("/store-settings")
+    public String storeSettingsForm(Model model) {
+        StoreSettings settings = gatewayClient.getStoreSettings();
+        if (settings == null) {
+            settings = new StoreSettings();
+            PublicStoreSettings fallback = gatewayClient.getPublicStoreSettings();
+            settings.setSiteName(fallback.getSiteName());
+            settings.setLogoUrl(fallback.getLogoUrl());
+            settings.setContactEmail(fallback.getContactEmail());
+            settings.setSupportEmail(fallback.getSupportEmail());
+            settings.setSupportPhone(fallback.getSupportPhone());
+            settings.setSupportPhoneSecondary(fallback.getSupportPhoneSecondary());
+            settings.setAddressLine1(fallback.getAddressLine1());
+            settings.setAddressLine2(fallback.getAddressLine2());
+            settings.setCity(fallback.getCity());
+            settings.setPostalCode(fallback.getPostalCode());
+            settings.setCountry(fallback.getCountry());
+            settings.setSmtpEnabled(true);
+            settings.setSmtpHost("smtp.gmail.com");
+            settings.setSmtpPort(587);
+            settings.setSmtpAuth(true);
+            settings.setSmtpStarttls(true);
+            settings.setSmtpUsername("andrea.terrasi78@gmail.com");
+            settings.setMailFromEmail("andrea.terrasi78@gmail.com");
+            settings.setMailFromName(firstNonBlank(fallback.getSiteName(), "TSATech Store"));
+        }
+
+        settings.setSmtpPassword("");
+        model.addAttribute("settingsForm", settings);
+        return "admin/store-settings";
+    }
+
+    @PostMapping("/store-settings")
+    public String storeSettingsSave(@ModelAttribute("settingsForm") StoreSettings form) {
+        normalizeStoreSettings(form);
+        gatewayClient.updateStoreSettings(form);
+        return "redirect:/admin/store-settings?success=1";
+    }
     @GetMapping("/information")
     public String informationList(Model model) {
         model.addAttribute("pages", gatewayClient.listInformationPages(null));
@@ -249,6 +289,51 @@ public class AdminCmsController {
         }
 
         return normalized;
+    }
+
+    private void normalizeStoreSettings(StoreSettings form) {
+        form.setSiteName(firstNonBlank(form.getSiteName(), "TSATech Store"));
+        form.setLogoUrl(trimToNull(form.getLogoUrl()));
+        form.setContactEmail(trimToNull(form.getContactEmail()));
+        form.setSupportEmail(trimToNull(form.getSupportEmail()));
+        form.setSupportPhone(trimToNull(form.getSupportPhone()));
+        form.setSupportPhoneSecondary(trimToNull(form.getSupportPhoneSecondary()));
+        form.setAddressLine1(trimToNull(form.getAddressLine1()));
+        form.setAddressLine2(trimToNull(form.getAddressLine2()));
+        form.setCity(trimToNull(form.getCity()));
+        form.setPostalCode(trimToNull(form.getPostalCode()));
+        form.setCountry(trimToNull(form.getCountry()));
+
+        if (form.getSmtpEnabled() == null) {
+            form.setSmtpEnabled(false);
+        }
+        if (form.getSmtpAuth() == null) {
+            form.setSmtpAuth(false);
+        }
+        if (form.getSmtpStarttls() == null) {
+            form.setSmtpStarttls(false);
+        }
+        if (form.getSmtpPort() == null || form.getSmtpPort() <= 0) {
+            form.setSmtpPort(587);
+        }
+
+        form.setSmtpHost(trimToNull(form.getSmtpHost()));
+        form.setSmtpUsername(trimToNull(form.getSmtpUsername()));
+        form.setMailFromEmail(trimToNull(form.getMailFromEmail()));
+        form.setMailFromName(trimToNull(form.getMailFromName()));
+
+        if (form.getSmtpPassword() != null) {
+            String trimmed = form.getSmtpPassword().trim();
+            form.setSmtpPassword(trimmed.isEmpty() ? null : trimmed);
+        }
+    }
+
+    private String trimToNull(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     private String firstNonBlank(String... values) {

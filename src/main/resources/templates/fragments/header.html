@@ -2,7 +2,7 @@
     <div id="top">
         <div class="container top-row">
             <div class="top-left">
-                <span th:text="#{header.support}">Supporto: +39 800 000 000</span>
+                <span th:text="${#messages.msg('header.support.prefix')} + ' ' + (storeSettings.supportPhone != null ? storeSettings.supportPhone : '+39 800 000 000')">Support: +39 800 000 000</span>
             </div>
             <ul class="top-links">
                 <li>
@@ -30,7 +30,10 @@
     <div id="header-main">
         <div class="container header-row">
             <div id="logo">
-                <a th:href="@{/}" th:text="#{header.brand}">TSATech Store</a>
+                <a th:href="@{/}" class="brand-link">
+                    <img class="brand-logo" th:if="${storeSettings.logoUrl != null and !#strings.isEmpty(storeSettings.logoUrl)}" th:src="${storeSettings.logoUrl}" th:alt="${storeSettings.siteName}" />
+                    <span th:text="${storeSettings.siteName != null ? storeSettings.siteName : #messages.msg('header.brand')}">TSATech Store</span>
+                </a>
             </div>
             <form class="header-search" method="get" th:action="@{/catalogo}">
                 <input type="text" name="q" th:placeholder="#{header.search.placeholder}" />

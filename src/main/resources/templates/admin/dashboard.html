@@ -97,6 +97,11 @@
             <a class="btn" th:href="@{/admin/contact-messages}" th:text="#{admin.dashboard.contact.inbox}">Inbox contatti</a>
         </div>
         <div class="card">
+            <div class="stat-label" th:text="#{admin.dashboard.store.settings}">Store settings</div>
+            <div class="stat-value" th:text="#{admin.dashboard.store.settings.value}">Config</div>
+            <a class="btn" th:href="@{/admin/store-settings}" th:text="#{admin.dashboard.manage.settings}">Configure store</a>
+        </div>
+        <div class="card">
             <div class="stat-label" th:text="#{admin.dashboard.notifications}">Notification Service</div>
             <div class="stat-value" th:text="${notificationStatus}">unknown</div>
             <span class="muted" th:text="#{admin.dashboard.kafka.health}">Kafka consumer health</span>

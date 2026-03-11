@@ -1,6 +1,8 @@
 package com.newproject.web.controller;
 
+import com.newproject.web.dto.PublicStoreSettings;
 import com.newproject.web.i18n.LanguageSupport;
+import com.newproject.web.service.GatewayClient;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Locale;
@@ -11,6 +13,12 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 
 @ControllerAdvice
 public class GlobalModelAttributes {
+    private final GatewayClient gatewayClient;
+
+    public GlobalModelAttributes(GatewayClient gatewayClient) {
+        this.gatewayClient = gatewayClient;
+    }
+
     @ModelAttribute
     public void enrichModel(Model model, Locale locale, HttpServletRequest request) {
         String current = LanguageSupport.fromLocale(locale);
@@ -26,8 +34,11 @@ public class GlobalModelAttributes {
             ? request.getRequestURI()
             : "/";
 
+        PublicStoreSettings settings = gatewayClient.getPublicStoreSettings();
+
         model.addAttribute("languageOptions", options);
         model.addAttribute("currentLanguage", current);
         model.addAttribute("currentRequestUri", currentRequestUri);
+        model.addAttribute("storeSettings", settings);
     }
 }

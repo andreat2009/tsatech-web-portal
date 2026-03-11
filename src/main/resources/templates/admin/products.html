@@ -47,7 +47,7 @@
                     <td th:text="${product.quantity}">0</td>
                     <td>
                         <span class="badge" th:classappend="${product.active} ? ' badge-success' : ' badge-muted'"
-                              th:text="${product.active} ? #messages.msg('common.active') : #messages.msg('common.inactive')">Attivo</span>
+                              th:text="${product.active ? #messages.msg('common.active') : #messages.msg('common.inactive')}">Attivo</span>
                     </td>
                     <td class="actions table-actions">
                         <a class="btn" th:href="@{/admin/catalogo/prodotti/{id}/modifica(id=${product.id})}" th:text="#{common.edit}">Modifica</a>

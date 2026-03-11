@@ -15,7 +15,7 @@
         <h2 th:text="#{account.payment.method.addresses}">Available addresses</h2>
         <ul>
             <li th:each="a : ${addresses}">
-                <span th:text="${a.line1} + ', ' + ${a.city} + ' (' + ${a.country} + ')'">address</span>
+                <span th:text="${a.line1 + ', ' + a.city + ' (' + a.country + ')'}">address</span>
                 <strong th:if="${a.isDefault}" th:text="#{account.payment.method.default}"> [Default]</strong>
             </li>
         </ul>

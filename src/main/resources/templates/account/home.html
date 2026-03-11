@@ -11,15 +11,15 @@
 <main class="container">
     <section class="card section-pad block">
         <h1 th:text="#{account.home.heading}">Your account</h1>
-        <p th:text="${customer.firstName} + ' ' + ${customer.lastName} + ' - ' + ${customer.email}">Profile</p>
+        <p th:text="${customer.firstName + ' ' + customer.lastName + ' - ' + customer.email}">Profile</p>
         <p>
             <span th:text="#{account.home.newsletter}">Newsletter:</span>
-            <strong th:text="${newsletterSubscribed} ? #messages.msg('account.home.newsletter.active') : #messages.msg('account.home.newsletter.inactive')">status</strong>
+            <strong th:text="${newsletterSubscribed ? #messages.msg('account.home.newsletter.active') : #messages.msg('account.home.newsletter.inactive') }">status</strong>
         </p>
         <form method="post" th:action="@{/account/newsletter}">
             <input type="hidden" name="newsletter" th:value="${newsletterSubscribed} ? false : true" />
             <button class="btn btn-primary" type="submit"
-                    th:text="${newsletterSubscribed} ? #messages.msg('account.home.newsletter.disable') : #messages.msg('account.home.newsletter.enable')">Toggle</button>
+                    th:text="${newsletterSubscribed ? #messages.msg('account.home.newsletter.disable') : #messages.msg('account.home.newsletter.enable') }">Toggle</button>
         </form>
     </section>
 

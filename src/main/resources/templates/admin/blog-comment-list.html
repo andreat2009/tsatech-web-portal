@@ -24,7 +24,7 @@
                 <td th:text="${c.postId}">1</td>
                 <td th:text="${c.authorName}">Mario</td>
                 <td th:text="${c.comment}">Testo</td>
-                <td th:text="${c.approved} ? #messages.msg('common.approved') : #messages.msg('common.pending')">pending</td>
+                <td th:text="${c.approved ? #messages.msg('common.approved') : #messages.msg('common.pending')}">pending</td>
                 <td>
                     <form method="post" th:action="@{/admin/blog/comments/{id}/approval(id=${c.id})}" class="inline-form-action">
                         <input type="hidden" name="approved" value="true" />

@@ -37,7 +37,7 @@
             <td th:text="${review.authorName}">Author</td>
             <td th:text="${review.rating}">5</td>
             <td th:text="${review.title}">Title</td>
-            <td th:text="${review.approved} ? #messages.msg('common.approved') : #messages.msg('common.pending')">STATE</td>
+            <td th:text="${review.approved ? #messages.msg('common.approved') : #messages.msg('common.pending')}">STATE</td>
             <td class="actions">
                 <form th:if="${!review.approved}" th:action="@{/admin/reviews/{id}/approve(id=${review.id})}" method="post">
                     <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />

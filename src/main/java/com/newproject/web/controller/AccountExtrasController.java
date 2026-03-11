@@ -83,6 +83,9 @@ public class AccountExtrasController {
             if ("exists".equals(ex.getReason())) {
                 return "redirect:/account/register?error=exists";
             }
+            if ("password_policy".equals(ex.getReason())) {
+                return "redirect:/account/register?error=password_policy";
+            }
             return "redirect:/account/register?error=identity";
         }
 

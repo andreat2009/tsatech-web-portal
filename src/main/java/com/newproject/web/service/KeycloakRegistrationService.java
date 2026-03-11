@@ -1,6 +1,7 @@
 package com.newproject.web.service;
 
 import com.newproject.web.dto.CustomerRegistrationForm;
+import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
@@ -13,6 +14,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -73,47 +75,16 @@ public class KeycloakRegistrationService {
 
         String createdUserId = null;
         try {
-            Map<String, Object> payload = new LinkedHashMap<>();
-            payload.put("username", username);
-            payload.put("email", email);
-            String firstName = trimToNull(form.getFirstName());
-            if (firstName != null) {
-                payload.put("firstName", firstName);
-            }
-            String lastName = trimToNull(form.getLastName());
-            if (lastName != null) {
-                payload.put("lastName", lastName);
-            }
-            payload.put("enabled", true);
-            payload.put("emailVerified", true);
-
-            webClient.post()
-                .uri(adminRealmEndpoint + "/users")
-                .contentType(MediaType.APPLICATION_JSON)
-                .headers(h -> h.setBearerAuth(accessToken))
-                .bodyValue(payload)
-                .retrieve()
-                .toBodilessEntity()
-                .block();
-
-            createdUserId = findUserId(accessToken, username, email);
+            createdUserId = createUser(accessToken, form, username, email);
             if (createdUserId == null) {
-                throw new KeycloakRegistrationException("provider", "Keycloak user id not returned");
+                throw new KeycloakRegistrationException("provider", "Keycloak user id not available after creation");
             }
 
             setPassword(accessToken, createdUserId, form.getPassword());
             assignRealmRole(accessToken, createdUserId, registrationRole);
             return createdUserId;
-        } catch (WebClientResponseException ex) {
-            if (ex.getStatusCode().value() == 409) {
-                throw new KeycloakRegistrationException("exists", "Keycloak user already exists", ex);
-            }
-            if (createdUserId != null) {
-                deleteUserQuietly(createdUserId);
-            }
-            throw new KeycloakRegistrationException("provider", "Keycloak registration failed", ex);
         } catch (KeycloakRegistrationException ex) {
-            if (createdUserId != null && "provider".equals(ex.getReason())) {
+            if (createdUserId != null && !"exists".equals(ex.getReason())) {
                 deleteUserQuietly(createdUserId);
             }
             throw ex;
@@ -143,6 +114,58 @@ public class KeycloakRegistrationService {
         }
     }
 
+    private String createUser(String accessToken, CustomerRegistrationForm form, String username, String email) {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("username", username);
+        payload.put("email", email);
+        String firstName = trimToNull(form.getFirstName());
+        if (firstName != null) {
+            payload.put("firstName", firstName);
+        }
+        String lastName = trimToNull(form.getLastName());
+        if (lastName != null) {
+            payload.put("lastName", lastName);
+        }
+        payload.put("enabled", true);
+        payload.put("emailVerified", true);
+
+        try {
+            ResponseEntity<Void> response = webClient.post()
+                .uri(adminRealmEndpoint + "/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .headers(h -> h.setBearerAuth(accessToken))
+                .bodyValue(payload)
+                .retrieve()
+                .toBodilessEntity()
+                .block();
+
+            String userId = extractUserIdFromLocation(response != null ? response.getHeaders().getLocation() : null);
+            if (userId != null) {
+                return userId;
+            }
+
+            // fallback: eventual consistency on listing can lag briefly
+            for (int i = 0; i < 6; i++) {
+                String found = findUserId(accessToken, username, email);
+                if (found != null) {
+                    return found;
+                }
+                try {
+                    Thread.sleep(200L);
+                } catch (InterruptedException ignored) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+            return null;
+        } catch (WebClientResponseException ex) {
+            logHttpError("createUser", ex);
+            if (ex.getStatusCode().value() == 409) {
+                throw new KeycloakRegistrationException("exists", "Keycloak user already exists", ex);
+            }
+            throw new KeycloakRegistrationException("identity", "Failed to create Keycloak user", ex);
+        }
+    }
+
     private void setPassword(String accessToken, String userId, String password) {
         Map<String, Object> payload = Map.of(
             "type", "password",
@@ -150,36 +173,65 @@ public class KeycloakRegistrationService {
             "value", password
         );
 
-        webClient.put()
-            .uri(adminRealmEndpoint + "/users/" + url(userId) + "/reset-password")
-            .contentType(MediaType.APPLICATION_JSON)
-            .headers(h -> h.setBearerAuth(accessToken))
-            .bodyValue(payload)
-            .retrieve()
-            .toBodilessEntity()
-            .block();
+        try {
+            webClient.put()
+                .uri(adminRealmEndpoint + "/users/" + url(userId) + "/reset-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .headers(h -> h.setBearerAuth(accessToken))
+                .bodyValue(payload)
+                .retrieve()
+                .toBodilessEntity()
+                .block();
+        } catch (WebClientResponseException ex) {
+            logHttpError("setPassword", ex);
+            if (ex.getStatusCode().is4xxClientError()) {
+                throw new KeycloakRegistrationException("password_policy", "Keycloak password policy rejected password", ex);
+            }
+            throw new KeycloakRegistrationException("identity", "Failed to set Keycloak password", ex);
+        }
     }
 
     private void assignRealmRole(String accessToken, String userId, String roleName) {
-        Map<String, Object> roleRepresentation = webClient.get()
-            .uri(adminRealmEndpoint + "/roles/" + url(roleName))
-            .headers(h -> h.setBearerAuth(accessToken))
-            .retrieve()
-            .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
-            .block();
+        try {
+            Map<String, Object> roleRepresentation = webClient.get()
+                .uri(adminRealmEndpoint + "/roles/" + url(roleName))
+                .headers(h -> h.setBearerAuth(accessToken))
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                .block();
 
-        if (roleRepresentation == null || roleRepresentation.isEmpty()) {
-            throw new KeycloakRegistrationException("provider", "Keycloak role not found: " + roleName);
+            if (roleRepresentation == null || roleRepresentation.isEmpty()) {
+                throw new KeycloakRegistrationException("identity", "Keycloak role not found: " + roleName);
+            }
+
+            webClient.post()
+                .uri(adminRealmEndpoint + "/users/" + url(userId) + "/role-mappings/realm")
+                .contentType(MediaType.APPLICATION_JSON)
+                .headers(h -> h.setBearerAuth(accessToken))
+                .bodyValue(List.of(roleRepresentation))
+                .retrieve()
+                .toBodilessEntity()
+                .block();
+        } catch (WebClientResponseException ex) {
+            logHttpError("assignRealmRole", ex);
+            throw new KeycloakRegistrationException("identity", "Failed to assign Keycloak role", ex);
         }
+    }
 
-        webClient.post()
-            .uri(adminRealmEndpoint + "/users/" + url(userId) + "/role-mappings/realm")
-            .contentType(MediaType.APPLICATION_JSON)
-            .headers(h -> h.setBearerAuth(accessToken))
-            .bodyValue(List.of(roleRepresentation))
-            .retrieve()
-            .toBodilessEntity()
-            .block();
+    private String extractUserIdFromLocation(URI location) {
+        if (location == null) {
+            return null;
+        }
+        String path = location.getPath();
+        if (path == null || path.isBlank()) {
+            return null;
+        }
+        int idx = path.lastIndexOf('/');
+        if (idx < 0 || idx == path.length() - 1) {
+            return null;
+        }
+        String candidate = path.substring(idx + 1).trim();
+        return candidate.isBlank() ? null : candidate;
     }
 
     private String findUserId(String accessToken, String username, String email) {
@@ -239,8 +291,13 @@ public class KeycloakRegistrationService {
             }
             return token.toString();
         } catch (WebClientResponseException ex) {
+            logHttpError("obtainAdminAccessToken", ex);
             throw new KeycloakRegistrationException("identity", "Unable to obtain Keycloak admin token", ex);
         }
+    }
+
+    private void logHttpError(String step, WebClientResponseException ex) {
+        logger.warn("Keycloak registration step '{}' failed: status={}, body={}", step, ex.getStatusCode().value(), ex.getResponseBodyAsString());
     }
 
     private String normalize(String value) {

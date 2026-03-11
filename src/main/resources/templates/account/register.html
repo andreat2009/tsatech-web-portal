@@ -27,6 +27,7 @@
 
     <div class="alert-error" th:if="${param.error != null and param.error[0] == 'data'}" th:text="#{account.register.error.data}">Invalid data.</div>
     <div class="alert-error" th:if="${param.error != null and param.error[0] == 'password'}" th:text="#{account.register.error.password}">Invalid password.</div>
+    <div class="alert-error" th:if="${param.error != null and param.error[0] == 'password_policy'}" th:text="#{account.register.error.password.policy}">Password policy rejected.</div>
     <div class="alert-error" th:if="${param.error != null and param.error[0] == 'exists'}" th:text="#{account.register.error.exists}">User already exists.</div>
     <div class="alert-error" th:if="${param.error != null and param.error[0] == 'identity'}" th:text="#{account.register.error.identity}">Identity service error.</div>
     <div class="alert-error" th:if="${param.error != null and param.error[0] == 'processing'}" th:text="#{account.register.error.processing}">Registration failed.</div>

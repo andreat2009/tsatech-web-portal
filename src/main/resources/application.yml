@@ -38,6 +38,10 @@ app:
   currency: ${APP_CURRENCY:EUR}
   store-url: ${APP_STORE_URL:https://web-portal-ecommerce.apps-crc.testing}
   keycloak-account-url: ${KEYCLOAK_ACCOUNT_URL:https://keycloak-platform.apps-crc.testing/realms/master/account}
+  keycloak-admin-client-id: ${KEYCLOAK_ADMIN_CLIENT_ID:admin-cli}
+  keycloak-admin-username: ${KEYCLOAK_ADMIN_USER:admin}
+  keycloak-admin-password: ${KEYCLOAK_ADMIN_PASS:adminPass}
+  keycloak-registration-role: ${KEYCLOAK_REGISTRATION_ROLE:USER}
 
 management:
   endpoints:

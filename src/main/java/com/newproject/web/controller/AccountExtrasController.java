@@ -1,9 +1,10 @@
 package com.newproject.web.controller;
 
 import com.newproject.web.dto.*;
-import com.newproject.web.i18n.LanguageSupport;
 import com.newproject.web.service.CustomerResolver;
 import com.newproject.web.service.GatewayClient;
+import com.newproject.web.service.KeycloakRegistrationException;
+import com.newproject.web.service.KeycloakRegistrationService;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -23,10 +24,12 @@ public class AccountExtrasController {
     private final CustomerResolver customerResolver;
     private final String keycloakAccountUrl;
     private final String currency;
+    private final KeycloakRegistrationService keycloakRegistrationService;
 
     public AccountExtrasController(
         GatewayClient gatewayClient,
         CustomerResolver customerResolver,
+        KeycloakRegistrationService keycloakRegistrationService,
         @Value("${app.keycloak-account-url:}") String keycloakAccountUrl,
         @Value("${app.currency:EUR}") String currency
     ) {
@@ -34,6 +37,7 @@ public class AccountExtrasController {
         this.customerResolver = customerResolver;
         this.keycloakAccountUrl = keycloakAccountUrl;
         this.currency = currency;
+        this.keycloakRegistrationService = keycloakRegistrationService;
     }
 
 
@@ -43,30 +47,93 @@ public class AccountExtrasController {
     }
 
     @GetMapping("/register")
-    public String register(Model model, Authentication authentication, Locale locale) {
+    public String register(Model model, Authentication authentication) {
         if (authentication != null && authentication.isAuthenticated() && !(authentication instanceof AnonymousAuthenticationToken)) {
             return "redirect:/account";
         }
 
-        String language = LanguageSupport.fromLocale(locale);
-        model.addAttribute("keycloakRegisterUrl", "/account/register/start?lang=" + language);
+        CustomerRegistrationForm form = new CustomerRegistrationForm();
+        form.setNewsletter(false);
+        model.addAttribute("registrationForm", form);
         return "account/register";
     }
 
     @PostMapping("/register")
-    public String registerSubmit(@RequestParam(name = "lang", required = false) String lang) {
-        return keycloakRegistrationRedirect(lang);
+    public String registerSubmit(@ModelAttribute("registrationForm") CustomerRegistrationForm form) {
+        if (isBlank(form.getEmail())
+            || isBlank(form.getPassword())
+            || isBlank(form.getPasswordConfirm())
+            || isBlank(form.getFirstName())
+            || isBlank(form.getLastName())
+            || isBlank(form.getAddressLine1())
+            || isBlank(form.getCity())
+            || isBlank(form.getCountry())
+            || isBlank(form.getPostalCode())) {
+            return "redirect:/account/register?error=data";
+        }
+
+        if (form.getPassword().length() < 8 || !form.getPassword().equals(form.getPasswordConfirm())) {
+            return "redirect:/account/register?error=password";
+        }
+
+        String keycloakUserId;
+        try {
+            keycloakUserId = keycloakRegistrationService.createUserWithRole(form);
+        } catch (KeycloakRegistrationException ex) {
+            if ("exists".equals(ex.getReason())) {
+                return "redirect:/account/register?error=exists";
+            }
+            return "redirect:/account/register?error=identity";
+        }
+
+        CustomerRequest request = new CustomerRequest();
+        request.setKeycloakUserId(keycloakUserId);
+        request.setEmail(form.getEmail().trim().toLowerCase(Locale.ROOT));
+        request.setFirstName(form.getFirstName().trim());
+        request.setLastName(form.getLastName().trim());
+        request.setPhone(form.getPhone() != null ? form.getPhone().trim() : null);
+        request.setNewsletter(Boolean.TRUE.equals(form.getNewsletter()));
+        request.setActive(true);
+
+        try {
+            Customer created = gatewayClient.createCustomer(request);
+            if (created == null || created.getId() == null) {
+                keycloakRegistrationService.deleteUserQuietly(keycloakUserId);
+                return "redirect:/account/register?error=processing";
+            }
+
+            AddressRequest addressRequest = new AddressRequest();
+            addressRequest.setLine1(form.getAddressLine1().trim());
+            addressRequest.setLine2(form.getAddressLine2() != null ? form.getAddressLine2().trim() : null);
+            addressRequest.setCity(form.getCity().trim());
+            addressRequest.setRegion(form.getRegion() != null ? form.getRegion().trim() : null);
+            addressRequest.setCountry(form.getCountry().trim());
+            addressRequest.setPostalCode(form.getPostalCode().trim());
+            addressRequest.setIsDefault(true);
+
+            gatewayClient.createCustomerAddress(created.getId(), addressRequest);
+        } catch (Exception ex) {
+            keycloakRegistrationService.deleteUserQuietly(keycloakUserId);
+            return "redirect:/account/register?error=processing";
+        }
+
+        return "redirect:/account/register?success=1";
     }
 
     @GetMapping("/register/start")
-    public String registerStart(@RequestParam(name = "lang", required = false) String lang) {
-        return keycloakRegistrationRedirect(lang);
+    public String registerStart() {
+        return "redirect:/account/register";
     }
 
     @GetMapping("/forgotten")
     public String forgotten() {
         return "redirect:/account/password";
     }
+
+    private boolean isBlank(String value) {
+        return value == null || value.isBlank();
+    }
+
 
     @GetMapping
     public String accountHome(Model model, Authentication authentication) {
@@ -299,12 +366,4 @@ public class AccountExtrasController {
         return "redirect:/";
     }
 
-    private String keycloakRegistrationRedirect(String lang) {
-        String normalized = LanguageSupport.normalizeLanguage(lang);
-        StringBuilder redirect = new StringBuilder("redirect:/oauth2/authorization/keycloak?kc_action=register");
-        if (normalized != null) {
-            redirect.append("&ui_locales=").append(normalized);
-        }
-        return redirect.toString();
-    }
 }

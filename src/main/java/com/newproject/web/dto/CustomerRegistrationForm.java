@@ -11,6 +11,8 @@ public class CustomerRegistrationForm {
     private String region;
     private String country;
     private String postalCode;
+    private String password;
+    private String passwordConfirm;
     private Boolean newsletter;
 
     public String getEmail() {
@@ -93,6 +95,22 @@ public class CustomerRegistrationForm {
         this.postalCode = postalCode;
     }
 
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getPasswordConfirm() {
+        return passwordConfirm;
+    }
+
+    public void setPasswordConfirm(String passwordConfirm) {
+        this.passwordConfirm = passwordConfirm;
+    }
     public Boolean getNewsletter() {
         return newsletter;
     }

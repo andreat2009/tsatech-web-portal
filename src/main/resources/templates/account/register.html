@@ -17,17 +17,85 @@
     </div>
 
     <h1 th:text="#{account.register.heading}">Create account</h1>
-    <p class="muted" th:text="#{account.register.description}">Registration is handled by Keycloak.</p>
+    <p class="muted" th:text="#{account.register.description}">Create your account and profile.</p>
+    <p class="muted" th:text="#{account.register.keycloak.note}">Credentials are saved on Keycloak, customer data in profile tables linked 1:1.</p>
 
-    <section class="success-box">
-        <p th:text="#{account.register.keycloak.role}">The account will be created in Keycloak with USER role.</p>
-        <p th:text="#{account.register.keycloak.note}">After registration you will be redirected to the store as authenticated customer.</p>
+    <div class="success-box" th:if="${param.success}">
+        <strong th:text="#{account.register.success}">Registration completed.</strong>
+        <p><a th:href="@{/oauth2/authorization/keycloak}" th:text="#{account.register.login}">Go to login</a></p>
+    </div>
+
+    <div class="alert-error" th:if="${param.error != null and param.error[0] == 'data'}" th:text="#{account.register.error.data}">Invalid data.</div>
+    <div class="alert-error" th:if="${param.error != null and param.error[0] == 'password'}" th:text="#{account.register.error.password}">Invalid password.</div>
+    <div class="alert-error" th:if="${param.error != null and param.error[0] == 'exists'}" th:text="#{account.register.error.exists}">User already exists.</div>
+    <div class="alert-error" th:if="${param.error != null and param.error[0] == 'identity'}" th:text="#{account.register.error.identity}">Identity service error.</div>
+    <div class="alert-error" th:if="${param.error != null and param.error[0] == 'processing'}" th:text="#{account.register.error.processing}">Registration failed.</div>
+
+    <form class="form" th:action="@{/account/register}" method="post" th:object="${registrationForm}">
+        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+        <div class="field-grid two">
+            <div class="field">
+                <label th:text="#{checkout.field.email}">Email</label>
+                <input type="email" th:field="*{email}" required />
+            </div>
+            <div class="field">
+                <label th:text="#{checkout.field.phone}">Phone</label>
+                <input th:field="*{phone}" />
+            </div>
+            <div class="field">
+                <label th:text="#{account.register.field.password}">Password</label>
+                <input type="password" th:field="*{password}" minlength="8" required />
+            </div>
+            <div class="field">
+                <label th:text="#{account.register.field.password.confirm}">Confirm password</label>
+                <input type="password" th:field="*{passwordConfirm}" minlength="8" required />
+            </div>
+            <div class="field">
+                <label th:text="#{checkout.field.first.name}">First name</label>
+                <input th:field="*{firstName}" required />
+            </div>
+            <div class="field">
+                <label th:text="#{checkout.field.last.name}">Last name</label>
+                <input th:field="*{lastName}" required />
+            </div>
+            <div class="field">
+                <label th:text="#{checkout.field.address1}">Address</label>
+                <input th:field="*{addressLine1}" required />
+            </div>
+            <div class="field">
+                <label th:text="#{checkout.field.address2}">Address line 2</label>
+                <input th:field="*{addressLine2}" />
+            </div>
+            <div class="field">
+                <label th:text="#{checkout.field.city}">City</label>
+                <input th:field="*{city}" required />
+            </div>
+            <div class="field">
+                <label th:text="#{checkout.field.region}">Region</label>
+                <input th:field="*{region}" />
+            </div>
+            <div class="field">
+                <label th:text="#{checkout.field.country}">Country</label>
+                <input th:field="*{country}" required />
+            </div>
+            <div class="field">
+                <label th:text="#{checkout.field.postal}">Postal code</label>
+                <input th:field="*{postalCode}" required />
+            </div>
+            <div class="field full-width">
+                <div class="inline-control">
+                    <input type="checkbox" th:field="*{newsletter}" />
+                    <label th:text="#{checkout.newsletter}">Subscribe to newsletter</label>
+                </div>
+            </div>
+        </div>
 
         <div class="actions-row">
-            <a class="btn btn-primary" th:href="${keycloakRegisterUrl}" th:text="#{account.register.keycloak.button}">Register on Keycloak</a>
-            <a class="btn" th:href="@{/oauth2/authorization/keycloak}" th:text="#{account.register.login}">Go to login</a>
+            <button class="btn btn-primary" type="submit" th:text="#{account.register.submit}">Register</button>
+            <a class="btn" th:href="@{/oauth2/authorization/keycloak}" th:text="#{header.login}">Login</a>
         </div>
-    </section>
+    </form>
 </main>
 
 <div th:replace="fragments/footer :: footer"></div>

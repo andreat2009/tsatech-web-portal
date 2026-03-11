@@ -2,7 +2,7 @@
     <div id="top">
         <div class="container top-row">
             <div class="top-left">
-                <span th:text="${#messages.msg('header.support.prefix')} + ' ' + (storeSettings.supportPhone != null ? storeSettings.supportPhone : '+39 800 000 000')">Support: +39 800 000 000</span>
+                <span th:text="${#messages.msg('header.support.prefix') + ' ' + ((storeSettings != null and storeSettings.supportPhone != null and !#strings.isEmpty(storeSettings.supportPhone)) ? storeSettings.supportPhone : '+39 800 000 000')}">Support: +39 800 000 000</span>
             </div>
             <ul class="top-links">
                 <li>

@@ -9,12 +9,16 @@ import com.newproject.web.dto.PublicStoreSettings;
 import com.newproject.web.dto.StoreSettings;
 import com.newproject.web.i18n.LanguageSupport;
 import com.newproject.web.service.GatewayClient;
+import java.io.IOException;
 import java.time.OffsetDateTime;
+import java.util.Base64;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @Controller
 @RequestMapping("/admin")
@@ -58,8 +62,18 @@ public class AdminCmsController {
     }
 
     @PostMapping("/store-settings")
-    public String storeSettingsSave(@ModelAttribute("settingsForm") StoreSettings form) {
+    public String storeSettingsSave(
+        @ModelAttribute("settingsForm") StoreSettings form,
+        @RequestParam(name = "logoFile", required = false) MultipartFile logoFile,
+        @RequestParam(name = "removeLogo", defaultValue = "false") boolean removeLogo
+    ) {
         normalizeStoreSettings(form);
+
+        String logoError = applyLogoUpload(form, logoFile, removeLogo);
+        if (logoError != null) {
+            return "redirect:/admin/store-settings?error=" + logoError;
+        }
+
         gatewayClient.updateStoreSettings(form);
         return "redirect:/admin/store-settings?success=1";
     }
@@ -289,6 +303,33 @@ public class AdminCmsController {
         }
 
         return normalized;
+    }
+
+    private String applyLogoUpload(StoreSettings form, MultipartFile logoFile, boolean removeLogo) {
+        if (removeLogo) {
+            form.setLogoUrl(null);
+            return null;
+        }
+        if (logoFile == null || logoFile.isEmpty()) {
+            return null;
+        }
+
+        if (logoFile.getSize() > 1024 * 1024) {
+            return "logo_size";
+        }
+
+        String contentType = logoFile.getContentType();
+        if (contentType == null || !contentType.toLowerCase(Locale.ROOT).startsWith("image/")) {
+            return "logo_type";
+        }
+
+        try {
+            String encoded = Base64.getEncoder().encodeToString(logoFile.getBytes());
+            form.setLogoUrl("data:" + contentType + ";base64," + encoded);
+            return null;
+        } catch (IOException ex) {
+            return "logo_upload";
+        }
     }
 
     private void normalizeStoreSettings(StoreSettings form) {

@@ -15,8 +15,11 @@
     </div>
 
     <p class="alert-success" th:if="${param.success}" th:text="#{admin.settings.saved}">Settings saved.</p>
+    <p class="alert-error" th:if="${param.error != null and param.error[0] == 'logo_size'}" th:text="#{admin.settings.logo.error.size}">Logo too large.</p>
+    <p class="alert-error" th:if="${param.error != null and param.error[0] == 'logo_type'}" th:text="#{admin.settings.logo.error.type}">Invalid logo format.</p>
+    <p class="alert-error" th:if="${param.error != null and param.error[0] == 'logo_upload'}" th:text="#{admin.settings.logo.error.upload}">Logo upload failed.</p>
 
-    <form class="form" method="post" th:action="@{/admin/store-settings}" th:object="${settingsForm}">
+    <form class="form" method="post" enctype="multipart/form-data" th:action="@{/admin/store-settings}" th:object="${settingsForm}">
         <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 
         <h2 th:text="#{admin.settings.section.store}">Store details</h2>
@@ -28,6 +31,25 @@
             <div class="field">
                 <label th:text="#{admin.settings.logo.url}">Logo URL</label>
                 <input th:field="*{logoUrl}" placeholder="https://..." />
+            </div>
+            <div class="field full-width">
+                <label th:text="#{admin.settings.logo.current}">Current logo</label>
+                <div class="store-logo-preview" th:if="${settingsForm.logoUrl != null and !#strings.isEmpty(settingsForm.logoUrl)}">
+                    <img th:src="${settingsForm.logoUrl}" th:alt="#{admin.settings.logo.current}" />
+                </div>
+                <small class="muted" th:if="${settingsForm.logoUrl == null or #strings.isEmpty(settingsForm.logoUrl)}" th:text="#{admin.settings.logo.current.none}">No logo configured.</small>
+            </div>
+            <div class="field">
+                <label th:text="#{admin.settings.logo.upload}">Upload logo</label>
+                <input type="file" name="logoFile" accept="image/jpeg,image/png,image/webp,image/gif" />
+                <small class="muted" th:text="#{admin.settings.logo.upload.hint}">Accepted: JPG/PNG/WEBP/GIF, max 1MB.</small>
+            </div>
+            <div class="field">
+                <label th:text="#{admin.settings.logo.remove}">Remove logo</label>
+                <div class="inline-control danger">
+                    <input id="removeLogo" type="checkbox" name="removeLogo" value="true" />
+                    <label for="removeLogo" th:text="#{admin.settings.logo.remove.check}">Remove current logo</label>
+                </div>
             </div>
             <div class="field">
                 <label th:text="#{admin.settings.contact.email}">Contact email</label>

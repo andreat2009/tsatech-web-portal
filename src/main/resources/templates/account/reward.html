@@ -1,32 +1,32 @@
 <!DOCTYPE html>
-<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Reward</title>
+    <title th:text="#{account.reward.title}">Reward</title>
     <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css" />
 </head>
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
 <main class="container">
     <section class="card section-pad block">
-        <h1>Punti Reward</h1>
-        <p>Saldo attuale: <strong th:text="${rewardSummary.pointsBalance}">0</strong></p>
+        <h1 th:text="#{account.reward.heading}">Reward points</h1>
+        <p><span th:text="#{account.reward.balance}">Current balance:</span> <strong th:text="${rewardSummary.pointsBalance}">0</strong></p>
     </section>
     <section class="card section-pad">
-        <h2>Movimenti punti</h2>
+        <h2 th:text="#{account.reward.movements}">Points movements</h2>
         <table class="table">
             <thead>
-            <tr><th>Data</th><th>Descrizione</th><th>Ordine</th><th>Punti</th></tr>
+            <tr><th th:text="#{common.date}">Date</th><th th:text="#{common.description}">Description</th><th th:text="#{common.order}">Order</th><th th:text="#{account.home.reward.points}">Points</th></tr>
             </thead>
             <tbody>
             <tr th:each="tx : ${rewardTransactions}">
                 <td th:text="${tx.createdAt}">2026-01-01</td>
-                <td th:text="${tx.description}">Acquisto</td>
+                <td th:text="${tx.description}">Purchase</td>
                 <td th:text="${tx.orderId}">1</td>
                 <td th:text="${tx.pointsDelta}">10</td>
             </tr>
-            <tr th:if="${#lists.isEmpty(rewardTransactions)}"><td colspan="4">Nessun movimento.</td></tr>
+            <tr th:if="${#lists.isEmpty(rewardTransactions)}"><td colspan="4" th:text="#{account.reward.empty}">No movements.</td></tr>
             </tbody>
         </table>
     </section>

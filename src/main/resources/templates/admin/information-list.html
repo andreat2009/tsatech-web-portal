@@ -3,17 +3,17 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Admin Informazioni</title>
+    <title th:text="#{admin.information.list.title}">Admin Informazioni</title>
     <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css" />
 </head>
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
 <main class="container">
     <section class="card section-pad">
-        <h1>Pagine informative</h1>
-        <p><a class="btn btn-primary" th:href="@{/admin/information/new}">Nuova pagina</a></p>
+        <h1 th:text="#{admin.information.list.title}">Pagine informative</h1>
+        <p><a class="btn btn-primary" th:href="@{/admin/information/new}" th:text="#{admin.information.new}">Nuova pagina</a></p>
         <table class="table">
-            <thead><tr><th>ID</th><th>Titolo</th><th>Slug</th><th>Attiva</th><th>Azioni</th></tr></thead>
+            <thead><tr><th>ID</th><th th:text="#{common.title}">Titolo</th><th>Slug</th><th th:text="#{common.active}">Attiva</th><th th:text="#{common.actions}">Azioni</th></tr></thead>
             <tbody>
             <tr th:each="p : ${pages}">
                 <td th:text="${p.id}">1</td>
@@ -21,9 +21,9 @@
                 <td th:text="${p.slug}">slug</td>
                 <td th:text="${p.active}">true</td>
                 <td>
-                    <a th:href="@{/admin/information/{id}/edit(id=${p.id})}">Modifica</a>
+                    <a th:href="@{/admin/information/{id}/edit(id=${p.id})}" th:text="#{common.edit}">Modifica</a>
                     <form method="post" th:action="@{/admin/information/{id}/delete(id=${p.id})}" class="inline-form-action">
-                        <button class="btn" type="submit">Elimina</button>
+                        <button class="btn" type="submit" th:text="#{common.delete}">Elimina</button>
                     </form>
                 </td>
             </tr>

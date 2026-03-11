@@ -43,7 +43,7 @@ public class AdminCouponController {
         coupon.setActive(true);
         coupon.setTranslations(ensureCouponTranslations(null, null));
         model.addAttribute("coupon", coupon);
-        model.addAttribute("formTitle", "Nuovo coupon");
+        model.addAttribute("formTitleKey", "admin.coupon.title.new");
         model.addAttribute("formAction", "/admin/marketing/coupon");
         return "admin/coupon-form";
     }
@@ -79,7 +79,7 @@ public class AdminCouponController {
         request.setTranslations(ensureCouponTranslations(coupon.getTranslations(), coupon));
 
         model.addAttribute("coupon", request);
-        model.addAttribute("formTitle", "Modifica coupon");
+        model.addAttribute("formTitleKey", "admin.coupon.title.edit");
         model.addAttribute("formAction", "/admin/marketing/coupon/" + id);
         return "admin/coupon-form";
     }

@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title th:text="${product.name} + ' | TSATech Store'">Prodotto</title>
-    <meta name="description" th:content="${product.description != null ? product.description : 'Scheda prodotto'}" />
+    <title th:text="${product.name} + ' | TSATech Store'">Product</title>
+    <meta name="description" th:content="${product.description != null ? product.description : #messages.msg('shop.product.description.fallback')}" />
     <link rel="canonical" th:href="${product.seoPath}" />
     <link rel="stylesheet" th:href="@{/css/app.css}" />
 </head>
@@ -13,9 +13,9 @@
 
 <main class="container">
     <div class="breadcrumbs">
-        <a th:href="@{/}">Home</a>
+        <a th:href="@{/}" th:text="#{menu.home}">Home</a>
         <span>/</span>
-        <a th:href="@{/catalogo}">Catalogo</a>
+        <a th:href="@{/catalogo}" th:text="#{menu.catalog}">Catalog</a>
         <span>/</span>
         <span th:text="${product.name}">Product</span>
     </div>
@@ -41,10 +41,10 @@
             <div class="muted" th:text="${product.sku}">SKU</div>
             <p class="desc" th:text="${product.description}">Description</p>
             <div class="meta-grid">
-                <div><strong>Modello:</strong> <span th:text="${product.model}">MODEL</span></div>
-                <div><strong>Disponibilità:</strong> <span th:text="${product.quantity}">0</span></div>
-                <div><strong>Rating medio:</strong> <span th:text="${#numbers.formatDecimal(avgRating,1,1)}">0.0</span></div>
-                <div><strong>Recensioni:</strong> <span th:text="${reviews.size()}">0</span></div>
+                <div><strong th:text="#{shop.product.meta.model} + ':'">Model:</strong> <span th:text="${product.model}">MODEL</span></div>
+                <div><strong th:text="#{shop.product.meta.availability} + ':'">Availability:</strong> <span th:text="${product.quantity}">0</span></div>
+                <div><strong th:text="#{shop.product.meta.avg.rating} + ':'">Average rating:</strong> <span th:text="${#numbers.formatDecimal(avgRating,1,1)}">0.0</span></div>
+                <div><strong th:text="#{shop.product.meta.reviews} + ':'">Reviews:</strong> <span th:text="${reviews.size()}">0</span></div>
             </div>
         </div>
         <div class="product-buy">
@@ -52,51 +52,51 @@
             <form th:action="@{/cart/add}" method="post" class="buy-form">
                 <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                 <input type="hidden" name="productId" th:value="${product.id}" />
-                <label>Quantità</label>
+                <label th:text="#{common.quantity}">Quantity</label>
                 <input type="number" name="quantity" min="1" value="1" />
-                <button class="btn btn-primary" type="submit">Aggiungi al carrello</button>
+                <button class="btn btn-primary" type="submit" th:text="#{shop.product.add.to.cart}">Add to cart</button>
             </form>
             <div class="stack-actions">
                 <form th:action="@{/account/lista-desideri/aggiungi}" method="post" sec:authorize="isAuthenticated()">
                     <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                     <input type="hidden" name="productId" th:value="${product.id}" />
                     <button class="btn" type="submit"
-                            th:text="${wishlistProductIds.contains(product.id)} ? 'In wishlist' : 'Aggiungi wishlist'">Wishlist</button>
+                            th:text="${wishlistProductIds.contains(product.id)} ? #messages.msg('shop.product.in.wishlist') : #messages.msg('shop.product.add.wishlist')">Wishlist</button>
                 </form>
                 <form th:action="@{/catalogo/confronta/aggiungi}" method="post">
                     <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                     <input type="hidden" name="productId" th:value="${product.id}" />
-                    <button class="btn" type="submit">Confronta prodotto</button>
+                    <button class="btn" type="submit" th:text="#{shop.product.compare}">Compare product</button>
                 </form>
-                <a class="btn" th:href="@{/carrello}">Vai al carrello</a>
-                <a class="btn" th:href="@{/oauth2/authorization/keycloak}" sec:authorize="!isAuthenticated()">Login (opzionale)</a>
+                <a class="btn" th:href="@{/carrello}" th:text="#{shop.product.goto.cart}">Go to cart</a>
+                <a class="btn" th:href="@{/oauth2/authorization/keycloak}" sec:authorize="!isAuthenticated()" th:text="#{shop.product.login.optional}">Login (optional)</a>
             </div>
         </div>
     </div>
 
     <section class="reviews">
-        <h2>Recensioni</h2>
-        <div th:if="${reviews.isEmpty()}" class="empty">Nessuna recensione approvata per questo prodotto.</div>
+        <h2 th:text="#{shop.product.reviews}">Reviews</h2>
+        <div th:if="${reviews.isEmpty()}" class="empty" th:text="#{shop.product.reviews.empty}">No approved reviews.</div>
         <div class="review-card" th:each="review : ${reviews}">
             <div class="review-head">
-                <strong th:text="${review.authorName}">Autore</strong>
-                <span class="muted" th:text="${review.createdAt}">data</span>
+                <strong th:text="${review.authorName}">Author</strong>
+                <span class="muted" th:text="${review.createdAt}">date</span>
             </div>
-            <div class="review-rating" th:text="'Rating: ' + ${review.rating} + '/5'">Rating</div>
-            <h3 th:text="${review.title}">Titolo</h3>
-            <p th:text="${review.text}">Testo</p>
+            <div class="review-rating" th:text="#{shop.product.review.rating} + ': ' + ${review.rating} + '/5'">Rating</div>
+            <h3 th:text="${review.title}">Title</h3>
+            <p th:text="${review.text}">Text</p>
         </div>
 
         <div sec:authorize="isAuthenticated()" class="review-form-wrap">
-            <h3>Scrivi una recensione</h3>
+            <h3 th:text="#{shop.product.review.write}">Write a review</h3>
             <form class="form" th:action="${product.seoReviewsPath}" method="post" th:object="${reviewForm}">
                 <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                 <div class="field">
-                    <label>Titolo</label>
+                    <label th:text="#{common.title}">Title</label>
                     <input th:field="*{title}" />
                 </div>
                 <div class="field">
-                    <label>Rating</label>
+                    <label th:text="#{common.rating}">Rating</label>
                     <select th:field="*{rating}">
                         <option value="5">5</option>
                         <option value="4">4</option>
@@ -106,10 +106,10 @@
                     </select>
                 </div>
                 <div class="field">
-                    <label>Commento</label>
+                    <label th:text="#{common.comment}">Comment</label>
                     <textarea th:field="*{text}" rows="4" required></textarea>
                 </div>
-                <button class="btn btn-primary" type="submit">Invia recensione</button>
+                <button class="btn btn-primary" type="submit" th:text="#{shop.product.review.submit}">Submit review</button>
             </form>
         </div>
     </section>

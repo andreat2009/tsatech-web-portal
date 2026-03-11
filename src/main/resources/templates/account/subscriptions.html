@@ -1,30 +1,30 @@
 <!DOCTYPE html>
-<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Abbonamenti</title>
+    <title th:text="#{account.subscriptions.title}">Subscriptions</title>
     <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css" />
 </head>
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
 <main class="container">
     <section class="form section-pad block">
-        <h1>Nuovo abbonamento</h1>
+        <h1 th:text="#{account.subscriptions.new}">New subscription</h1>
         <form method="post" th:action="@{/account/subscriptions}" th:object="${subscriptionForm}">
-            <div class="field"><label>Piano</label><input type="text" th:field="*{planName}" /></div>
-            <div class="field"><label>Stato</label><input type="text" th:field="*{status}" /></div>
-            <div class="field"><label>Importo</label><input type="number" step="0.01" th:field="*{amount}" /></div>
-            <div class="field"><label>Valuta</label><input type="text" th:field="*{currency}" /></div>
-            <button class="btn btn-primary" type="submit">Attiva</button>
+            <div class="field"><label th:text="#{account.subscriptions.plan}">Plan</label><input type="text" th:field="*{planName}" /></div>
+            <div class="field"><label th:text="#{common.status}">Status</label><input type="text" th:field="*{status}" /></div>
+            <div class="field"><label th:text="#{common.amount}">Amount</label><input type="number" step="0.01" th:field="*{amount}" /></div>
+            <div class="field"><label th:text="#{common.currency}">Currency</label><input type="text" th:field="*{currency}" /></div>
+            <button class="btn btn-primary" type="submit" th:text="#{account.subscriptions.activate}">Activate</button>
         </form>
     </section>
 
     <section class="card section-pad">
-        <h2>Abbonamenti attivi/storico</h2>
+        <h2 th:text="#{account.subscriptions.active.history}">Active/history subscriptions</h2>
         <table class="table">
             <thead>
-            <tr><th>ID</th><th>Piano</th><th>Stato</th><th>Importo</th><th>Prossimo addebito</th><th>Azioni</th></tr>
+            <tr><th>ID</th><th th:text="#{account.subscriptions.plan}">Plan</th><th th:text="#{common.status}">Status</th><th th:text="#{common.amount}">Amount</th><th th:text="#{account.subscriptions.next.billing}">Next billing</th><th th:text="#{common.actions}">Actions</th></tr>
             </thead>
             <tbody>
             <tr th:each="s : ${subscriptions}">
@@ -36,11 +36,11 @@
                 <td>
                     <form method="post" th:action="@{/account/subscriptions/{id}/status(id=${s.id})}" class="inline-form-action">
                         <input type="hidden" name="status" value="CANCELLED" />
-                        <button class="btn" type="submit" th:if="${s.status != 'CANCELLED'}">Annulla</button>
+                        <button class="btn" type="submit" th:if="${s.status != 'CANCELLED'}" th:text="#{account.subscriptions.cancel}">Cancel</button>
                     </form>
                 </td>
             </tr>
-            <tr th:if="${#lists.isEmpty(subscriptions)}"><td colspan="6">Nessun abbonamento.</td></tr>
+            <tr th:if="${#lists.isEmpty(subscriptions)}"><td colspan="6" th:text="#{account.subscriptions.empty}">No subscriptions.</td></tr>
             </tbody>
         </table>
     </section>

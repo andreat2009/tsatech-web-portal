@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
-    <title>Ordine completato</title>
+    <title th:text="#{checkout.success.title}">Order completed</title>
     <link rel="stylesheet" th:href="@{/css/app.css}" />
 </head>
 <body>
@@ -10,24 +10,24 @@
 
 <main class="container">
     <section class="success-box">
-        <h1>Ordine confermato</h1>
-        <p>Il tuo ordine è stato creato correttamente.</p>
+        <h1 th:text="#{checkout.success.heading}">Order confirmed</h1>
+        <p th:text="#{checkout.success.message}">Your order has been created successfully.</p>
         <div class="meta" th:if="${order != null}">
-            <div><strong>Ordine:</strong> <span th:text="${order.id}">1</span></div>
-            <div><strong>Totale:</strong> <span th:text="${order.total != null ? #numbers.formatDecimal(order.total, 1, 'POINT', 2, 'POINT') : '0.00'}">0.00</span></div>
-            <div><strong>Stato:</strong> <span th:text="${order.status}">PENDING_PAYMENT</span></div>
+            <div><strong th:text="#{checkout.success.order} + ':'">Order:</strong> <span th:text="${order.id}">1</span></div>
+            <div><strong th:text="#{common.total} + ':'">Total:</strong> <span th:text="${order.total != null ? #numbers.formatDecimal(order.total, 1, 'POINT', 2, 'POINT') : '0.00'}">0.00</span></div>
+            <div><strong th:text="#{common.status} + ':'">Status:</strong> <span th:text="${order.status}">PENDING_PAYMENT</span></div>
         </div>
     </section>
 
     <section th:if="${orderItems != null and !orderItems.isEmpty()}">
-        <h2>Righe ordine</h2>
+        <h2 th:text="#{checkout.success.lines}">Order lines</h2>
         <table class="table">
             <thead>
             <tr>
-                <th>SKU</th>
-                <th>Prodotto</th>
-                <th>Q.tà</th>
-                <th>Prezzo</th>
+                <th th:text="#{common.sku}">SKU</th>
+                <th th:text="#{common.product}">Product</th>
+                <th th:text="#{checkout.summary.qty}">Qty</th>
+                <th th:text="#{common.price}">Price</th>
             </tr>
             </thead>
             <tbody>
@@ -43,13 +43,13 @@
 
     <section class="grid-2">
         <div>
-            <h2>Pagamenti</h2>
+            <h2 th:text="#{checkout.success.payments}">Payments</h2>
             <table class="table compact">
                 <thead>
                 <tr>
                     <th>ID</th>
-                    <th>Provider</th>
-                    <th>Stato</th>
+                    <th th:text="#{common.provider}">Provider</th>
+                    <th th:text="#{common.status}">Status</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -63,14 +63,14 @@
         </div>
 
         <div>
-            <h2>Spedizioni</h2>
+            <h2 th:text="#{checkout.success.shipments}">Shipments</h2>
             <table class="table compact">
                 <thead>
                 <tr>
                     <th>ID</th>
-                    <th>Carrier</th>
-                    <th>Tracking</th>
-                    <th>Stato</th>
+                    <th th:text="#{common.carrier}">Carrier</th>
+                    <th th:text="#{common.tracking}">Tracking</th>
+                    <th th:text="#{common.status}">Status</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -86,9 +86,9 @@
     </section>
 
     <div class="actions-row">
-        <a class="btn" th:href="@{/account/ordini}" th:if="${!guestCheckout}">Vai agli ordini</a>
-        <a class="btn btn-primary" th:href="@{/catalogo}">Continua acquisti</a>
-        <a class="btn" th:href="@{/oauth2/authorization/keycloak}" th:if="${guestCheckout}">Crea account / Login</a>
+        <a class="btn" th:href="@{/account/ordini}" th:if="${!guestCheckout}" th:text="#{checkout.success.goto.orders}">Go to orders</a>
+        <a class="btn btn-primary" th:href="@{/catalogo}" th:text="#{cart.continue}">Continue shopping</a>
+        <a class="btn" th:href="@{/oauth2/authorization/keycloak}" th:if="${guestCheckout}" th:text="#{checkout.success.create.account}">Create account / Login</a>
     </div>
 </main>
 

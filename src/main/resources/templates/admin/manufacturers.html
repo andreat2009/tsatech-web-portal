@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
-    <title>Produttori</title>
+    <title th:text="#{admin.manufacturer.list.title}">Produttori</title>
     <link rel="stylesheet" th:href="@{/css/app.css}" />
 </head>
 <body>
@@ -10,32 +10,32 @@
 
 <main class="container admin">
     <div class="page-header">
-        <h1>Produttori</h1>
-        <a class="btn btn-primary" th:href="@{/admin/catalogo/produttori/new}">Nuovo produttore</a>
+        <h1 th:text="#{admin.manufacturer.list.title}">Produttori</h1>
+        <a class="btn btn-primary" th:href="@{/admin/catalogo/produttori/new}" th:text="#{admin.manufacturer.new}">Nuovo produttore</a>
     </div>
 
     <table class="table">
         <thead>
         <tr>
             <th>ID</th>
-            <th>Nome</th>
-            <th>Stato</th>
-            <th>Azioni</th>
+            <th th:text="#{common.name}">Nome</th>
+            <th th:text="#{common.status}">Stato</th>
+            <th th:text="#{common.actions}">Azioni</th>
         </tr>
         </thead>
         <tbody>
         <tr th:if="${#lists.isEmpty(manufacturers)}">
-            <td colspan="4">Nessun produttore configurato.</td>
+            <td colspan="4" th:text="#{admin.manufacturer.none}">Nessun produttore configurato.</td>
         </tr>
         <tr th:each="manufacturer : ${manufacturers}">
             <td th:text="${manufacturer.id}">1</td>
             <td th:text="${manufacturer.name}">Produttore</td>
-            <td th:text="${manufacturer.active != null and manufacturer.active ? 'Attivo' : 'Disattivo'}">Attivo</td>
+            <td th:text="${manufacturer.active != null and manufacturer.active ? #messages.msg('common.active') : #messages.msg('common.inactive')}">Attivo</td>
             <td class="table-actions">
-                <a class="btn" th:href="@{|/admin/catalogo/produttori/${manufacturer.id}/edit|}">Modifica</a>
+                <a class="btn" th:href="@{|/admin/catalogo/produttori/${manufacturer.id}/edit|}" th:text="#{common.edit}">Modifica</a>
                 <form class="inline-form-action" th:action="@{|/admin/catalogo/produttori/${manufacturer.id}/delete|}" method="post">
                     <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                    <button class="btn btn-danger" type="submit">Elimina</button>
+                    <button class="btn btn-danger" type="submit" th:text="#{common.delete}">Elimina</button>
                 </form>
             </td>
         </tr>

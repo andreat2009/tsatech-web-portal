@@ -1,47 +1,47 @@
 <!DOCTYPE html>
-<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Confronta prodotti</title>
+    <title th:text="#{shop.compare.title}">Compare products</title>
     <link rel="stylesheet" th:href="@{/css/app.css}" />
 </head>
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
 <main class="container">
     <div class="breadcrumbs">
-        <a th:href="@{/}">Home</a>
+        <a th:href="@{/}" th:text="#{menu.home}">Home</a>
         <span>/</span>
-        <span>Confronta</span>
+        <span th:text="#{shop.compare.breadcrumb}">Compare</span>
     </div>
 
     <section class="card section-pad">
-        <h1>Confronta prodotti</h1>
+        <h1 th:text="#{shop.compare.heading}">Compare products</h1>
         <div class="table-wrap">
             <table class="table">
                 <thead>
                 <tr>
-                    <th>Prodotto</th>
-                    <th>SKU</th>
-                    <th>Prezzo</th>
-                    <th>Disponibilità</th>
-                    <th>Azioni</th>
+                    <th th:text="#{common.product}">Product</th>
+                    <th th:text="#{common.sku}">SKU</th>
+                    <th th:text="#{common.price}">Price</th>
+                    <th th:text="#{shop.product.meta.availability}">Availability</th>
+                    <th th:text="#{common.actions}">Actions</th>
                 </tr>
                 </thead>
                 <tbody>
                 <tr th:each="p : ${products}">
-                    <td><a th:href="${p.seoPath}" th:text="${p.name}">Prodotto</a></td>
+                    <td><a th:href="${p.seoPath}" th:text="${p.name}">Product</a></td>
                     <td th:text="${p.sku}">SKU</td>
                     <td th:text="${p.price != null ? #numbers.formatDecimal(p.price, 1, 'POINT', 2, 'POINT') : '0.00'}">0.00</td>
                     <td th:text="${p.quantity}">0</td>
                     <td>
                         <form method="post" th:action="@{/catalogo/confronta/{id}/rimuovi(id=${p.id})}">
                             <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                            <button class="btn" type="submit">Rimuovi</button>
+                            <button class="btn" type="submit" th:text="#{cart.remove}">Remove</button>
                         </form>
                     </td>
                 </tr>
-                <tr th:if="${#lists.isEmpty(products)}"><td colspan="5">Nessun prodotto in confronto.</td></tr>
+                <tr th:if="${#lists.isEmpty(products)}"><td colspan="5" th:text="#{shop.compare.empty}">No products in comparison.</td></tr>
                 </tbody>
             </table>
         </div>

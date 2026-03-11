@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
-    <title>Wishlist</title>
+    <title th:text="#{account.wishlist.title}">Wishlist</title>
     <link rel="stylesheet" th:href="@{/css/app.css}" />
 </head>
 <body>
@@ -10,25 +10,25 @@
 
 <main class="container">
     <div class="page-header">
-        <h1>Wishlist</h1>
-        <a class="btn" th:href="@{/catalogo}">Continua acquisti</a>
+        <h1 th:text="#{account.wishlist.heading}">Wishlist</h1>
+        <a class="btn" th:href="@{/catalogo}" th:text="#{account.wishlist.continue}">Continue shopping</a>
     </div>
 
-    <div th:if="${wishlistItems.isEmpty()}" class="empty">Wishlist vuota.</div>
+    <div th:if="${wishlistItems.isEmpty()}" class="empty" th:text="#{account.wishlist.empty}">Wishlist is empty.</div>
 
     <table class="table" th:if="${!wishlistItems.isEmpty()}">
         <thead>
         <tr>
-            <th>Prodotto</th>
-            <th>Prezzo</th>
-            <th>Aggiunto il</th>
+            <th th:text="#{common.product}">Product</th>
+            <th th:text="#{common.price}">Price</th>
+            <th th:text="#{account.wishlist.added.at}">Added at</th>
             <th></th>
         </tr>
         </thead>
         <tbody>
         <tr th:each="entry : ${wishlistItems}">
             <td>
-                <a th:href="${entry.product.seoPath}" th:text="${entry.product.name}">Prodotto</a>
+                <a th:href="${entry.product.seoPath}" th:text="${entry.product.name}">Product</a>
             </td>
             <td th:text="${entry.product.price != null ? #numbers.formatDecimal(entry.product.price, 1, 'POINT', 2, 'POINT') : '0.00'}">0.00</td>
             <td th:text="${entry.addedAt}">-</td>
@@ -37,11 +37,11 @@
                     <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                     <input type="hidden" name="productId" th:value="${entry.product.id}" />
                     <input type="hidden" name="quantity" value="1" />
-                    <button class="btn btn-primary" type="submit">Aggiungi al carrello</button>
+                    <button class="btn btn-primary" type="submit" th:text="#{account.wishlist.add.to.cart}">Add to cart</button>
                 </form>
                 <form th:action="@{/account/lista-desideri/{id}/elimina(id=${entry.product.id})}" method="post">
                     <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                    <button class="btn btn-link" type="submit">Rimuovi</button>
+                    <button class="btn btn-link" type="submit" th:text="#{account.wishlist.remove}">Remove</button>
                 </form>
             </td>
         </tr>

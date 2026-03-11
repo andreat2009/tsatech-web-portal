@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
-    <title>Ordini</title>
+    <title th:text="#{account.orders.title}">Orders</title>
     <link rel="stylesheet" th:href="@{/css/app.css}" />
 </head>
 <body>
@@ -10,23 +10,23 @@
 
 <main class="container">
     <div class="page-header">
-        <h1>I miei ordini</h1>
+        <h1 th:text="#{account.orders.heading}">My orders</h1>
         <div class="actions">
-            <a class="btn" th:href="@{/account/indirizzi}">I miei indirizzi</a>
-            <a class="btn" th:href="@{/account/lista-desideri}">Wishlist</a>
-            <a class="btn" th:href="@{/account/resi}">Resi</a>
+            <a class="btn" th:href="@{/account/indirizzi}" th:text="#{account.orders.my.addresses}">My addresses</a>
+            <a class="btn" th:href="@{/account/lista-desideri}" th:text="#{account.orders.wishlist}">Wishlist</a>
+            <a class="btn" th:href="@{/account/resi}" th:text="#{account.orders.returns}">Returns</a>
         </div>
     </div>
 
-    <div th:if="${orders.isEmpty()}" class="empty">Nessun ordine disponibile.</div>
+    <div th:if="${orders.isEmpty()}" class="empty" th:text="#{account.orders.empty}">No orders available.</div>
 
     <table class="table" th:if="${!orders.isEmpty()}">
         <thead>
             <tr>
                 <th>ID</th>
-                <th>Data</th>
-                <th>Totale</th>
-                <th>Status</th>
+                <th th:text="#{common.date}">Date</th>
+                <th th:text="#{common.total}">Total</th>
+                <th th:text="#{common.status}">Status</th>
                 <th></th>
             </tr>
         </thead>
@@ -37,7 +37,7 @@
                 <td th:text="${order.total != null ? #numbers.formatDecimal(order.total, 1, 'POINT', 2, 'POINT') : '0.00'}">0.00</td>
                 <td th:text="${order.status}">NEW</td>
                 <td>
-                    <a class="btn" th:href="@{/account/ordini/{id}(id=${order.id})}">Dettaglio</a>
+                    <a class="btn" th:href="@{/account/ordini/{id}(id=${order.id})}" th:text="#{account.orders.detail}">Details</a>
                 </td>
             </tr>
         </tbody>

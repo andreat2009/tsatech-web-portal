@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Carrello</title>
+    <title th:text="#{cart.title}">Cart</title>
     <link rel="canonical" th:href="@{/carrello}" />
     <link rel="stylesheet" th:href="@{/css/app.css}" />
 </head>
@@ -12,23 +12,23 @@
 
 <main class="container">
     <div class="breadcrumbs">
-        <a th:href="@{/}">Home</a>
+        <a th:href="@{/}" th:text="#{menu.home}">Home</a>
         <span>/</span>
-        <span>Carrello</span>
+        <span th:text="#{cart.breadcrumb}">Cart</span>
     </div>
 
-    <h1>Carrello</h1>
-    <div th:if="${items.isEmpty()}" class="empty">Il carrello è vuoto.</div>
+    <h1 th:text="#{cart.heading}">Cart</h1>
+    <div th:if="${items.isEmpty()}" class="empty" th:text="#{cart.empty}">Your cart is empty.</div>
 
     <div class="table-wrap" th:if="${!items.isEmpty()}">
         <table class="table">
             <thead>
                 <tr>
-                    <th>Prodotto</th>
-                    <th>Quantità</th>
-                    <th>Prezzo</th>
-                    <th>Totale</th>
-                    <th>Azioni</th>
+                    <th th:text="#{common.product}">Product</th>
+                    <th th:text="#{common.quantity}">Quantity</th>
+                    <th th:text="#{common.price}">Price</th>
+                    <th th:text="#{common.total}">Total</th>
+                    <th th:text="#{common.actions}">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -38,7 +38,7 @@
                         <form class="qty-form" th:action="@{/cart/items/{id}/quantity(id=${item.id})}" method="post">
                             <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                             <input type="number" name="quantity" min="1" th:value="${item.quantity}" />
-                            <button class="btn" type="submit">Aggiorna</button>
+                            <button class="btn" type="submit" th:text="#{cart.update}">Update</button>
                         </form>
                     </td>
                     <td th:text="${item.unitPrice != null ? #numbers.formatDecimal(item.unitPrice, 1, 'POINT', 2, 'POINT') : '0.00'}">0.00</td>
@@ -46,7 +46,7 @@
                     <td>
                         <form th:action="@{/cart/items/{id}/delete(id=${item.id})}" method="post">
                             <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                            <button class="btn btn-link" type="submit">Rimuovi</button>
+                            <button class="btn btn-link" type="submit" th:text="#{cart.remove}">Remove</button>
                         </form>
                     </td>
                 </tr>
@@ -57,21 +57,21 @@
     <div class="checkout" th:if="${!items.isEmpty()}">
         <div class="summary-grid">
             <div class="summary-row">
-                <span>Subtotale</span>
+                <span th:text="#{cart.subtotal}">Subtotal</span>
                 <strong th:text="${subtotal != null ? #numbers.formatDecimal(subtotal, 1, 'POINT', 2, 'POINT') : '0.00'}">0.00</strong>
             </div>
             <div class="summary-row">
-                <span>Spedizione stimata</span>
+                <span th:text="#{cart.shipping.estimated}">Estimated shipping</span>
                 <strong th:text="${shipping != null ? #numbers.formatDecimal(shipping, 1, 'POINT', 2, 'POINT') : '0.00'}">0.00</strong>
             </div>
             <div class="summary-row total">
-                <span>Totale</span>
+                <span th:text="#{common.total}">Total</span>
                 <strong th:text="${total != null ? #numbers.formatDecimal(total, 1, 'POINT', 2, 'POINT') : '0.00'}">0.00</strong>
             </div>
         </div>
         <div class="actions-row">
-            <a class="btn" th:href="@{/catalogo}">Continua acquisti</a>
-            <a class="btn btn-primary" th:href="@{/checkout-rapido}">Procedi al checkout</a>
+            <a class="btn" th:href="@{/catalogo}" th:text="#{cart.continue}">Continue shopping</a>
+            <a class="btn btn-primary" th:href="@{/checkout-rapido}" th:text="#{cart.proceed.checkout}">Proceed to checkout</a>
         </div>
     </div>
 </main>

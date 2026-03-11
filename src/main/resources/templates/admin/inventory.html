@@ -2,22 +2,22 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
-    <title>Admin Inventario</title>
+    <title th:text="#{admin.inventory.title}">Admin Inventario</title>
     <link rel="stylesheet" th:href="@{/css/app.css}" />
 </head>
 <body>
 <div th:replace="fragments/header :: header"></div>
 
 <main class="container admin">
-    <h1>Inventario</h1>
+    <h1 th:text="#{admin.inventory.title}">Inventario</h1>
     <table class="table">
         <thead>
             <tr>
                 <th>ID</th>
-                <th>Prodotto</th>
-                <th>On hand</th>
-                <th>Reserved</th>
-                <th>Aggiornato</th>
+                <th th:text="#{common.product}">Prodotto</th>
+                <th th:text="#{admin.inventory.on.hand}">On hand</th>
+                <th th:text="#{admin.inventory.reserved}">Reserved</th>
+                <th th:text="#{common.updated.at}">Aggiornato</th>
             </tr>
         </thead>
         <tbody>

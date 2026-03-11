@@ -50,7 +50,7 @@ public class AdminProductController {
         model.addAttribute("product", product);
         model.addAttribute("productView", null);
         model.addAttribute("categories", gatewayClient.listCategories(true));
-        model.addAttribute("formTitle", "Nuovo prodotto");
+        model.addAttribute("formTitleKey", "admin.product.title.new");
         model.addAttribute("formAction", "/admin/catalogo/prodotti");
         return "admin/product-form";
     }
@@ -91,7 +91,7 @@ public class AdminProductController {
         model.addAttribute("product", request);
         model.addAttribute("productView", product);
         model.addAttribute("categories", gatewayClient.listCategories(true));
-        model.addAttribute("formTitle", "Modifica prodotto");
+        model.addAttribute("formTitleKey", "admin.product.title.edit");
         model.addAttribute("formAction", "/admin/catalogo/prodotti/" + id);
         return "admin/product-form";
     }

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Checkout</title>
+    <title th:text="#{checkout.title}">Checkout</title>
     <link rel="canonical" th:href="@{/checkout-rapido}" />
     <link rel="stylesheet" th:href="@{/css/app.css}" />
 </head>
@@ -12,21 +12,21 @@
 
 <main class="container">
     <div class="breadcrumbs">
-        <a th:href="@{/}">Home</a>
+        <a th:href="@{/}" th:text="#{menu.home}">Home</a>
         <span>/</span>
-        <a th:href="@{/carrello}">Carrello</a>
+        <a th:href="@{/carrello}" th:text="#{cart.breadcrumb}">Cart</a>
         <span>/</span>
-        <span>Checkout</span>
+        <span th:text="#{checkout.breadcrumb}">Checkout</span>
     </div>
 
-    <h1>Checkout</h1>
+    <h1 th:text="#{checkout.heading}">Checkout</h1>
 
     <p class="muted" th:if="${guestCheckout}">
-        Checkout ospite attivo. Puoi completare l'ordine senza account oppure
-        <a th:href="@{/oauth2/authorization/keycloak}">accedere</a> per usare i dati salvati.
+        <span th:text="#{checkout.guest.notice}">Guest checkout is active.</span>
+        <a th:href="@{/oauth2/authorization/keycloak}" th:text="#{header.login}">Login</a>
     </p>
 
-    <div class="alert-error" th:if="${checkoutError != null}" th:text="${checkoutError}">Checkout non completato.</div>
+    <div class="alert-error" th:if="${checkoutError != null}" th:text="${checkoutError}">Checkout failed.</div>
 
     <div class="checkout-layout">
         <section class="checkout-form-wrap">
@@ -34,61 +34,61 @@
                 <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 
                 <div th:if="${!guestCheckout}" class="field">
-                    <label>Indirizzo di spedizione</label>
+                    <label th:text="#{checkout.shipping.address}">Shipping address</label>
                     <select th:if="${!addresses.isEmpty()}" th:field="*{addressId}" required>
                         <option th:each="address : ${addresses}" th:value="${address.id}"
                                 th:text="${address.line1 + ', ' + address.city + ' (' + address.country + ')'}">Address</option>
                     </select>
-                    <div th:if="${addresses.isEmpty()}" class="empty">Aggiungi almeno un indirizzo prima di completare il checkout.</div>
-                    <a class="inline-link" th:href="@{/account/indirizzi}">Gestisci indirizzi</a>
+                    <div th:if="${addresses.isEmpty()}" class="empty" th:text="#{checkout.addresses.empty}">Add an address first.</div>
+                    <a class="inline-link" th:href="@{/account/indirizzi}" th:text="#{checkout.manage.addresses}">Manage addresses</a>
                 </div>
 
                 <div th:if="${guestCheckout}" class="field-grid two">
                     <div class="field">
-                        <label>Email</label>
+                        <label th:text="#{checkout.field.email}">Email</label>
                         <input th:field="*{guestEmail}" type="email" required />
                     </div>
                     <div class="field">
-                        <label>Nome</label>
+                        <label th:text="#{checkout.field.first.name}">First name</label>
                         <input th:field="*{guestFirstName}" required />
                     </div>
                     <div class="field">
-                        <label>Cognome</label>
+                        <label th:text="#{checkout.field.last.name}">Last name</label>
                         <input th:field="*{guestLastName}" required />
                     </div>
                     <div class="field">
-                        <label>Telefono</label>
+                        <label th:text="#{checkout.field.phone}">Phone</label>
                         <input th:field="*{guestPhone}" />
                     </div>
                     <div class="field">
-                        <label>Indirizzo</label>
+                        <label th:text="#{checkout.field.address1}">Address</label>
                         <input th:field="*{guestAddressLine1}" required />
                     </div>
                     <div class="field">
-                        <label>Indirizzo (linea 2)</label>
+                        <label th:text="#{checkout.field.address2}">Address line 2</label>
                         <input th:field="*{guestAddressLine2}" />
                     </div>
                     <div class="field">
-                        <label>Città</label>
+                        <label th:text="#{checkout.field.city}">City</label>
                         <input th:field="*{guestCity}" required />
                     </div>
                     <div class="field">
-                        <label>Regione</label>
+                        <label th:text="#{checkout.field.region}">Region</label>
                         <input th:field="*{guestRegion}" />
                     </div>
                     <div class="field">
-                        <label>Nazione</label>
+                        <label th:text="#{checkout.field.country}">Country</label>
                         <input th:field="*{guestCountry}" required />
                     </div>
                     <div class="field">
-                        <label>CAP</label>
+                        <label th:text="#{checkout.field.postal}">Postal code</label>
                         <input th:field="*{guestPostalCode}" required />
                     </div>
                 </div>
 
                 <div class="field-grid two">
                     <div class="field">
-                        <label>Metodo di spedizione</label>
+                        <label th:text="#{checkout.shipping.method}">Shipping method</label>
                         <select th:field="*{shippingMethod}" required>
                             <option th:each="entry : ${shippingMethods.entrySet()}" th:value="${entry.key}"
                                     th:text="${entry.key + ' - ' + entry.value}">flat.flat</option>
@@ -96,43 +96,43 @@
                     </div>
 
                     <div class="field">
-                        <label>Metodo di pagamento</label>
+                        <label th:text="#{checkout.payment.method}">Payment method</label>
                         <select th:field="*{paymentMethod}" required>
                             <option th:each="entry : ${paymentMethods.entrySet()}" th:value="${entry.key}"
-                                    th:text="${entry.value}">Pagamento</option>
+                                    th:text="${entry.value}">Payment</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="field">
-                    <label>Coupon</label>
-                    <input th:field="*{couponCode}" placeholder="Inserisci coupon (es. WELCOME10)" />
-                    <small class="muted" th:text="${quoteMessage}">Messaggio coupon</small>
+                    <label th:text="#{checkout.coupon}">Coupon</label>
+                    <input th:field="*{couponCode}" th:placeholder="#{checkout.coupon.placeholder}" />
+                    <small class="muted" th:text="${quoteMessage}">Coupon message</small>
                 </div>
 
                 <div class="field">
-                    <label>Commento ordine</label>
-                    <textarea th:field="*{comment}" rows="4" placeholder="Note aggiuntive"></textarea>
+                    <label th:text="#{checkout.comment}">Order comment</label>
+                    <textarea th:field="*{comment}" rows="4" th:placeholder="#{checkout.comment.placeholder}"></textarea>
                 </div>
 
-                <button class="btn btn-primary" type="submit" th:disabled="${!guestCheckout and addresses.isEmpty()}">Conferma ordine</button>
+                <button class="btn btn-primary" type="submit" th:disabled="${!guestCheckout and addresses.isEmpty()}" th:text="#{checkout.confirm.order}">Confirm order</button>
             </form>
         </section>
 
-        <aside class="checkout-summary" aria-label="Riepilogo ordine">
-            <h2 class="checkout-summary-title">Riepilogo ordine</h2>
+        <aside class="checkout-summary" th:attr="aria-label=#{checkout.summary.title}">
+            <h2 class="checkout-summary-title" th:text="#{checkout.summary.title}">Order summary</h2>
             <div class="table-wrap checkout-summary-table-wrap">
                 <table class="table compact checkout-items-table">
                     <thead>
                     <tr>
-                        <th>Prodotto</th>
-                        <th class="qty-col">Q.tà</th>
-                        <th class="amount-col">Totale</th>
+                        <th th:text="#{common.product}">Product</th>
+                        <th class="qty-col" th:text="#{checkout.summary.qty}">Qty</th>
+                        <th class="amount-col" th:text="#{common.total}">Total</th>
                     </tr>
                     </thead>
                     <tbody>
                     <tr th:each="item : ${items}">
-                        <td th:text="${item.productName}">Prodotto</td>
+                        <td th:text="${item.productName}">Product</td>
                         <td class="qty-col" th:text="${item.quantity}">1</td>
                         <td class="amount-col"
                             th:text="${item.lineTotal != null ? #numbers.formatDecimal(item.lineTotal, 1, 'POINT', 2, 'POINT') : '0.00'}">0.00</td>
@@ -142,19 +142,19 @@
             </div>
             <div class="summary-grid">
                 <div class="summary-row">
-                    <span>Subtotale</span>
+                    <span th:text="#{checkout.subtotal}">Subtotal</span>
                     <strong class="amount" th:text="${subtotal != null ? #numbers.formatDecimal(subtotal, 1, 'POINT', 2, 'POINT') : '0.00'}">0.00</strong>
                 </div>
                 <div class="summary-row">
-                    <span>Spedizione</span>
+                    <span th:text="#{checkout.shipping}">Shipping</span>
                     <strong class="amount" th:text="${shipping != null ? #numbers.formatDecimal(shipping, 1, 'POINT', 2, 'POINT') : '0.00'}">0.00</strong>
                 </div>
                 <div class="summary-row" th:if="${discount != null}">
-                    <span>Sconto</span>
+                    <span th:text="#{checkout.discount}">Discount</span>
                     <strong class="amount" th:text="${#numbers.formatDecimal(discount, 1, 'POINT', 2, 'POINT')}">0.00</strong>
                 </div>
                 <div class="summary-row total">
-                    <span>Totale</span>
+                    <span th:text="#{checkout.total}">Total</span>
                     <strong class="amount" th:text="${total != null ? #numbers.formatDecimal(total, 1, 'POINT', 2, 'POINT') : '0.00'}">0.00</strong>
                 </div>
             </div>

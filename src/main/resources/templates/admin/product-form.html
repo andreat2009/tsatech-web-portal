@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title th:text="${formTitle}">Prodotto</title>
+    <title th:text="${#messages.msg(formTitleKey)}">Prodotto</title>
     <link rel="stylesheet" th:href="@{/css/app.css}" />
 </head>
 <body>
@@ -11,8 +11,8 @@
 
 <main class="container admin">
     <div class="page-header">
-        <h1 th:text="${formTitle}">Prodotto</h1>
-        <a class="btn" th:href="@{/admin/catalogo/prodotti}">Torna alla lista</a>
+        <h1 th:text="${#messages.msg(formTitleKey)}">Prodotto</h1>
+        <a class="btn" th:href="@{/admin/catalogo/prodotti}" th:text="#{common.back.to.list}">Torna alla lista</a>
     </div>
 
     <form class="form" th:action="${formAction}" method="post" enctype="multipart/form-data">
@@ -20,29 +20,29 @@
 
         <div class="field-grid">
             <div class="field">
-                <label>SKU</label>
+                <label th:text="#{common.sku}">SKU</label>
                 <input type="text" name="sku" th:value="${product.sku}" />
             </div>
             <div class="field">
-                <label>Modello</label>
+                <label th:text="#{common.model}">Modello</label>
                 <input type="text" name="model" th:value="${product.model}" />
             </div>
         </div>
 
         <section class="translation-section">
-            <h2>Contenuti multilingua</h2>
+            <h2 th:text="#{common.multilingual.content}">Contenuti multilingua</h2>
             <div class="translation-grid">
                 <div class="translation-card" th:each="lang : ${languageOptions}">
                     <h3><span class="lang-flag" th:text="${lang.flag}">IT</span> <span th:text="${lang.label}">Italiano</span></h3>
                     <div class="field">
-                        <label>Nome prodotto</label>
+                        <label th:text="#{admin.product.field.name}">Nome prodotto</label>
                         <input type="text"
                                th:name="${'translations[' + lang.code + '].name'}"
                                th:value="${product.translations != null and product.translations[lang.code] != null ? product.translations[lang.code].name : ''}"
                                th:required="${lang.code == 'it'}" />
                     </div>
                     <div class="field">
-                        <label>Descrizione</label>
+                        <label th:text="#{common.description}">Descrizione</label>
                         <textarea rows="4"
                                   th:name="${'translations[' + lang.code + '].description'}"
                                   th:text="${product.translations != null and product.translations[lang.code] != null ? product.translations[lang.code].description : ''}"></textarea>
@@ -53,17 +53,17 @@
 
         <div class="field-grid two">
             <div class="field">
-                <label>Prezzo</label>
+                <label th:text="#{common.price}">Prezzo</label>
                 <input type="number" step="0.01" min="0" name="price" th:value="${product.price != null ? #numbers.formatDecimal(product.price, 1, 'POINT', 2, 'POINT') : ''}" required />
             </div>
             <div class="field">
-                <label>Quantita</label>
+                <label th:text="#{common.quantity}">Quantita</label>
                 <input type="number" min="0" name="quantity" th:value="${product.quantity}" required />
             </div>
         </div>
 
         <div class="field">
-            <label>Categorie</label>
+            <label th:text="#{common.categories}">Categorie</label>
             <select name="categoryIds" multiple size="8">
                 <option th:each="category : ${categories}"
                         th:value="${category.id}"
@@ -73,37 +73,37 @@
         </div>
 
         <div class="field">
-            <label>Stato</label>
+            <label th:text="#{common.status}">Stato</label>
             <select name="active">
-                <option value="true" th:selected="${product.active}">Attivo</option>
-                <option value="false" th:selected="${product.active == false}">Disattivo</option>
+                <option value="true" th:selected="${product.active}" th:text="#{common.active}">Attivo</option>
+                <option value="false" th:selected="${product.active == false}" th:text="#{common.inactive}">Disattivo</option>
             </select>
         </div>
 
         <section class="media-section">
-            <h2>Immagini prodotto</h2>
+            <h2 th:text="#{admin.product.images}">Immagini prodotto</h2>
 
             <div class="media-current" th:if="${productView != null}">
                 <div class="field" th:if="${productView.primaryImageUrl != null and !productView.primaryImageUrl.isBlank()}">
-                    <label>Immagine principale attuale</label>
+                    <label th:text="#{admin.product.current.cover}">Immagine principale attuale</label>
                     <div class="media-cover-preview">
                         <img th:src="${productView.primaryImageUrl}" th:alt="${productView.name}" />
                     </div>
                 </div>
 
                 <div class="field" th:if="${productView.galleryImages != null and !productView.galleryImages.isEmpty()}">
-                    <label>Galleria attuale</label>
+                    <label th:text="#{admin.product.current.gallery}">Galleria attuale</label>
                     <div class="admin-gallery-grid">
                         <div class="admin-gallery-item" th:each="img : ${productView.galleryImages}">
                             <img th:src="${img.url}" th:alt="${img.originalFilename}" />
                             <div class="media-item-actions">
                                 <label class="inline-control">
                                     <input type="radio" name="selectedCoverImageId" th:value="${img.id}" />
-                                    Usa come cover
+                                    <span th:text="#{admin.product.use.as.cover}">Usa come cover</span>
                                 </label>
                                 <label class="inline-control danger">
                                     <input type="checkbox" name="deleteImageIds" th:value="${img.id}" />
-                                    Elimina
+                                    <span th:text="#{common.delete}">Elimina</span>
                                 </label>
                             </div>
                         </div>
@@ -112,21 +112,21 @@
             </div>
 
             <div class="field">
-                <label>Nuova immagine principale</label>
+                <label th:text="#{admin.product.new.cover}">Nuova immagine principale</label>
                 <input type="file" name="coverImageFile" accept="image/jpeg,image/png,image/webp,image/gif" />
-                <small class="muted">JPG/PNG/WEBP/GIF, max 5MB.</small>
+                <small class="muted" th:text="#{admin.product.cover.hint}">JPG/PNG/WEBP/GIF, max 5MB.</small>
             </div>
 
             <div class="field">
-                <label>Nuove immagini galleria</label>
+                <label th:text="#{admin.product.new.gallery}">Nuove immagini galleria</label>
                 <input type="file" name="galleryImageFiles" multiple accept="image/jpeg,image/png,image/webp,image/gif" />
-                <small class="muted">Puoi caricare piu file insieme.</small>
+                <small class="muted" th:text="#{admin.product.gallery.hint}">Puoi caricare piu file insieme.</small>
             </div>
         </section>
 
         <div class="actions space-top">
-            <button class="btn btn-primary" type="submit">Salva prodotto</button>
-            <a class="btn" th:href="@{/admin/catalogo/prodotti}">Annulla</a>
+            <button class="btn btn-primary" type="submit" th:text="#{admin.product.save}">Salva prodotto</button>
+            <a class="btn" th:href="@{/admin/catalogo/prodotti}" th:text="#{common.cancel}">Annulla</a>
         </div>
     </form>
 </main>

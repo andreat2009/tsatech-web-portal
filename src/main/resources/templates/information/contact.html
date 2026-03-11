@@ -1,24 +1,24 @@
 <!DOCTYPE html>
-<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Contatti</title>
+    <title th:text="#{info.contact.title}">Contact</title>
     <link rel="stylesheet" th:href="@{/css/app.css}" />
 </head>
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
 <main class="container">
     <section class="form section-pad contact-form">
-        <h1>Contattaci</h1>
-        <p th:if="${param.success}" class="alert-success">Messaggio inviato con successo.</p>
-        <p th:if="${param.error}" class="alert-error">Compila tutti i campi richiesti.</p>
+        <h1 th:text="#{info.contact.heading}">Contact us</h1>
+        <p th:if="${param.success}" class="alert-success" th:text="#{info.contact.success}">Message sent successfully.</p>
+        <p th:if="${param.error}" class="alert-error" th:text="#{info.contact.error}">Fill all required fields.</p>
         <form method="post" th:action="@{/contatti}" th:object="${contactForm}">
-            <div class="field"><label>Nome</label><input type="text" th:field="*{name}" /></div>
+            <div class="field"><label th:text="#{common.name}">Name</label><input type="text" th:field="*{name}" /></div>
             <div class="field"><label>Email</label><input type="email" th:field="*{email}" /></div>
-            <div class="field"><label>Oggetto</label><input type="text" th:field="*{subject}" /></div>
-            <div class="field"><label>Messaggio</label><textarea th:field="*{message}"></textarea></div>
-            <button class="btn btn-primary" type="submit">Invia</button>
+            <div class="field"><label th:text="#{common.subject}">Subject</label><input type="text" th:field="*{subject}" /></div>
+            <div class="field"><label th:text="#{common.message}">Message</label><textarea th:field="*{message}"></textarea></div>
+            <button class="btn btn-primary" type="submit" th:text="#{blog.post.submit}">Submit</button>
         </form>
     </section>
 </main>

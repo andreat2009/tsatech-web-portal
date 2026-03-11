@@ -3,36 +3,36 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Admin Commenti Blog</title>
+    <title th:text="#{admin.blog.comments.title}">Admin Commenti Blog</title>
     <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css" />
 </head>
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
 <main class="container">
     <section class="card section-pad">
-        <h1>Commenti blog</h1>
+        <h1 th:text="#{admin.blog.comments.title}">Commenti blog</h1>
         <p>
-            <a class="btn" th:href="@{/admin/blog/comments(approved=true)}">Solo approvati</a>
-            <a class="btn" th:href="@{/admin/blog/comments(approved=false)}">Solo in attesa</a>
-            <a class="btn" th:href="@{/admin/blog/comments}">Tutti</a>
+            <a class="btn" th:href="@{/admin/blog/comments(approved=true)}" th:text="#{admin.blog.comments.only.approved}">Solo approvati</a>
+            <a class="btn" th:href="@{/admin/blog/comments(approved=false)}" th:text="#{admin.blog.comments.only.pending}">Solo in attesa</a>
+            <a class="btn" th:href="@{/admin/blog/comments}" th:text="#{common.all}">Tutti</a>
         </p>
         <table class="table">
-            <thead><tr><th>ID</th><th>Post</th><th>Autore</th><th>Commento</th><th>Stato</th><th>Azioni</th></tr></thead>
+            <thead><tr><th>ID</th><th th:text="#{common.post}">Post</th><th th:text="#{common.author}">Autore</th><th th:text="#{common.comment}">Commento</th><th th:text="#{common.status}">Stato</th><th th:text="#{common.actions}">Azioni</th></tr></thead>
             <tbody>
             <tr th:each="c : ${comments}">
                 <td th:text="${c.id}">1</td>
                 <td th:text="${c.postId}">1</td>
                 <td th:text="${c.authorName}">Mario</td>
                 <td th:text="${c.comment}">Testo</td>
-                <td th:text="${c.approved} ? 'APPROVATO' : 'PENDING'">pending</td>
+                <td th:text="${c.approved} ? #messages.msg('common.approved') : #messages.msg('common.pending')">pending</td>
                 <td>
                     <form method="post" th:action="@{/admin/blog/comments/{id}/approval(id=${c.id})}" class="inline-form-action">
                         <input type="hidden" name="approved" value="true" />
-                        <button class="btn" type="submit">Approva</button>
+                        <button class="btn" type="submit" th:text="#{common.approve}">Approva</button>
                     </form>
                     <form method="post" th:action="@{/admin/blog/comments/{id}/approval(id=${c.id})}" class="inline-form-action">
                         <input type="hidden" name="approved" value="false" />
-                        <button class="btn" type="submit">Blocca</button>
+                        <button class="btn" type="submit" th:text="#{common.block}">Blocca</button>
                     </form>
                 </td>
             </tr>

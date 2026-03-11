@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,28 +10,28 @@
 <div th:replace="~{fragments/header :: header}"></div>
 <main class="container">
     <article class="card section-pad block">
-        <h1 th:text="${post.title}">Titolo</h1>
+        <h1 th:text="${post.title}">Title</h1>
         <p><small th:text="${post.publishedAt}">2026-01-01</small></p>
         <div th:utext="${post.content}"></div>
     </article>
 
     <section class="card section-pad block">
-        <h2>Commenti</h2>
+        <h2 th:text="#{blog.post.comments}">Comments</h2>
         <div th:each="c : ${comments}" class="list-divider-sm">
-            <strong th:text="${c.authorName}">Autore</strong>
+            <strong th:text="${c.authorName}">Author</strong>
             <small th:text="${c.createdAt}">2026-01-01</small>
-            <p th:text="${c.comment}">Commento</p>
+            <p th:text="${c.comment}">Comment</p>
         </div>
-        <p th:if="${#lists.isEmpty(comments)}">Nessun commento approvato.</p>
+        <p th:if="${#lists.isEmpty(comments)}" th:text="#{blog.post.empty.comments}">No approved comments.</p>
     </section>
 
     <section class="form section-pad">
-        <h3>Aggiungi commento</h3>
+        <h3 th:text="#{blog.post.add.comment}">Add comment</h3>
         <form method="post" th:action="@{/news/{slug}/commenti(slug=${post.slug})}" th:object="${commentForm}">
-            <div class="field"><label>Nome</label><input type="text" th:field="*{authorName}" /></div>
+            <div class="field"><label th:text="#{common.name}">Name</label><input type="text" th:field="*{authorName}" /></div>
             <div class="field"><label>Email</label><input type="email" th:field="*{authorEmail}" /></div>
-            <div class="field"><label>Commento</label><textarea th:field="*{comment}"></textarea></div>
-            <button class="btn btn-primary" type="submit">Invia</button>
+            <div class="field"><label th:text="#{common.comment}">Comment</label><textarea th:field="*{comment}"></textarea></div>
+            <button class="btn btn-primary" type="submit" th:text="#{blog.post.submit}">Submit</button>
         </form>
     </section>
 </main>

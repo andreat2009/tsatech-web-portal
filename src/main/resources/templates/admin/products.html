@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Admin Prodotti</title>
+    <title th:text="#{admin.products.title}">Admin Prodotti</title>
     <link rel="stylesheet" th:href="@{/css/app.css}" />
 </head>
 <body>
@@ -11,8 +11,8 @@
 
 <main class="container admin">
     <div class="page-header">
-        <h1>Prodotti</h1>
-        <a class="btn btn-primary" th:href="@{/admin/catalogo/prodotti/nuovo}">Nuovo prodotto</a>
+        <h1 th:text="#{admin.products.title}">Prodotti</h1>
+        <a class="btn btn-primary" th:href="@{/admin/catalogo/prodotti/nuovo}" th:text="#{admin.product.new}">Nuovo prodotto</a>
     </div>
 
     <div class="table-wrap">
@@ -20,13 +20,13 @@
             <thead>
                 <tr>
                     <th>ID</th>
-                    <th>Immagine</th>
-                    <th>SKU</th>
-                    <th>Nome</th>
-                    <th>Prezzo</th>
-                    <th>Quantità</th>
-                    <th>Stato</th>
-                    <th>Azioni</th>
+                    <th th:text="#{common.image}">Immagine</th>
+                    <th th:text="#{common.sku}">SKU</th>
+                    <th th:text="#{common.name}">Nome</th>
+                    <th th:text="#{common.price}">Prezzo</th>
+                    <th th:text="#{common.quantity}">Quantità</th>
+                    <th th:text="#{common.status}">Stato</th>
+                    <th th:text="#{common.actions}">Azioni</th>
                 </tr>
             </thead>
             <tbody>
@@ -37,7 +37,7 @@
                              th:if="${product.primaryImageUrl != null and !product.primaryImageUrl.isBlank()}"
                              th:src="${product.primaryImageUrl}"
                              th:alt="${product.name}" />
-                        <span class="muted" th:if="${product.primaryImageUrl == null or product.primaryImageUrl.isBlank()}">N/D</span>
+                        <span class="muted" th:if="${product.primaryImageUrl == null or product.primaryImageUrl.isBlank()}" th:text="#{common.na}">N/D</span>
                     </td>
                     <td th:text="${product.sku}">SKU</td>
                     <td>
@@ -47,13 +47,13 @@
                     <td th:text="${product.quantity}">0</td>
                     <td>
                         <span class="badge" th:classappend="${product.active} ? ' badge-success' : ' badge-muted'"
-                              th:text="${product.active} ? 'Attivo' : 'Disattivo'">Attivo</span>
+                              th:text="${product.active} ? #messages.msg('common.active') : #messages.msg('common.inactive')">Attivo</span>
                     </td>
                     <td class="actions table-actions">
-                        <a class="btn" th:href="@{/admin/catalogo/prodotti/{id}/modifica(id=${product.id})}">Modifica</a>
+                        <a class="btn" th:href="@{/admin/catalogo/prodotti/{id}/modifica(id=${product.id})}" th:text="#{common.edit}">Modifica</a>
                         <form th:action="@{/admin/catalogo/prodotti/{id}/delete(id=${product.id})}" method="post">
                             <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                            <button class="btn btn-link" type="submit">Elimina</button>
+                            <button class="btn btn-link" type="submit" th:text="#{common.delete}">Elimina</button>
                         </form>
                     </td>
                 </tr>

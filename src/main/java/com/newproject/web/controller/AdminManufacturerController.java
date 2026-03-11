@@ -37,7 +37,7 @@ public class AdminManufacturerController {
         form.setActive(true);
         form.setTranslations(ensureTranslations(null, null));
         model.addAttribute("manufacturer", form);
-        model.addAttribute("formTitle", "Nuovo produttore");
+        model.addAttribute("formTitleKey", "admin.manufacturer.title.new");
         model.addAttribute("formAction", "/admin/catalogo/produttori");
         return "admin/manufacturer-form";
     }
@@ -63,7 +63,7 @@ public class AdminManufacturerController {
         form.setTranslations(ensureTranslations(manufacturer.getTranslations(), manufacturer));
 
         model.addAttribute("manufacturer", form);
-        model.addAttribute("formTitle", "Modifica produttore");
+        model.addAttribute("formTitleKey", "admin.manufacturer.title.edit");
         model.addAttribute("formAction", "/admin/catalogo/produttori/" + id);
         return "admin/manufacturer-form";
     }

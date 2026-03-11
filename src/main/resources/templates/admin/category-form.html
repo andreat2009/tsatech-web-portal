@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
-    <title th:text="${formTitle}">Categoria</title>
+    <title th:text="${#messages.msg(formTitleKey)}">Categoria</title>
     <link rel="stylesheet" th:href="@{/css/app.css}" />
 </head>
 <body>
@@ -10,17 +10,17 @@
 
 <main class="container">
     <div class="page-header">
-        <h1 th:text="${formTitle}">Categoria</h1>
-        <a class="btn" th:href="@{/admin/catalogo/categorie}">Torna all'elenco</a>
+        <h1 th:text="${#messages.msg(formTitleKey)}">Categoria</h1>
+        <a class="btn" th:href="@{/admin/catalogo/categorie}" th:text="#{common.back.to.list}">Torna all'elenco</a>
     </div>
 
     <form class="form" th:action="${formAction}" method="post" th:object="${category}">
         <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 
         <div class="field">
-            <label>Categoria padre</label>
+            <label th:text="#{admin.category.parent}">Categoria padre</label>
             <select th:field="*{parentId}">
-                <option value="">Nessuna</option>
+                <option value="" th:text="#{common.none}">Nessuna</option>
                 <option th:each="cat : ${allCategories}"
                         th:value="${cat.id}"
                         th:text="${cat.name}"
@@ -29,19 +29,19 @@
         </div>
 
         <section class="translation-section">
-            <h2>Contenuti multilingua</h2>
+            <h2 th:text="#{common.multilingual.content}">Contenuti multilingua</h2>
             <div class="translation-grid">
                 <div class="translation-card" th:each="lang : ${languageOptions}">
                     <h3><span class="lang-flag" th:text="${lang.flag}">IT</span> <span th:text="${lang.label}">Italiano</span></h3>
                     <div class="field">
-                        <label>Nome</label>
+                        <label th:text="#{common.name}">Nome</label>
                         <input type="text"
                                th:name="${'translations[' + lang.code + '].name'}"
                                th:value="${category.translations != null and category.translations[lang.code] != null ? category.translations[lang.code].name : ''}"
                                th:required="${lang.code == 'it'}" />
                     </div>
                     <div class="field">
-                        <label>Descrizione</label>
+                        <label th:text="#{common.description}">Descrizione</label>
                         <textarea rows="3"
                                   th:name="${'translations[' + lang.code + '].description'}"
                                   th:text="${category.translations != null and category.translations[lang.code] != null ? category.translations[lang.code].description : ''}"></textarea>
@@ -52,11 +52,11 @@
 
         <div class="grid-2">
             <div class="field">
-                <label>Sort order</label>
+                <label th:text="#{common.sort.order}">Sort order</label>
                 <input type="number" th:field="*{sortOrder}" />
             </div>
             <div class="field">
-                <label>Attiva</label>
+                <label th:text="#{common.active}">Attiva</label>
                 <select th:field="*{active}">
                     <option th:value="true">true</option>
                     <option th:value="false">false</option>
@@ -64,7 +64,7 @@
             </div>
         </div>
 
-        <button class="btn btn-primary" type="submit">Salva</button>
+        <button class="btn btn-primary" type="submit" th:text="#{common.save}">Salva</button>
     </form>
 </main>
 

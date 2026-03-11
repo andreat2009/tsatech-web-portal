@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
-    <title>Coupon</title>
+    <title th:text="#{admin.coupons.title}">Coupon</title>
     <link rel="stylesheet" th:href="@{/css/app.css}" />
 </head>
 <body>
@@ -10,8 +10,8 @@
 
 <main class="container">
     <div class="page-header">
-        <h1>Coupon</h1>
-        <a class="btn btn-primary" th:href="@{/admin/marketing/coupon/new}">Nuovo coupon</a>
+        <h1 th:text="#{admin.coupons.title}">Coupon</h1>
+        <a class="btn btn-primary" th:href="@{/admin/marketing/coupon/new}" th:text="#{admin.coupon.new}">Nuovo coupon</a>
     </div>
 
     <table class="table">
@@ -19,12 +19,12 @@
         <tr>
             <th>ID</th>
             <th>Code</th>
-            <th>Nome</th>
-            <th>Tipo</th>
-            <th>Valore</th>
-            <th>Min Total</th>
-            <th>Attivo</th>
-            <th></th>
+            <th th:text="#{common.name}">Nome</th>
+            <th th:text="#{common.type}">Tipo</th>
+            <th th:text="#{common.value}">Valore</th>
+            <th th:text="#{admin.coupon.min.total.short}">Min Total</th>
+            <th th:text="#{common.active}">Attivo</th>
+            <th th:text="#{common.actions}">Azioni</th>
         </tr>
         </thead>
         <tbody>
@@ -37,10 +37,10 @@
             <td th:text="${coupon.minTotal != null ? #numbers.formatDecimal(coupon.minTotal, 1, 'POINT', 2, 'POINT') : '0.00'}">0</td>
             <td th:text="${coupon.active}">true</td>
             <td class="actions">
-                <a class="btn" th:href="@{/admin/marketing/coupon/{id}/edit(id=${coupon.id})}">Modifica</a>
+                <a class="btn" th:href="@{/admin/marketing/coupon/{id}/edit(id=${coupon.id})}" th:text="#{common.edit}">Modifica</a>
                 <form th:action="@{/admin/marketing/coupon/{id}/delete(id=${coupon.id})}" method="post">
                     <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                    <button class="btn btn-link" type="submit">Elimina</button>
+                    <button class="btn btn-link" type="submit" th:text="#{common.delete}">Elimina</button>
                 </form>
             </td>
         </tr>

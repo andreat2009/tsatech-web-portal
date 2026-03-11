@@ -20,6 +20,8 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
@@ -45,15 +47,18 @@ public class StorefrontController {
     private final GatewayClient gatewayClient;
     private final CustomerResolver customerResolver;
     private final String currency;
+    private final MessageSource messageSource;
 
     public StorefrontController(
         GatewayClient gatewayClient,
         CustomerResolver customerResolver,
-        @Value("${app.currency}") String currency
+        @Value("${app.currency}") String currency,
+        MessageSource messageSource
     ) {
         this.gatewayClient = gatewayClient;
         this.customerResolver = customerResolver;
         this.currency = currency;
+        this.messageSource = messageSource;
     }
 
     @GetMapping({"/", "/shop", "/catalogo"})
@@ -337,7 +342,7 @@ public class StorefrontController {
             model.addAttribute("checkoutForm", checkoutForm);
             model.addAttribute("guestCheckout", false);
             model.addAttribute("checkoutError", "processing".equalsIgnoreCase(error)
-                ? "Checkout non completato. Verifica i servizi e riprova."
+                ? msg("checkout.error.services")
                 : null);
             return "checkout/index";
         }
@@ -366,7 +371,7 @@ public class StorefrontController {
         model.addAttribute("checkoutForm", guestForm);
         model.addAttribute("guestCheckout", true);
         model.addAttribute("checkoutError", "processing".equalsIgnoreCase(error)
-            ? "Checkout non completato. Verifica i dati e riprova."
+            ? msg("checkout.error.data")
             : null);
         return "checkout/index";
     }
@@ -1002,11 +1007,11 @@ public class StorefrontController {
 
     private Map<String, String> sortOptions() {
         Map<String, String> options = new LinkedHashMap<>();
-        options.put("name_asc", "Nome (A-Z)");
-        options.put("name_desc", "Nome (Z-A)");
-        options.put("price_asc", "Prezzo crescente");
-        options.put("price_desc", "Prezzo decrescente");
-        options.put("newest", "Novità");
+        options.put("name_asc", msg("catalog.sort.name.asc"));
+        options.put("name_desc", msg("catalog.sort.name.desc"));
+        options.put("price_asc", msg("catalog.sort.price.asc"));
+        options.put("price_desc", msg("catalog.sort.price.desc"));
+        options.put("newest", msg("catalog.sort.newest"));
         return options;
     }
 
@@ -1019,8 +1024,8 @@ public class StorefrontController {
 
     private Map<String, String> paymentMethods() {
         Map<String, String> methods = new LinkedHashMap<>();
-        methods.put(PAYMENT_COD, "Pagamento alla consegna");
-        methods.put(PAYMENT_BANK, "Bonifico bancario");
+        methods.put(PAYMENT_COD, msg("checkout.payment.cod"));
+        methods.put(PAYMENT_BANK, msg("checkout.payment.bank"));
         return methods;
     }
 
@@ -1030,6 +1035,10 @@ public class StorefrontController {
 
     private String normalizePaymentMethod(String method) {
         return paymentMethods().containsKey(method) ? method : PAYMENT_COD;
+    }
+
+    private String msg(String key) {
+        return messageSource.getMessage(key, null, LocaleContextHolder.getLocale());
     }
 
     private String normalizeGuestEmail(String email) {

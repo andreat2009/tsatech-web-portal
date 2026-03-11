@@ -2,104 +2,104 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
-    <title>Admin Dashboard</title>
+    <title th:text="#{admin.dashboard.title}">Admin Dashboard</title>
     <link rel="stylesheet" th:href="@{/css/app.css}" />
 </head>
 <body>
 <div th:replace="fragments/header :: header"></div>
 
 <main class="container admin">
-    <h1>Dashboard Admin</h1>
+    <h1 th:text="#{admin.dashboard.title}">Dashboard Admin</h1>
     <div class="grid stats">
         <div class="card">
-            <div class="stat-label">Prodotti</div>
+            <div class="stat-label" th:text="#{admin.dashboard.products}">Prodotti</div>
             <div class="stat-value" th:text="${productCount}">0</div>
-            <a class="btn" th:href="@{/admin/catalogo/prodotti}">Gestisci prodotti</a>
+            <a class="btn" th:href="@{/admin/catalogo/prodotti}" th:text="#{admin.dashboard.manage.products}">Gestisci prodotti</a>
         </div>
         <div class="card">
-            <div class="stat-label">Categorie</div>
+            <div class="stat-label" th:text="#{admin.dashboard.categories}">Categorie</div>
             <div class="stat-value" th:text="${categoryCount}">0</div>
-            <a class="btn" th:href="@{/admin/catalogo/categorie}">Gestisci categorie</a>
+            <a class="btn" th:href="@{/admin/catalogo/categorie}" th:text="#{admin.dashboard.manage.categories}">Gestisci categorie</a>
         </div>
         <div class="card">
-            <div class="stat-label">Produttori</div>
+            <div class="stat-label" th:text="#{admin.dashboard.manufacturers}">Produttori</div>
             <div class="stat-value" th:text="${manufacturerCount}">0</div>
-            <a class="btn" th:href="@{/admin/catalogo/produttori}">Gestisci produttori</a>
+            <a class="btn" th:href="@{/admin/catalogo/produttori}" th:text="#{admin.dashboard.manage.manufacturers}">Gestisci produttori</a>
         </div>
         <div class="card">
-            <div class="stat-label">Clienti</div>
+            <div class="stat-label" th:text="#{admin.dashboard.customers}">Clienti</div>
             <div class="stat-value" th:text="${customerCount}">0</div>
-            <a class="btn" th:href="@{/admin/customers}">Elenco clienti</a>
+            <a class="btn" th:href="@{/admin/customers}" th:text="#{admin.dashboard.list.customers}">Elenco clienti</a>
         </div>
         <div class="card">
-            <div class="stat-label">Carrelli</div>
+            <div class="stat-label" th:text="#{admin.dashboard.carts}">Carrelli</div>
             <div class="stat-value" th:text="${cartCount}">0</div>
-            <a class="btn" th:href="@{/admin/carts}">Elenco carrelli</a>
+            <a class="btn" th:href="@{/admin/carts}" th:text="#{admin.dashboard.list.carts}">Elenco carrelli</a>
         </div>
         <div class="card">
-            <div class="stat-label">Ordini</div>
+            <div class="stat-label" th:text="#{menu.orders}">Ordini</div>
             <div class="stat-value" th:text="${orderCount}">0</div>
-            <a class="btn" th:href="@{/admin/orders}">Gestisci ordini</a>
+            <a class="btn" th:href="@{/admin/orders}" th:text="#{admin.dashboard.manage.orders}">Gestisci ordini</a>
         </div>
         <div class="card">
-            <div class="stat-label">Resi</div>
+            <div class="stat-label" th:text="#{menu.returns}">Resi</div>
             <div class="stat-value" th:text="${returnCount}">0</div>
-            <a class="btn" th:href="@{/admin/returns}">Gestisci resi</a>
+            <a class="btn" th:href="@{/admin/returns}" th:text="#{admin.dashboard.manage.returns}">Gestisci resi</a>
         </div>
         <div class="card">
-            <div class="stat-label">Inventario</div>
+            <div class="stat-label" th:text="#{admin.dashboard.inventory}">Inventario</div>
             <div class="stat-value" th:text="${inventoryCount}">0</div>
-            <a class="btn" th:href="@{/admin/inventory}">Vedi stock</a>
+            <a class="btn" th:href="@{/admin/inventory}" th:text="#{admin.dashboard.view.stock}">Vedi stock</a>
         </div>
         <div class="card">
-            <div class="stat-label">Prezzi</div>
+            <div class="stat-label" th:text="#{admin.dashboard.prices}">Prezzi</div>
             <div class="stat-value" th:text="${priceCount}">0</div>
-            <a class="btn" th:href="@{/admin/pricing}">Vedi prezzi</a>
+            <a class="btn" th:href="@{/admin/pricing}" th:text="#{admin.dashboard.view.prices}">Vedi prezzi</a>
         </div>
         <div class="card">
-            <div class="stat-label">Coupon</div>
+            <div class="stat-label" th:text="#{admin.dashboard.coupons}">Coupon</div>
             <div class="stat-value" th:text="${couponCount}">0</div>
-            <a class="btn" th:href="@{/admin/marketing/coupon}">Gestisci coupon</a>
+            <a class="btn" th:href="@{/admin/marketing/coupon}" th:text="#{admin.dashboard.manage.coupons}">Gestisci coupon</a>
         </div>
         <div class="card">
-            <div class="stat-label">Pagamenti</div>
+            <div class="stat-label" th:text="#{admin.dashboard.payments}">Pagamenti</div>
             <div class="stat-value" th:text="${paymentCount}">0</div>
-            <a class="btn" th:href="@{/admin/payments}">Gestisci pagamenti</a>
+            <a class="btn" th:href="@{/admin/payments}" th:text="#{admin.dashboard.manage.payments}">Gestisci pagamenti</a>
         </div>
         <div class="card">
-            <div class="stat-label">Spedizioni</div>
+            <div class="stat-label" th:text="#{admin.dashboard.shipments}">Spedizioni</div>
             <div class="stat-value" th:text="${shipmentCount}">0</div>
-            <a class="btn" th:href="@{/admin/shipments}">Gestisci spedizioni</a>
+            <a class="btn" th:href="@{/admin/shipments}" th:text="#{admin.dashboard.manage.shipments}">Gestisci spedizioni</a>
         </div>
         <div class="card">
-            <div class="stat-label">Recensioni</div>
-            <div class="stat-value">Moderazione</div>
-            <a class="btn" th:href="@{/admin/reviews}">Gestisci recensioni</a>
+            <div class="stat-label" th:text="#{admin.dashboard.reviews}">Recensioni</div>
+            <div class="stat-value" th:text="#{admin.dashboard.moderation}">Moderazione</div>
+            <a class="btn" th:href="@{/admin/reviews}" th:text="#{admin.dashboard.manage.reviews}">Gestisci recensioni</a>
         </div>
         <div class="card">
-            <div class="stat-label">Pagine Info</div>
+            <div class="stat-label" th:text="#{admin.dashboard.info.pages}">Pagine Info</div>
             <div class="stat-value" th:text="${informationCount}">0</div>
-            <a class="btn" th:href="@{/admin/information}">Gestisci contenuti</a>
+            <a class="btn" th:href="@{/admin/information}" th:text="#{admin.dashboard.manage.contents}">Gestisci contenuti</a>
         </div>
         <div class="card">
-            <div class="stat-label">Blog Posts</div>
+            <div class="stat-label" th:text="#{admin.dashboard.blog.posts}">Blog Posts</div>
             <div class="stat-value" th:text="${blogPostCount}">0</div>
-            <a class="btn" th:href="@{/admin/blog/posts}">Gestisci blog</a>
+            <a class="btn" th:href="@{/admin/blog/posts}" th:text="#{admin.dashboard.manage.blog}">Gestisci blog</a>
         </div>
         <div class="card">
-            <div class="stat-label">Blog Commenti</div>
+            <div class="stat-label" th:text="#{admin.dashboard.blog.comments}">Blog Commenti</div>
             <div class="stat-value" th:text="${blogCommentCount}">0</div>
-            <a class="btn" th:href="@{/admin/blog/comments}">Modera commenti</a>
+            <a class="btn" th:href="@{/admin/blog/comments}" th:text="#{admin.dashboard.moderate.comments}">Modera commenti</a>
         </div>
         <div class="card">
-            <div class="stat-label">Messaggi Contatto</div>
+            <div class="stat-label" th:text="#{admin.dashboard.contact.messages}">Messaggi Contatto</div>
             <div class="stat-value" th:text="${contactMessageCount}">0</div>
-            <a class="btn" th:href="@{/admin/contact-messages}">Inbox contatti</a>
+            <a class="btn" th:href="@{/admin/contact-messages}" th:text="#{admin.dashboard.contact.inbox}">Inbox contatti</a>
         </div>
         <div class="card">
-            <div class="stat-label">Notification Service</div>
+            <div class="stat-label" th:text="#{admin.dashboard.notifications}">Notification Service</div>
             <div class="stat-value" th:text="${notificationStatus}">unknown</div>
-            <span class="muted">Kafka consumer health</span>
+            <span class="muted" th:text="#{admin.dashboard.kafka.health}">Kafka consumer health</span>
         </div>
     </div>
 </main>

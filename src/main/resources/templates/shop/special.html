@@ -1,41 +1,41 @@
 <!DOCTYPE html>
-<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Offerte speciali</title>
+    <title th:text="#{shop.special.title}">Special offers</title>
     <link rel="stylesheet" th:href="@{/css/app.css}" />
 </head>
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
 <main class="container">
     <div class="breadcrumbs">
-        <a th:href="@{/}">Home</a>
+        <a th:href="@{/}" th:text="#{menu.home}">Home</a>
         <span>/</span>
-        <span>Offerte</span>
+        <span th:text="#{shop.special.breadcrumb}">Specials</span>
     </div>
 
     <section class="card section-pad">
-        <h1>Offerte speciali</h1>
+        <h1 th:text="#{shop.special.heading}">Special offers</h1>
         <div class="product-grid">
             <article class="product-card" th:each="p : ${products}">
                 <div class="product-media-small">
                     <img th:if="${p.primaryImageUrl != null and !p.primaryImageUrl.isBlank()}" th:src="${p.primaryImageUrl}" th:alt="${p.name}" loading="lazy" />
                     <div class="image-placeholder" th:if="${p.primaryImageUrl == null or p.primaryImageUrl.isBlank()}" th:text="${p.sku != null ? p.sku : 'SKU'}">SKU</div>
                 </div>
-                <h3><a th:href="${p.seoPath}" th:text="${p.name}">Prodotto</a></h3>
+                <h3><a th:href="${p.seoPath}" th:text="${p.name}">Product</a></h3>
                 <p><strong th:text="${p.price != null ? #numbers.formatDecimal(p.price, 1, 'POINT', 2, 'POINT') : '0.00'}">0.00</strong></p>
                 <div class="stack-actions">
                     <form method="post" th:action="@{/cart/add}">
                         <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                         <input type="hidden" name="productId" th:value="${p.id}" />
                         <input type="hidden" name="quantity" value="1" />
-                        <button class="btn btn-primary" type="submit">Aggiungi al carrello</button>
+                        <button class="btn btn-primary" type="submit" th:text="#{shop.special.add.to.cart}">Add to cart</button>
                     </form>
                     <form method="post" th:action="@{/catalogo/confronta/aggiungi}">
                         <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                         <input type="hidden" name="productId" th:value="${p.id}" />
-                        <button class="btn" type="submit">Confronta</button>
+                        <button class="btn" type="submit" th:text="#{shop.special.compare}">Compare</button>
                     </form>
                 </div>
             </article>

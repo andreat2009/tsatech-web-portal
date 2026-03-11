@@ -1,27 +1,35 @@
 <!DOCTYPE html>
-<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Download</title>
+    <title th:text="#{account.downloads.title}">Downloads</title>
     <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css" />
 </head>
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
 <main class="container">
     <section class="card section-pad">
-        <h1>I tuoi download</h1>
+        <h1 th:text="#{account.downloads.heading}">Your downloads</h1>
         <table class="table">
-            <thead><tr><th>Nome</th><th>File</th><th>Ordine</th><th>Dimensione</th><th>Data</th></tr></thead>
+            <thead>
+            <tr>
+                <th th:text="#{common.name}">Name</th>
+                <th th:text="#{account.downloads.file}">File</th>
+                <th th:text="#{common.order}">Order</th>
+                <th th:text="#{account.downloads.size}">Size</th>
+                <th th:text="#{common.date}">Date</th>
+            </tr>
+            </thead>
             <tbody>
             <tr th:each="d : ${downloads}">
-                <td th:text="${d.name}">Manuale</td>
+                <td th:text="${d.name}">Manual</td>
                 <td th:text="${d.filename}">manual.pdf</td>
                 <td th:text="${d.orderId}">1</td>
                 <td th:text="${d.sizeBytes}">1024</td>
                 <td th:text="${d.createdAt}">2026-01-01</td>
             </tr>
-            <tr th:if="${#lists.isEmpty(downloads)}"><td colspan="5">Nessun download disponibile.</td></tr>
+            <tr th:if="${#lists.isEmpty(downloads)}"><td colspan="5" th:text="#{account.downloads.empty}">No downloads available.</td></tr>
             </tbody>
         </table>
     </section>

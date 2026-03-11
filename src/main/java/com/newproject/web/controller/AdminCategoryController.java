@@ -40,7 +40,7 @@ public class AdminCategoryController {
         category.setTranslations(ensureCategoryTranslations(null, null));
         model.addAttribute("category", category);
         model.addAttribute("allCategories", gatewayClient.listCategories(true));
-        model.addAttribute("formTitle", "Nuova categoria");
+        model.addAttribute("formTitleKey", "admin.category.title.new");
         model.addAttribute("formAction", "/admin/catalogo/categorie");
         return "admin/category-form";
     }
@@ -70,7 +70,7 @@ public class AdminCategoryController {
         model.addAttribute("category", request);
         model.addAttribute("allCategories", gatewayClient.listCategories(true));
         model.addAttribute("editingCategoryId", id);
-        model.addAttribute("formTitle", "Modifica categoria");
+        model.addAttribute("formTitleKey", "admin.category.title.edit");
         model.addAttribute("formAction", "/admin/catalogo/categorie/" + id);
         return "admin/category-form";
     }

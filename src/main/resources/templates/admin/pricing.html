@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
-    <title>Admin Prezzi</title>
+    <title th:text="#{admin.pricing.title}">Admin Prezzi</title>
     <link rel="stylesheet" th:href="@{/css/app.css}" />
 </head>
 <body>
@@ -10,18 +10,18 @@
 
 <main class="container admin">
     <div class="page-header">
-        <h1>Prezzi</h1>
-        <a class="btn" th:href="@{/admin/marketing/coupon}">Vai ai coupon</a>
+        <h1 th:text="#{admin.pricing.title}">Prezzi</h1>
+        <a class="btn" th:href="@{/admin/marketing/coupon}" th:text="#{admin.pricing.goto.coupons}">Vai ai coupon</a>
     </div>
     <table class="table">
         <thead>
             <tr>
                 <th>ID</th>
-                <th>Prodotto</th>
-                <th>Importo</th>
-                <th>Valuta</th>
-                <th>Attivo</th>
-                <th>Aggiornato</th>
+                <th th:text="#{common.product}">Prodotto</th>
+                <th th:text="#{common.amount}">Importo</th>
+                <th th:text="#{common.currency}">Valuta</th>
+                <th th:text="#{common.active}">Attivo</th>
+                <th th:text="#{common.updated.at}">Aggiornato</th>
             </tr>
         </thead>
         <tbody>

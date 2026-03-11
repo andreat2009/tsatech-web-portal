@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
-    <title>Dettaglio ordine</title>
+    <title th:text="#{account.order.detail.title}">Order details</title>
     <link rel="stylesheet" th:href="@{/css/app.css}" />
 </head>
 <body>
@@ -10,28 +10,28 @@
 
 <main class="container">
     <div class="page-header">
-        <h1>Ordine #<span th:text="${order.id}">1</span></h1>
+        <h1><span th:text="#{common.order}">Order</span> #<span th:text="${order.id}">1</span></h1>
         <div class="actions">
-            <a class="btn" th:href="@{/account/ordini}">Torna agli ordini</a>
-            <a class="btn" th:href="@{/account/resi}">I miei resi</a>
+            <a class="btn" th:href="@{/account/ordini}" th:text="#{account.order.detail.back.orders}">Back to orders</a>
+            <a class="btn" th:href="@{/account/resi}" th:text="#{account.order.detail.my.returns}">My returns</a>
         </div>
     </div>
 
     <section class="order-meta card-lite">
-        <div><strong>Stato:</strong> <span th:text="${order.status}">NEW</span></div>
-        <div><strong>Data:</strong> <span th:text="${order.createdAt}">-</span></div>
-        <div><strong>Totale:</strong> <span th:text="${order.total != null ? #numbers.formatDecimal(order.total, 1, 'POINT', 2, 'POINT') : '0.00'}">0.00</span></div>
+        <div><strong th:text="#{common.status} + ':'">Status:</strong> <span th:text="${order.status}">NEW</span></div>
+        <div><strong th:text="#{common.date} + ':'">Date:</strong> <span th:text="${order.createdAt}">-</span></div>
+        <div><strong th:text="#{common.total} + ':'">Total:</strong> <span th:text="${order.total != null ? #numbers.formatDecimal(order.total, 1, 'POINT', 2, 'POINT') : '0.00'}">0.00</span></div>
     </section>
 
     <section>
-        <h2>Righe ordine</h2>
+        <h2 th:text="#{account.order.detail.lines}">Order lines</h2>
         <table class="table">
             <thead>
             <tr>
-                <th>SKU</th>
-                <th>Prodotto</th>
-                <th>Q.tà</th>
-                <th>Prezzo unitario</th>
+                <th th:text="#{common.sku}">SKU</th>
+                <th th:text="#{common.product}">Product</th>
+                <th th:text="#{common.quantity}">Quantity</th>
+                <th th:text="#{account.order.detail.unit.price}">Unit price</th>
             </tr>
             </thead>
             <tbody>
@@ -47,13 +47,13 @@
 
     <section class="grid-2">
         <div>
-            <h2>Pagamenti</h2>
+            <h2 th:text="#{account.order.detail.payments}">Payments</h2>
             <table class="table compact">
                 <thead>
                 <tr>
                     <th>ID</th>
-                    <th>Provider</th>
-                    <th>Stato</th>
+                    <th th:text="#{common.provider}">Provider</th>
+                    <th th:text="#{common.status}">Status</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -67,14 +67,14 @@
         </div>
 
         <div>
-            <h2>Spedizioni</h2>
+            <h2 th:text="#{account.order.detail.shipments}">Shipments</h2>
             <table class="table compact">
                 <thead>
                 <tr>
                     <th>ID</th>
-                    <th>Carrier</th>
-                    <th>Tracking</th>
-                    <th>Stato</th>
+                    <th th:text="#{common.carrier}">Carrier</th>
+                    <th th:text="#{common.tracking}">Tracking</th>
+                    <th th:text="#{common.status}">Status</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -90,26 +90,26 @@
     </section>
 
     <section>
-        <h2>Apri reso</h2>
+        <h2 th:text="#{account.order.detail.open.return}">Open return</h2>
         <form class="form" th:action="@{/account/resi}" method="post" th:object="${returnForm}">
             <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
             <input type="hidden" th:field="*{orderId}" />
             <div class="field">
-                <label>Riga ordine (opzionale)</label>
+                <label th:text="#{account.order.detail.item.optional}">Order line (optional)</label>
                 <select th:field="*{orderItemId}">
-                    <option value="">Intero ordine</option>
+                    <option value="" th:text="#{account.order.detail.whole.order}">Whole order</option>
                     <option th:each="item : ${items}" th:value="${item.id}" th:text="${item.name + ' (x' + item.quantity + ')'}">Item</option>
                 </select>
             </div>
             <div class="field">
-                <label>Motivo</label>
-                <input th:field="*{reason}" placeholder="Es. prodotto difettoso" required />
+                <label th:text="#{account.order.detail.reason}">Reason</label>
+                <input th:field="*{reason}" th:placeholder="#{account.order.detail.reason.placeholder}" required />
             </div>
             <div class="field">
-                <label>Commento</label>
+                <label th:text="#{account.order.detail.comment}">Comment</label>
                 <textarea th:field="*{comment}" rows="3"></textarea>
             </div>
-            <button class="btn btn-primary" type="submit">Invia richiesta reso</button>
+            <button class="btn btn-primary" type="submit" th:text="#{account.order.detail.submit.return}">Submit return request</button>
         </form>
     </section>
 </main>

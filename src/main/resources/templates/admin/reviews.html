@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
-    <title>Recensioni</title>
+    <title th:text="#{admin.reviews.title}">Recensioni</title>
     <link rel="stylesheet" th:href="@{/css/app.css}" />
 </head>
 <body>
@@ -10,11 +10,11 @@
 
 <main class="container">
     <div class="page-header">
-        <h1>Recensioni prodotti</h1>
+        <h1 th:text="#{admin.reviews.title}">Recensioni prodotti</h1>
         <div class="actions">
-            <a class="btn" th:href="@{/admin/reviews}">Tutte</a>
-            <a class="btn" th:href="@{/admin/reviews(approved=true)}">Solo approvate</a>
-            <a class="btn" th:href="@{/admin/reviews(approved=false)}">Da moderare</a>
+            <a class="btn" th:href="@{/admin/reviews}" th:text="#{common.all}">Tutte</a>
+            <a class="btn" th:href="@{/admin/reviews(approved=true)}" th:text="#{admin.reviews.only.approved}">Solo approvate</a>
+            <a class="btn" th:href="@{/admin/reviews(approved=false)}" th:text="#{admin.reviews.to.moderate}">Da moderare</a>
         </div>
     </div>
 
@@ -22,12 +22,12 @@
         <thead>
         <tr>
             <th>ID</th>
-            <th>Prodotto</th>
-            <th>Autore</th>
-            <th>Rating</th>
-            <th>Titolo</th>
-            <th>Stato</th>
-            <th></th>
+            <th th:text="#{common.product}">Prodotto</th>
+            <th th:text="#{common.author}">Autore</th>
+            <th th:text="#{common.rating}">Rating</th>
+            <th th:text="#{common.title}">Titolo</th>
+            <th th:text="#{common.status}">Stato</th>
+            <th th:text="#{common.actions}">Azioni</th>
         </tr>
         </thead>
         <tbody>
@@ -37,17 +37,17 @@
             <td th:text="${review.authorName}">Author</td>
             <td th:text="${review.rating}">5</td>
             <td th:text="${review.title}">Title</td>
-            <td th:text="${review.approved} ? 'APPROVATA' : 'IN ATTESA'">STATE</td>
+            <td th:text="${review.approved} ? #messages.msg('common.approved') : #messages.msg('common.pending')">STATE</td>
             <td class="actions">
                 <form th:if="${!review.approved}" th:action="@{/admin/reviews/{id}/approve(id=${review.id})}" method="post">
                     <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                     <input type="hidden" name="approved" value="true" />
-                    <button class="btn btn-primary" type="submit">Approva</button>
+                    <button class="btn btn-primary" type="submit" th:text="#{common.approve}">Approva</button>
                 </form>
                 <form th:if="${review.approved}" th:action="@{/admin/reviews/{id}/approve(id=${review.id})}" method="post">
                     <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                     <input type="hidden" name="approved" value="false" />
-                    <button class="btn" type="submit">Disapprova</button>
+                    <button class="btn" type="submit" th:text="#{common.disapprove}">Disapprova</button>
                 </form>
             </td>
         </tr>

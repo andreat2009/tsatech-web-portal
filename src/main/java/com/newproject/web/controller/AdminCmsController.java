@@ -37,7 +37,7 @@ public class AdminCmsController {
         form.setTranslations(ensureInformationTranslations(null, null));
         model.addAttribute("pageForm", form);
         model.addAttribute("formAction", "/admin/information");
-        model.addAttribute("formTitle", "Nuova pagina informativa");
+        model.addAttribute("formTitleKey", "admin.information.title.new");
         return "admin/information-form";
     }
 
@@ -64,7 +64,7 @@ public class AdminCmsController {
 
         model.addAttribute("pageForm", form);
         model.addAttribute("formAction", "/admin/information/" + id);
-        model.addAttribute("formTitle", "Modifica pagina informativa");
+        model.addAttribute("formTitleKey", "admin.information.title.edit");
         return "admin/information-form";
     }
 
@@ -95,7 +95,7 @@ public class AdminCmsController {
         form.setTranslations(ensureBlogTranslations(null, null));
         model.addAttribute("postForm", form);
         model.addAttribute("formAction", "/admin/blog/posts");
-        model.addAttribute("formTitle", "Nuovo articolo");
+        model.addAttribute("formTitleKey", "admin.blog.title.new");
         return "admin/blog-post-form";
     }
 
@@ -125,7 +125,7 @@ public class AdminCmsController {
 
         model.addAttribute("postForm", form);
         model.addAttribute("formAction", "/admin/blog/posts/" + id);
-        model.addAttribute("formTitle", "Modifica articolo");
+        model.addAttribute("formTitleKey", "admin.blog.title.edit");
         return "admin/blog-post-form";
     }
 

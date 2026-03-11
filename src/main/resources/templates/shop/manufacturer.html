@@ -1,47 +1,47 @@
 <!DOCTYPE html>
-<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Produttori</title>
+    <title th:text="#{shop.manufacturer.title}">Manufacturers</title>
     <link rel="stylesheet" th:href="@{/css/app.css}" />
 </head>
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
 <main class="container">
     <div class="breadcrumbs">
-        <a th:href="@{/}">Home</a>
+        <a th:href="@{/}" th:text="#{menu.home}">Home</a>
         <span>/</span>
-        <span>Produttori</span>
+        <span th:text="#{shop.manufacturer.breadcrumb}">Manufacturers</span>
     </div>
 
     <section class="filters block">
         <form class="inline-form" method="get" th:action="@{/catalogo/produttori}">
-            <label>Produttore</label>
+            <label th:text="#{shop.manufacturer.filter.label}">Manufacturer</label>
             <select name="manufacturerId">
-                <option value="">Tutti</option>
+                <option value="" th:text="#{shop.manufacturer.filter.all}">All</option>
                 <option th:each="m : ${manufacturers}" th:value="${m.id}" th:selected="${selectedManufacturerId == m.id}" th:text="${m.name}">Brand</option>
             </select>
-            <button class="btn btn-primary" type="submit">Filtra</button>
+            <button class="btn btn-primary" type="submit" th:text="#{shop.manufacturer.filter.submit}">Filter</button>
         </form>
     </section>
 
     <section class="card section-pad">
-        <h1>Prodotti per produttore</h1>
+        <h1 th:text="#{shop.manufacturer.products.heading}">Products by manufacturer</h1>
         <div class="product-grid">
             <article class="product-card" th:each="p : ${products}">
                 <div class="product-media-small">
                     <img th:if="${p.primaryImageUrl != null and !p.primaryImageUrl.isBlank()}" th:src="${p.primaryImageUrl}" th:alt="${p.name}" loading="lazy" />
                     <div class="image-placeholder" th:if="${p.primaryImageUrl == null or p.primaryImageUrl.isBlank()}" th:text="${p.sku != null ? p.sku : 'SKU'}">SKU</div>
                 </div>
-                <h3><a th:href="${p.seoPath}" th:text="${p.name}">Prodotto</a></h3>
-                <p th:text="${p.description}">Descrizione</p>
+                <h3><a th:href="${p.seoPath}" th:text="${p.name}">Product</a></h3>
+                <p th:text="${p.description}">Description</p>
                 <p><strong th:text="${p.price != null ? #numbers.formatDecimal(p.price, 1, 'POINT', 2, 'POINT') : '0.00'}">0.00</strong></p>
                 <form method="post" th:action="@{/cart/add}">
                     <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                     <input type="hidden" name="productId" th:value="${p.id}" />
                     <input type="hidden" name="quantity" value="1" />
-                    <button class="btn btn-primary" type="submit">Aggiungi al carrello</button>
+                    <button class="btn btn-primary" type="submit" th:text="#{shop.manufacturer.add.to.cart}">Add to cart</button>
                 </form>
             </article>
         </div>

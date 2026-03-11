@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
-    <title>Indirizzi</title>
+    <title th:text="#{account.addresses.title}">Addresses</title>
     <link rel="stylesheet" th:href="@{/css/app.css}" />
 </head>
 <body>
@@ -10,59 +10,59 @@
 
 <main class="container">
     <div class="page-header">
-        <h1>I miei indirizzi</h1>
-        <a class="btn" th:href="@{/account/ordini}">Vai agli ordini</a>
+        <h1 th:text="#{account.addresses.heading}">My addresses</h1>
+        <a class="btn" th:href="@{/account/ordini}" th:text="#{account.addresses.goto.orders}">Go to orders</a>
     </div>
 
     <section class="grid-2">
         <div>
-            <h2>Elenco indirizzi</h2>
-            <div th:if="${addresses.isEmpty()}" class="empty">Nessun indirizzo configurato.</div>
+            <h2 th:text="#{account.addresses.list.title}">Address list</h2>
+            <div th:if="${addresses.isEmpty()}" class="empty" th:text="#{account.addresses.empty}">No addresses configured.</div>
             <div class="address-card" th:each="address : ${addresses}">
                 <div class="address-line" th:text="${address.line1}">Line1</div>
                 <div class="address-line muted" th:text="${address.line2}">Line2</div>
                 <div class="address-line" th:text="${address.city + ', ' + address.country + ' ' + address.postalCode}">City</div>
-                <span class="badge" th:if="${address.isDefault}">Default</span>
+                <span class="badge" th:if="${address.isDefault}" th:text="#{account.addresses.default}">Default</span>
             </div>
         </div>
 
         <div>
-            <h2>Nuovo indirizzo</h2>
+            <h2 th:text="#{account.addresses.new.title}">New address</h2>
             <form class="form" th:action="@{/account/indirizzi}" method="post" th:object="${addressForm}">
                 <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                 <div class="field">
-                    <label>Indirizzo riga 1</label>
+                    <label th:text="#{account.addresses.field.line1}">Address line 1</label>
                     <input th:field="*{line1}" required />
                 </div>
                 <div class="field">
-                    <label>Indirizzo riga 2</label>
+                    <label th:text="#{account.addresses.field.line2}">Address line 2</label>
                     <input th:field="*{line2}" />
                 </div>
                 <div class="grid-2">
                     <div class="field">
-                        <label>Città</label>
+                        <label th:text="#{account.addresses.field.city}">City</label>
                         <input th:field="*{city}" required />
                     </div>
                     <div class="field">
-                        <label>Regione</label>
+                        <label th:text="#{account.addresses.field.region}">Region</label>
                         <input th:field="*{region}" />
                     </div>
                 </div>
                 <div class="grid-2">
                     <div class="field">
-                        <label>Paese</label>
+                        <label th:text="#{account.addresses.field.country}">Country</label>
                         <input th:field="*{country}" required />
                     </div>
                     <div class="field">
-                        <label>CAP</label>
+                        <label th:text="#{account.addresses.field.postal}">Postal code</label>
                         <input th:field="*{postalCode}" required />
                     </div>
                 </div>
                 <label class="checkbox-inline">
                     <input type="checkbox" th:field="*{isDefault}" />
-                    Imposta come indirizzo predefinito
+                    <span th:text="#{account.addresses.field.default}">Set as default address</span>
                 </label>
-                <button class="btn btn-primary" type="submit">Salva indirizzo</button>
+                <button class="btn btn-primary" type="submit" th:text="#{account.addresses.save}">Save address</button>
             </form>
         </div>
     </section>

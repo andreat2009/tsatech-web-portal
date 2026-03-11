@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
-    <title>Resi</title>
+    <title th:text="#{account.returns.title}">Returns</title>
     <link rel="stylesheet" th:href="@{/css/app.css}" />
 </head>
 <body>
@@ -10,22 +10,22 @@
 
 <main class="container">
     <div class="page-header">
-        <h1>I miei resi</h1>
-        <a class="btn" th:href="@{/account/ordini}">Torna agli ordini</a>
+        <h1 th:text="#{account.returns.heading}">My returns</h1>
+        <a class="btn" th:href="@{/account/ordini}" th:text="#{account.returns.back.orders}">Back to orders</a>
     </div>
 
     <div class="grid-2">
         <div>
-            <h2>Storico resi</h2>
-            <div th:if="${returns.isEmpty()}" class="empty">Nessun reso aperto.</div>
+            <h2 th:text="#{account.returns.history}">Return history</h2>
+            <div th:if="${returns.isEmpty()}" class="empty" th:text="#{account.returns.empty}">No open returns.</div>
             <table class="table" th:if="${!returns.isEmpty()}">
                 <thead>
                 <tr>
                     <th>ID</th>
-                    <th>Ordine</th>
-                    <th>Motivo</th>
-                    <th>Stato</th>
-                    <th>Data</th>
+                    <th th:text="#{common.order}">Order</th>
+                    <th th:text="#{account.order.detail.reason}">Reason</th>
+                    <th th:text="#{common.status}">Status</th>
+                    <th th:text="#{common.date}">Date</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -41,25 +41,25 @@
         </div>
 
         <div>
-            <h2>Nuovo reso</h2>
+            <h2 th:text="#{account.returns.new}">New return</h2>
             <form class="form" th:action="@{/account/resi}" method="post" th:object="${returnForm}">
                 <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                 <div class="field">
-                    <label>Ordine</label>
+                    <label th:text="#{common.order}">Order</label>
                     <select th:field="*{orderId}" required>
-                        <option value="">Seleziona ordine</option>
-                        <option th:each="order : ${orders}" th:value="${order.id}" th:text="${'Ordine #' + order.id + ' - ' + (order.total != null ? #numbers.formatDecimal(order.total, 1, 'POINT', 2, 'POINT') : '0.00')}">Order</option>
+                        <option value="" th:text="#{account.returns.select.order}">Select order</option>
+                        <option th:each="order : ${orders}" th:value="${order.id}" th:text="${#messages.msg('common.order') + ' #' + order.id + ' - ' + (order.total != null ? #numbers.formatDecimal(order.total, 1, 'POINT', 2, 'POINT') : '0.00')}">Order</option>
                     </select>
                 </div>
                 <div class="field">
-                    <label>Motivo</label>
+                    <label th:text="#{account.order.detail.reason}">Reason</label>
                     <input th:field="*{reason}" required />
                 </div>
                 <div class="field">
-                    <label>Commento</label>
+                    <label th:text="#{account.order.detail.comment}">Comment</label>
                     <textarea th:field="*{comment}" rows="3"></textarea>
                 </div>
-                <button class="btn btn-primary" type="submit">Apri reso</button>
+                <button class="btn btn-primary" type="submit" th:text="#{account.returns.open}">Open return</button>
             </form>
         </div>
     </div>

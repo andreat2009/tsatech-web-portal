@@ -1,22 +1,22 @@
 <!DOCTYPE html>
-<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Modifica Profilo</title>
+    <title th:text="#{account.edit.title}">Edit profile</title>
     <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css" />
 </head>
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
 <main class="container">
     <section class="form section-pad centered-form">
-        <h1>Modifica profilo</h1>
+        <h1 th:text="#{account.edit.heading}">Edit profile</h1>
         <form method="post" th:action="@{/account/edit}" th:object="${profileForm}">
-            <div class="field"><label>Nome</label><input type="text" th:field="*{firstName}" /></div>
-            <div class="field"><label>Cognome</label><input type="text" th:field="*{lastName}" /></div>
-            <div class="field"><label>Telefono</label><input type="text" th:field="*{phone}" /></div>
-            <button class="btn btn-primary" type="submit">Salva</button>
-            <a class="btn" th:href="@{/account}">Annulla</a>
+            <div class="field"><label th:text="#{common.name}">Name</label><input type="text" th:field="*{firstName}" /></div>
+            <div class="field"><label th:text="#{common.lastname}">Last name</label><input type="text" th:field="*{lastName}" /></div>
+            <div class="field"><label th:text="#{account.edit.phone}">Phone</label><input type="text" th:field="*{phone}" /></div>
+            <button class="btn btn-primary" type="submit" th:text="#{account.edit.save}">Save</button>
+            <a class="btn" th:href="@{/account}" th:text="#{common.cancel}">Cancel</a>
         </form>
     </section>
 </main>

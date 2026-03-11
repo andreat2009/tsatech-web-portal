@@ -1,58 +1,59 @@
 <!DOCTYPE html>
-<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Account</title>
+    <title th:text="#{account.home.title}">Account</title>
     <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css" />
 </head>
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
 <main class="container">
     <section class="card section-pad block">
-        <h1>Il tuo account</h1>
-        <p th:text="${customer.firstName} + ' ' + ${customer.lastName} + ' - ' + ${customer.email}">Profilo</p>
+        <h1 th:text="#{account.home.heading}">Your account</h1>
+        <p th:text="${customer.firstName} + ' ' + ${customer.lastName} + ' - ' + ${customer.email}">Profile</p>
         <p>
-            Newsletter:
-            <strong th:text="${newsletterSubscribed} ? 'Attiva' : 'Disattiva'">stato</strong>
+            <span th:text="#{account.home.newsletter}">Newsletter:</span>
+            <strong th:text="${newsletterSubscribed} ? #messages.msg('account.home.newsletter.active') : #messages.msg('account.home.newsletter.inactive')">status</strong>
         </p>
         <form method="post" th:action="@{/account/newsletter}">
             <input type="hidden" name="newsletter" th:value="${newsletterSubscribed} ? false : true" />
-            <button class="btn btn-primary" type="submit" th:text="${newsletterSubscribed} ? 'Disattiva newsletter' : 'Attiva newsletter'">Toggle</button>
+            <button class="btn btn-primary" type="submit"
+                    th:text="${newsletterSubscribed} ? #messages.msg('account.home.newsletter.disable') : #messages.msg('account.home.newsletter.enable')">Toggle</button>
         </form>
     </section>
 
     <section class="card section-pad block">
-        <h2>Riepilogo rapido</h2>
+        <h2 th:text="#{account.home.quick.summary}">Quick summary</h2>
         <ul>
-            <li>Punti reward: <strong th:text="${rewardSummary.pointsBalance}">0</strong></li>
-            <li>Abbonamenti: <strong th:text="${subscriptionCount}">0</strong></li>
-            <li>Download: <strong th:text="${downloadCount}">0</strong></li>
+            <li><span th:text="#{account.home.reward.points}">Reward points:</span> <strong th:text="${rewardSummary.pointsBalance}">0</strong></li>
+            <li><span th:text="#{account.home.subscriptions}">Subscriptions:</span> <strong th:text="${subscriptionCount}">0</strong></li>
+            <li><span th:text="#{account.home.downloads}">Downloads:</span> <strong th:text="${downloadCount}">0</strong></li>
         </ul>
         <p>
-            <a class="btn" th:href="@{/account/edit}">Modifica profilo</a>
+            <a class="btn" th:href="@{/account/edit}" th:text="#{account.edit.heading}">Edit profile</a>
             <a class="btn" th:href="@{/account/reward}">Reward</a>
-            <a class="btn" th:href="@{/account/transactions}">Transazioni</a>
-            <a class="btn" th:href="@{/account/subscriptions}">Abbonamenti</a>
-            <a class="btn" th:href="@{/account/downloads}">Download</a>
-            <a class="btn" th:href="@{/account/password}">Password</a>
+            <a class="btn" th:href="@{/account/transactions}" th:text="#{account.transactions.title}">Transactions</a>
+            <a class="btn" th:href="@{/account/subscriptions}" th:text="#{account.subscriptions.title}">Subscriptions</a>
+            <a class="btn" th:href="@{/account/downloads}" th:text="#{account.downloads.title}">Downloads</a>
+            <a class="btn" th:href="@{/account/password}" th:text="#{account.home.password}">Password</a>
         </p>
     </section>
 
     <section class="card section-pad">
-        <h2>Ultimi ordini</h2>
+        <h2 th:text="#{account.home.latest.orders}">Latest orders</h2>
         <table class="table">
             <thead>
-            <tr><th>ID</th><th>Stato</th><th>Totale</th><th>Azioni</th></tr>
+            <tr><th>ID</th><th th:text="#{common.status}">Status</th><th th:text="#{common.total}">Total</th><th th:text="#{common.actions}">Actions</th></tr>
             </thead>
             <tbody>
             <tr th:each="order : ${latestOrders}">
                 <td th:text="${order.id}">1</td>
                 <td th:text="${order.status}">PENDING</td>
                 <td th:text="${order.total != null ? #numbers.formatDecimal(order.total, 1, 'POINT', 2, 'POINT') : '0.00'}">0.00</td>
-                <td><a th:href="@{/account/ordini/{id}(id=${order.id})}">Dettaglio</a></td>
+                <td><a th:href="@{/account/ordini/{id}(id=${order.id})}" th:text="#{account.home.detail}">Details</a></td>
             </tr>
-            <tr th:if="${#lists.isEmpty(latestOrders)}"><td colspan="4">Nessun ordine.</td></tr>
+            <tr th:if="${#lists.isEmpty(latestOrders)}"><td colspan="4" th:text="#{account.home.no.orders}">No orders.</td></tr>
             </tbody>
         </table>
     </section>

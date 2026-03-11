@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
-    <title th:text="${formTitle}">Produttore</title>
+    <title th:text="${#messages.msg(formTitleKey)}">Produttore</title>
     <link rel="stylesheet" th:href="@{/css/app.css}" />
 </head>
 <body>
@@ -10,20 +10,20 @@
 
 <main class="container admin">
     <div class="page-header">
-        <h1 th:text="${formTitle}">Produttore</h1>
-        <a class="btn" th:href="@{/admin/catalogo/produttori}">Torna all'elenco</a>
+        <h1 th:text="${#messages.msg(formTitleKey)}">Produttore</h1>
+        <a class="btn" th:href="@{/admin/catalogo/produttori}" th:text="#{common.back.to.list}">Torna all'elenco</a>
     </div>
 
     <form class="form" th:action="${formAction}" method="post" th:object="${manufacturer}">
         <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 
         <section class="translation-section">
-            <h2>Contenuti multilingua</h2>
+            <h2 th:text="#{common.multilingual.content}">Contenuti multilingua</h2>
             <div class="translation-grid">
                 <div class="translation-card" th:each="lang : ${languageOptions}">
                     <h3><span class="lang-flag" th:text="${lang.flag}">IT</span> <span th:text="${lang.label}">Italiano</span></h3>
                     <div class="field">
-                        <label>Nome produttore</label>
+                        <label th:text="#{admin.manufacturer.field.name}">Nome produttore</label>
                         <input type="text"
                                th:name="${'translations[' + lang.code + '].name'}"
                                th:value="${manufacturer.translations != null and manufacturer.translations[lang.code] != null ? manufacturer.translations[lang.code].name : ''}"
@@ -34,21 +34,21 @@
         </section>
 
         <div class="field">
-            <label>URL immagine/logo</label>
+            <label th:text="#{admin.manufacturer.image.url}">URL immagine/logo</label>
             <input type="url" th:field="*{image}" placeholder="https://..." />
         </div>
 
         <div class="field">
-            <label>Stato</label>
+            <label th:text="#{common.status}">Stato</label>
             <select th:field="*{active}">
-                <option th:value="true">Attivo</option>
-                <option th:value="false">Disattivo</option>
+                <option th:value="true" th:text="#{common.active}">Attivo</option>
+                <option th:value="false" th:text="#{common.inactive}">Disattivo</option>
             </select>
         </div>
 
         <div class="actions space-top">
-            <button class="btn btn-primary" type="submit">Salva</button>
-            <a class="btn" th:href="@{/admin/catalogo/produttori}">Annulla</a>
+            <button class="btn btn-primary" type="submit" th:text="#{common.save}">Salva</button>
+            <a class="btn" th:href="@{/admin/catalogo/produttori}" th:text="#{common.cancel}">Annulla</a>
         </div>
     </form>
 </main>

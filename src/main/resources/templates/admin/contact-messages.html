@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Admin Contatti</title>
+    <title th:text="#{admin.contact.title}">Admin Contatti</title>
     <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css" />
 </head>
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
 <main class="container">
     <section class="card section-pad">
-        <h1>Messaggi contatto</h1>
+        <h1 th:text="#{admin.contact.messages}">Messaggi contatto</h1>
         <table class="table">
-            <thead><tr><th>ID</th><th>Nome</th><th>Email</th><th>Oggetto</th><th>Messaggio</th><th>Stato</th><th>Azioni</th></tr></thead>
+            <thead><tr><th>ID</th><th th:text="#{common.name}">Nome</th><th>Email</th><th th:text="#{common.subject}">Oggetto</th><th th:text="#{common.message}">Messaggio</th><th th:text="#{common.status}">Stato</th><th th:text="#{common.actions}">Azioni</th></tr></thead>
             <tbody>
             <tr th:each="m : ${messages}">
                 <td th:text="${m.id}">1</td>
@@ -24,11 +24,11 @@
                 <td>
                     <form method="post" th:action="@{/admin/contact-messages/{id}/status(id=${m.id})}" class="inline-form-action">
                         <input type="hidden" name="status" value="READ" />
-                        <button class="btn" type="submit">Segna letto</button>
+                        <button class="btn" type="submit" th:text="#{admin.contact.mark.read}">Segna letto</button>
                     </form>
                     <form method="post" th:action="@{/admin/contact-messages/{id}/status(id=${m.id})}" class="inline-form-action">
                         <input type="hidden" name="status" value="DONE" />
-                        <button class="btn" type="submit">Chiudi</button>
+                        <button class="btn" type="submit" th:text="#{admin.contact.close}">Chiudi</button>
                     </form>
                 </td>
             </tr>

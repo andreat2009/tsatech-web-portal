@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Catalogo prodotti | TSATech Commerce</title>
-    <meta name="description" content="Catalogo e-commerce con ricerca prodotti, categorie e offerte aggiornate." />
+    <title th:text="#{catalog.title}">Product catalog | TSATech Commerce</title>
+    <meta name="description" th:content="#{catalog.meta.description}" />
     <link rel="canonical" th:href="@{/catalogo}" />
     <link rel="stylesheet" th:href="@{/css/app.css}" />
 </head>
@@ -13,30 +13,30 @@
 
 <main class="container">
     <div class="breadcrumbs">
-        <a th:href="@{/}">Home</a>
+        <a th:href="@{/}" th:text="#{menu.home}">Home</a>
         <span>/</span>
-        <span>Catalogo</span>
+        <span th:text="#{catalog.breadcrumb}">Catalog</span>
     </div>
 
     <section class="catalog-layout">
         <aside class="catalog-sidebar">
-            <h3>Refine Search</h3>
+            <h3 th:text="#{catalog.refine.search}">Refine Search</h3>
             <a class="category-link"
                th:classappend="${selectedCategoryId == null} ? ' active'"
-               th:href="@{/catalogo(q=${searchQuery},sort=${selectedSort})}">Tutte le categorie</a>
+               th:href="@{/catalogo(q=${searchQuery},sort=${selectedSort})}" th:text="#{catalog.all.categories}">All categories</a>
 
             <ul class="category-tree" th:if="${!categoryTree.isEmpty()}">
                 <li th:each="category : ${categoryTree}">
                     <a class="category-link"
                        th:classappend="${selectedCategoryId == category.id} ? ' active'"
                        th:text="${category.name}"
-                       th:href="@{/catalogo(q=${searchQuery},categoryId=${category.id},sort=${selectedSort})}">Categoria</a>
+                       th:href="@{/catalogo(q=${searchQuery},categoryId=${category.id},sort=${selectedSort})}">Category</a>
                     <ul th:if="${!category.children.isEmpty()}">
                         <li th:each="child : ${category.children}">
                             <a class="category-link child"
                                th:classappend="${selectedCategoryId == child.id} ? ' active'"
                                th:text="${child.name}"
-                               th:href="@{/catalogo(q=${searchQuery},categoryId=${child.id},sort=${selectedSort})}">Sotto categoria</a>
+                               th:href="@{/catalogo(q=${searchQuery},categoryId=${child.id},sort=${selectedSort})}">Sub-category</a>
                         </li>
                     </ul>
                 </li>
@@ -45,18 +45,18 @@
 
         <div class="catalog-main">
             <form class="filters" method="get" th:action="@{/catalogo}">
-                <input type="text" name="q" placeholder="Cerca prodotto" th:value="${searchQuery}" />
+                <input type="text" name="q" th:placeholder="#{catalog.search.placeholder}" th:value="${searchQuery}" />
                 <input type="hidden" name="categoryId" th:value="${selectedCategoryId}" />
                 <select name="sort">
                     <option th:each="entry : ${sortOptions.entrySet()}"
                             th:value="${entry.key}"
                             th:text="${entry.value}"
                             th:selected="${selectedSort == entry.key}">
-                        Nome (A-Z)
+                        Name (A-Z)
                     </option>
                 </select>
-                <button class="btn btn-primary" type="submit">Filtra</button>
-                <span class="muted products-count" th:text="${products.size()} + ' prodotti'">0 prodotti</span>
+                <button class="btn btn-primary" type="submit" th:text="#{catalog.filter}">Filter</button>
+                <span class="muted products-count" th:text="${products.size()} + ' ' + #messages.msg('catalog.products.count')">0 products</span>
             </form>
 
             <section class="product-grid" th:if="${!products.isEmpty()}">
@@ -78,8 +78,8 @@
                         <p class="desc" th:text="${product.description}">Description</p>
                         <p class="price" th:text="${product.price != null ? #numbers.formatDecimal(product.price, 1, 'POINT', 2, 'POINT') : '0.00'}">0.00</p>
                         <p class="price-tax"
-                           th:text="${product.quantity != null} ? 'Disponibili: ' + product.quantity : 'Disponibilita: n/d'">
-                            Disponibili: 0
+                           th:text="${product.quantity != null} ? #messages.msg('catalog.availability') + ': ' + product.quantity : #messages.msg('catalog.availability') + ': ' + #messages.msg('catalog.availability.na')">
+                            Available: 0
                         </p>
                     </div>
                     <div class="button">
@@ -89,26 +89,26 @@
                             <input type="hidden" name="quantity" value="1" />
                             <button type="submit"
                                     th:disabled="${product.quantity != null and product.quantity <= 0}"
-                                    th:text="${product.quantity != null and product.quantity <= 0} ? 'Esaurito' : 'Aggiungi'">Aggiungi</button>
+                                    th:text="${product.quantity != null and product.quantity <= 0} ? #messages.msg('catalog.sold.out') : #messages.msg('catalog.add')">Add</button>
                         </form>
                         <form th:action="@{/account/lista-desideri/aggiungi}" method="post" sec:authorize="isAuthenticated()">
                             <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                             <input type="hidden" name="productId" th:value="${product.id}" />
                             <button type="submit"
-                                    th:text="${wishlistProductIds.contains(product.id)} ? 'In wishlist' : 'Wishlist'">Wishlist</button>
+                                    th:text="${wishlistProductIds.contains(product.id)} ? #messages.msg('catalog.in.wishlist') : #messages.msg('catalog.wishlist')">Wishlist</button>
                         </form>
                         <form th:action="@{/catalogo/confronta/aggiungi}" method="post">
                             <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                             <input type="hidden" name="productId" th:value="${product.id}" />
-                            <button type="submit">Confronta</button>
+                            <button type="submit" th:text="#{catalog.compare}">Compare</button>
                         </form>
-                        <a class="btn-link" th:href="${product.seoPath}">Dettagli</a>
+                        <a class="btn-link" th:href="${product.seoPath}" th:text="#{catalog.details}">Details</a>
                     </div>
                 </article>
             </section>
 
-            <div class="empty" th:if="${products.isEmpty()}">
-                Nessun prodotto trovato con i filtri correnti.
+            <div class="empty" th:if="${products.isEmpty()}" th:text="#{catalog.empty}">
+                No product found with current filters.
             </div>
         </div>
     </section>

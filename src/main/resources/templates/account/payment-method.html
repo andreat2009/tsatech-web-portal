@@ -1,22 +1,22 @@
 <!DOCTYPE html>
-<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Metodi di Pagamento</title>
+    <title th:text="#{account.payment.method.title}">Payment methods</title>
     <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css" />
 </head>
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
 <main class="container">
     <section class="card section-pad">
-        <h1>Metodo di pagamento predefinito</h1>
-        <p>La gestione dei metodi di pagamento è centralizzata nel checkout e in Keycloak.</p>
-        <h2>Indirizzi disponibili</h2>
+        <h1 th:text="#{account.payment.method.heading}">Default payment method</h1>
+        <p th:text="#{account.payment.method.description}">Payment methods are managed in checkout and Keycloak.</p>
+        <h2 th:text="#{account.payment.method.addresses}">Available addresses</h2>
         <ul>
             <li th:each="a : ${addresses}">
-                <span th:text="${a.line1} + ', ' + ${a.city} + ' (' + ${a.country} + ')'">indirizzo</span>
-                <strong th:if="${a.isDefault}"> [Default]</strong>
+                <span th:text="${a.line1} + ', ' + ${a.city} + ' (' + ${a.country} + ')'">address</span>
+                <strong th:if="${a.isDefault}" th:text="#{account.payment.method.default}"> [Default]</strong>
             </li>
         </ul>
     </section>

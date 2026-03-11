@@ -2,23 +2,23 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
-    <title>Admin Pagamenti</title>
+    <title th:text="#{admin.payments.title}">Admin Pagamenti</title>
     <link rel="stylesheet" th:href="@{/css/app.css}" />
 </head>
 <body>
 <div th:replace="fragments/header :: header"></div>
 
 <main class="container admin">
-    <h1>Pagamenti</h1>
+    <h1 th:text="#{admin.payments.title}">Pagamenti</h1>
     <table class="table">
         <thead>
             <tr>
                 <th>ID</th>
-                <th>Order</th>
-                <th>Importo</th>
-                <th>Valuta</th>
-                <th>Status</th>
-                <th>Provider</th>
+                <th th:text="#{common.order}">Order</th>
+                <th th:text="#{common.amount}">Importo</th>
+                <th th:text="#{common.currency}">Valuta</th>
+                <th th:text="#{common.status}">Status</th>
+                <th th:text="#{common.provider}">Provider</th>
             </tr>
         </thead>
         <tbody>

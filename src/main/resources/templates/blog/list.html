@@ -1,22 +1,22 @@
 <!DOCTYPE html>
-<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Blog</title>
+    <title th:text="#{blog.list.title}">Blog</title>
     <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css" />
 </head>
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
 <main class="container">
     <section class="card section-pad">
-        <h1>Blog</h1>
+        <h1 th:text="#{blog.list.heading}">Blog</h1>
         <div th:each="post : ${posts}" class="list-divider">
-            <h3><a th:href="@{/news/{slug}(slug=${post.slug})}" th:text="${post.title}">Titolo</a></h3>
-            <p th:text="${post.excerpt}">Estratto</p>
+            <h3><a th:href="@{/news/{slug}(slug=${post.slug})}" th:text="${post.title}">Title</a></h3>
+            <p th:text="${post.excerpt}">Excerpt</p>
             <small th:text="${post.publishedAt}">2026-01-01</small>
         </div>
-        <p th:if="${#lists.isEmpty(posts)}">Nessun articolo pubblicato.</p>
+        <p th:if="${#lists.isEmpty(posts)}" th:text="#{blog.list.empty}">No articles published.</p>
     </section>
 </main>
 <div th:replace="~{fragments/footer :: footer}"></div>

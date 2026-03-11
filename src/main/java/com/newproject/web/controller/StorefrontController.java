@@ -47,17 +47,20 @@ public class StorefrontController {
     private final GatewayClient gatewayClient;
     private final CustomerResolver customerResolver;
     private final String currency;
+    private final String storeUrl;
     private final MessageSource messageSource;
 
     public StorefrontController(
         GatewayClient gatewayClient,
         CustomerResolver customerResolver,
         @Value("${app.currency}") String currency,
+        @Value("${app.store-url:https://web-portal-ecommerce.apps-crc.testing}") String storeUrl,
         MessageSource messageSource
     ) {
         this.gatewayClient = gatewayClient;
         this.customerResolver = customerResolver;
         this.currency = currency;
+        this.storeUrl = storeUrl;
         this.messageSource = messageSource;
     }
 
@@ -316,6 +319,7 @@ public class StorefrontController {
             checkoutForm.setShippingMethod(SHIPPING_FLAT);
             checkoutForm.setPaymentMethod(PAYMENT_COD);
             checkoutForm.setCouponCode("");
+            checkoutForm.setUseNewAddress(addresses.isEmpty());
             if (!addresses.isEmpty()) {
                 checkoutForm.setAddressId(addresses.stream()
                     .filter(address -> Boolean.TRUE.equals(address.getIsDefault()))
@@ -341,9 +345,7 @@ public class StorefrontController {
             model.addAttribute("paymentMethods", paymentMethods());
             model.addAttribute("checkoutForm", checkoutForm);
             model.addAttribute("guestCheckout", false);
-            model.addAttribute("checkoutError", "processing".equalsIgnoreCase(error)
-                ? msg("checkout.error.services")
-                : null);
+            model.addAttribute("checkoutError", checkoutErrorMessage(error));
             return "checkout/index";
         }
 
@@ -370,10 +372,20 @@ public class StorefrontController {
         model.addAttribute("paymentMethods", paymentMethods());
         model.addAttribute("checkoutForm", guestForm);
         model.addAttribute("guestCheckout", true);
-        model.addAttribute("checkoutError", "processing".equalsIgnoreCase(error)
-            ? msg("checkout.error.data")
-            : null);
+        model.addAttribute("checkoutError", checkoutErrorMessage(error));
         return "checkout/index";
+    }
+
+    private String checkoutErrorMessage(String errorCode) {
+        if (errorCode == null || errorCode.isBlank()) {
+            return null;
+        }
+        return switch (errorCode) {
+            case "address" -> msg("checkout.error.address");
+            case "guest_fields" -> msg("checkout.error.guest.fields");
+            case "processing" -> msg("checkout.error.services");
+            default -> msg("checkout.error.data");
+        };
     }
 
     @PostMapping("/checkout/confirm")
@@ -399,10 +411,9 @@ public class StorefrontController {
         }
 
         List<Address> addresses = gatewayClient.listCustomerAddresses(customerId);
-        boolean addressValid = checkoutForm.getAddressId() != null
-            && addresses.stream().anyMatch(address -> checkoutForm.getAddressId().equals(address.getId()));
-        if (!addressValid) {
-            return "redirect:/checkout-rapido";
+        Long resolvedAddressId = resolveOrCreateCheckoutAddress(customerId, checkoutForm, addresses);
+        if (resolvedAddressId == null) {
+            return "redirect:/checkout-rapido?error=address";
         }
 
         String shippingMethod = normalizeShippingMethod(checkoutForm.getShippingMethod());
@@ -420,12 +431,23 @@ public class StorefrontController {
         BigDecimal total = quote.getTotal() != null ? quote.getTotal() : subtotal.add(shippingCost);
 
         try {
+            Customer customer = gatewayClient.getCustomerSafe(customerId).orElse(null);
+
             OrderRequest orderRequest = new OrderRequest();
             orderRequest.setCustomerId(customerId);
             orderRequest.setCurrency(currency);
             orderRequest.setTotal(total);
             orderRequest.setStatus("PENDING_PAYMENT");
+            orderRequest.setCustomerEmail(customer != null ? customer.getEmail() : null);
+            orderRequest.setCustomerFirstName(customer != null ? customer.getFirstName() : null);
+            orderRequest.setCustomerLastName(customer != null ? customer.getLastName() : null);
+            orderRequest.setCustomerPhone(customer != null ? customer.getPhone() : null);
+            orderRequest.setCustomerLocale(LocaleContextHolder.getLocale().getLanguage());
+            orderRequest.setOrderComment(safeTrim(checkoutForm.getComment()));
+            orderRequest.setGuestCheckout(false);
+
             Order order = gatewayClient.createOrder(orderRequest);
+            List<OrderConfirmationItem> confirmationItems = new ArrayList<>();
 
             for (CartItem item : cartItems) {
                 Product product = gatewayClient.getProductSafe(item.getProductId()).orElse(null);
@@ -436,6 +458,17 @@ public class StorefrontController {
                 request.setQuantity(item.getQuantity());
                 request.setUnitPrice(item.getUnitPrice());
                 gatewayClient.addOrderItem(order.getId(), request);
+
+                int quantity = item.getQuantity() != null ? item.getQuantity() : 1;
+                BigDecimal unitPrice = item.getUnitPrice() != null ? item.getUnitPrice() : BigDecimal.ZERO;
+
+                OrderConfirmationItem confirmationItem = new OrderConfirmationItem();
+                confirmationItem.setName(request.getName());
+                confirmationItem.setQuantity(quantity);
+                confirmationItem.setUnitPrice(unitPrice);
+                confirmationItem.setLineTotal(unitPrice.multiply(BigDecimal.valueOf(quantity)));
+                confirmationItems.add(confirmationItem);
+
                 gatewayClient.deleteCartItem(item.getId());
             }
 
@@ -454,6 +487,18 @@ public class StorefrontController {
             shipmentRequest.setStatus("CREATED");
             gatewayClient.createShipment(shipmentRequest);
 
+            orderRequest.setStatus("CONFIRMED");
+            gatewayClient.updateOrder(order.getId(), orderRequest);
+
+            sendOrderConfirmationEmail(
+                order,
+                confirmationItems,
+                orderRequest.getCustomerEmail(),
+                orderRequest.getCustomerFirstName(),
+                orderRequest.getCustomerLastName(),
+                orderRequest.getCustomerLocale()
+            );
+
             return "redirect:/checkout/confermato?orderId=" + order.getId();
         } catch (Exception ex) {
             logger.warn("Checkout flow failed for customer {}: {}", customerId, ex.getMessage());
@@ -467,8 +512,9 @@ public class StorefrontController {
             return "redirect:/carrello";
         }
 
-        if (!isGuestCheckoutFormValid(checkoutForm)) {
-            return "redirect:/checkout-rapido";
+        String validationError = validateGuestCheckoutForm(checkoutForm);
+        if (validationError != null) {
+            return "redirect:/checkout-rapido?error=" + validationError;
         }
 
         String shippingMethod = normalizeShippingMethod(checkoutForm.getShippingMethod());
@@ -484,15 +530,24 @@ public class StorefrontController {
         BigDecimal total = quote.getTotal() != null ? quote.getTotal() : summary.subtotal().add(shippingCost);
 
         try {
-            Long guestCustomerId = ensureGuestCustomer(checkoutForm, session);
-            createGuestAddress(guestCustomerId, checkoutForm);
+            Customer guestCustomer = ensureGuestCustomer(checkoutForm, session);
+            createGuestAddress(guestCustomer.getId(), checkoutForm);
 
             OrderRequest orderRequest = new OrderRequest();
-            orderRequest.setCustomerId(guestCustomerId);
+            orderRequest.setCustomerId(guestCustomer.getId());
             orderRequest.setCurrency(currency);
             orderRequest.setTotal(total);
             orderRequest.setStatus("PENDING_PAYMENT");
+            orderRequest.setCustomerEmail(normalizeGuestEmail(checkoutForm.getGuestEmail()));
+            orderRequest.setCustomerFirstName(safeTrim(checkoutForm.getGuestFirstName()));
+            orderRequest.setCustomerLastName(safeTrim(checkoutForm.getGuestLastName()));
+            orderRequest.setCustomerPhone(safeTrim(checkoutForm.getGuestPhone()));
+            orderRequest.setCustomerLocale(LocaleContextHolder.getLocale().getLanguage());
+            orderRequest.setOrderComment(safeTrim(checkoutForm.getComment()));
+            orderRequest.setGuestCheckout(true);
+
             Order order = gatewayClient.createOrder(orderRequest);
+            List<OrderConfirmationItem> confirmationItems = new ArrayList<>();
 
             for (CartItemView item : summary.items()) {
                 Product product = gatewayClient.getProductSafe(item.getProductId()).orElse(null);
@@ -503,6 +558,16 @@ public class StorefrontController {
                 request.setQuantity(item.getQuantity());
                 request.setUnitPrice(item.getUnitPrice());
                 gatewayClient.addOrderItem(order.getId(), request);
+
+                int quantity = item.getQuantity() != null ? item.getQuantity() : 1;
+                BigDecimal unitPrice = item.getUnitPrice() != null ? item.getUnitPrice() : BigDecimal.ZERO;
+
+                OrderConfirmationItem confirmationItem = new OrderConfirmationItem();
+                confirmationItem.setName(request.getName());
+                confirmationItem.setQuantity(quantity);
+                confirmationItem.setUnitPrice(unitPrice);
+                confirmationItem.setLineTotal(unitPrice.multiply(BigDecimal.valueOf(quantity)));
+                confirmationItems.add(confirmationItem);
             }
 
             PaymentRequest paymentRequest = new PaymentRequest();
@@ -520,12 +585,108 @@ public class StorefrontController {
             shipmentRequest.setStatus("CREATED");
             gatewayClient.createShipment(shipmentRequest);
 
+            orderRequest.setStatus("CONFIRMED");
+            gatewayClient.updateOrder(order.getId(), orderRequest);
+
             saveGuestOrderSummary(session, order, summary.items());
             clearGuestCart(session);
+
+            sendOrderConfirmationEmail(
+                order,
+                confirmationItems,
+                orderRequest.getCustomerEmail(),
+                orderRequest.getCustomerFirstName(),
+                orderRequest.getCustomerLastName(),
+                orderRequest.getCustomerLocale()
+            );
+
             return "redirect:/checkout/confermato?orderId=" + order.getId();
         } catch (Exception ex) {
             logger.warn("Guest checkout flow failed: {}", ex.getMessage());
             return "redirect:/checkout-rapido?error=processing";
+        }
+    }
+
+    private String validateGuestCheckoutForm(CheckoutForm form) {
+        if (isBlank(form.getGuestEmail())
+            || isBlank(form.getGuestFirstName())
+            || isBlank(form.getGuestLastName())
+            || isBlank(form.getGuestAddressLine1())
+            || isBlank(form.getGuestCity())
+            || isBlank(form.getGuestCountry())
+            || isBlank(form.getGuestPostalCode())) {
+            return "guest_fields";
+        }
+
+        return null;
+    }
+
+    private Long resolveOrCreateCheckoutAddress(Long customerId, CheckoutForm checkoutForm, List<Address> addresses) {
+        if (checkoutForm.getAddressId() != null) {
+            boolean addressValid = addresses.stream().anyMatch(address -> checkoutForm.getAddressId().equals(address.getId()));
+            if (addressValid) {
+                return checkoutForm.getAddressId();
+            }
+        }
+
+        boolean shouldCreate = Boolean.TRUE.equals(checkoutForm.getUseNewAddress()) || addresses.isEmpty();
+        if (shouldCreate) {
+            if (isBlank(checkoutForm.getNewAddressLine1())
+                || isBlank(checkoutForm.getNewCity())
+                || isBlank(checkoutForm.getNewCountry())
+                || isBlank(checkoutForm.getNewPostalCode())) {
+                return null;
+            }
+
+            AddressRequest request = new AddressRequest();
+            request.setLine1(safeTrim(checkoutForm.getNewAddressLine1()));
+            request.setLine2(safeTrim(checkoutForm.getNewAddressLine2()));
+            request.setCity(safeTrim(checkoutForm.getNewCity()));
+            request.setRegion(safeTrim(checkoutForm.getNewRegion()));
+            request.setCountry(safeTrim(checkoutForm.getNewCountry()));
+            request.setPostalCode(safeTrim(checkoutForm.getNewPostalCode()));
+            request.setIsDefault(addresses.isEmpty());
+            Address created = gatewayClient.createCustomerAddress(customerId, request);
+            return created != null ? created.getId() : null;
+        }
+
+        if (!addresses.isEmpty()) {
+            return addresses.stream()
+                .filter(address -> Boolean.TRUE.equals(address.getIsDefault()))
+                .map(Address::getId)
+                .findFirst()
+                .orElse(addresses.get(0).getId());
+        }
+
+        return null;
+    }
+
+    private void sendOrderConfirmationEmail(
+        Order order,
+        List<OrderConfirmationItem> items,
+        String customerEmail,
+        String firstName,
+        String lastName,
+        String locale
+    ) {
+        if (order == null || customerEmail == null || customerEmail.isBlank()) {
+            return;
+        }
+
+        OrderConfirmationNotificationRequest request = new OrderConfirmationNotificationRequest();
+        request.setOrderId(order.getId());
+        request.setCustomerEmail(customerEmail);
+        String fullName = ((firstName != null ? firstName : "") + " " + (lastName != null ? lastName : "")).trim();
+        request.setCustomerName(fullName.isBlank() ? customerEmail : fullName);
+        request.setLocale(locale != null ? locale : LocaleContextHolder.getLocale().getLanguage());
+        request.setCurrency(order.getCurrency() != null ? order.getCurrency() : currency);
+        request.setTotal(order.getTotal());
+        request.setStoreUrl(storeUrl);
+        request.setItems(items);
+
+        boolean sent = gatewayClient.sendOrderConfirmationEmail(request);
+        if (!sent) {
+            logger.warn("Order confirmation email not sent for order {}", order.getId());
         }
     }
 
@@ -907,6 +1068,8 @@ public class StorefrontController {
         form.setShippingMethod(SHIPPING_FLAT);
         form.setPaymentMethod(PAYMENT_COD);
         form.setCouponCode("");
+        form.setCreateAccount(false);
+        form.setNewsletter(false);
         String previousEmail = asString(session.getAttribute(GUEST_CUSTOMER_EMAIL_SESSION_KEY));
         if (previousEmail != null) {
             form.setGuestEmail(previousEmail);
@@ -914,31 +1077,24 @@ public class StorefrontController {
         return form;
     }
 
-    private boolean isGuestCheckoutFormValid(CheckoutForm form) {
-        return !isBlank(form.getGuestEmail())
-            && !isBlank(form.getGuestFirstName())
-            && !isBlank(form.getGuestLastName())
-            && !isBlank(form.getGuestAddressLine1())
-            && !isBlank(form.getGuestCity())
-            && !isBlank(form.getGuestCountry())
-            && !isBlank(form.getGuestPostalCode());
-    }
-
-    private Long ensureGuestCustomer(CheckoutForm checkoutForm, HttpSession session) {
+    private Customer ensureGuestCustomer(CheckoutForm checkoutForm, HttpSession session) {
         String requestedEmail = normalizeGuestEmail(checkoutForm.getGuestEmail());
         Long existingCustomerId = asLong(session.getAttribute(GUEST_CUSTOMER_ID_SESSION_KEY));
         String existingEmail = asString(session.getAttribute(GUEST_CUSTOMER_EMAIL_SESSION_KEY));
         if (existingCustomerId != null && existingEmail != null && requestedEmail.equalsIgnoreCase(existingEmail)) {
-            return existingCustomerId;
+            Customer existing = gatewayClient.getCustomerSafe(existingCustomerId).orElse(null);
+            if (existing != null) {
+                return existing;
+            }
         }
 
         CustomerRequest request = new CustomerRequest();
         request.setKeycloakUserId(null);
         request.setEmail(requestedEmail);
-        request.setFirstName(checkoutForm.getGuestFirstName().trim());
-        request.setLastName(checkoutForm.getGuestLastName().trim());
+        request.setFirstName(safeTrim(checkoutForm.getGuestFirstName()));
+        request.setLastName(safeTrim(checkoutForm.getGuestLastName()));
         request.setPhone(safeTrim(checkoutForm.getGuestPhone()));
-        request.setNewsletter(false);
+        request.setNewsletter(Boolean.TRUE.equals(checkoutForm.getNewsletter()));
         request.setActive(true);
 
         Customer created = gatewayClient.createCustomer(request);
@@ -948,7 +1104,7 @@ public class StorefrontController {
 
         session.setAttribute(GUEST_CUSTOMER_ID_SESSION_KEY, created.getId());
         session.setAttribute(GUEST_CUSTOMER_EMAIL_SESSION_KEY, requestedEmail);
-        return created.getId();
+        return created;
     }
 
     private void createGuestAddress(Long customerId, CheckoutForm checkoutForm) {

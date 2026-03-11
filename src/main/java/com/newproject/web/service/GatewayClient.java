@@ -491,6 +491,15 @@ public class GatewayClient {
             .block();
     }
 
+    public Order updateOrder(Long orderId, OrderRequest request) {
+        return client().put()
+            .uri(baseUrl + "/api/orders/{orderId}", orderId)
+            .bodyValue(request)
+            .retrieve()
+            .bodyToMono(Order.class)
+            .block();
+    }
+
     public void addOrderItem(Long orderId, OrderItemRequest request) {
         client().post()
             .uri(baseUrl + "/api/orders/{orderId}/items", orderId)
@@ -785,6 +794,22 @@ public class GatewayClient {
         fallback.setTotal(request.getSubtotal().add(request.getShipping()));
         fallback.setMessage("Pricing service non raggiungibile: nessun coupon applicato");
         return fallback;
+    }
+
+    public boolean sendOrderConfirmationEmail(OrderConfirmationNotificationRequest request) {
+        return safeCall(
+            () -> {
+                client().post()
+                    .uri(baseUrl + "/api/notifications/order-confirmation")
+                    .bodyValue(request)
+                    .retrieve()
+                    .toBodilessEntity()
+                    .block();
+                return true;
+            },
+            "/api/notifications/order-confirmation",
+            false
+        );
     }
 
     public String notificationPing() {

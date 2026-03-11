@@ -19,6 +19,7 @@
                 <li><a th:href="@{/catalogo/confronta}" th:text="#{header.compare}">Confronta</a></li>
                 <li><a th:href="@{/carrello}" th:text="#{header.cart}">Carrello</a></li>
                 <li><a th:href="@{/checkout-rapido}" th:text="#{header.checkout}">Checkout</a></li>
+                <li sec:authorize="!isAuthenticated()"><a th:href="@{/account/register}" th:text="#{header.register}">Register</a></li>
                 <li sec:authorize="!isAuthenticated()"><a th:href="@{/oauth2/authorization/keycloak}" th:text="#{header.login}">Login</a></li>
                 <li sec:authorize="isAuthenticated()" class="user-pill" th:text="${#authentication.name}">user</li>
                 <li sec:authorize="isAuthenticated()"><a th:href="@{/logout}" th:text="#{header.logout}">Logout</a></li>

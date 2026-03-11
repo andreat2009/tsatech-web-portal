@@ -22,6 +22,7 @@
             <div>
                 <h5 th:text="#{menu.account}">Account</h5>
                 <ul>
+                    <li><a th:href="@{/account/register}" sec:authorize="!isAuthenticated()" th:text="#{header.register}">Register</a></li>
                     <li><a th:href="@{/oauth2/authorization/keycloak}" sec:authorize="!isAuthenticated()" th:text="#{header.login}">Login</a></li>
                     <li><a th:href="@{/account}" sec:authorize="isAuthenticated()" th:text="#{footer.account.area}">Area account</a></li>
                     <li><a th:href="@{/logout}" sec:authorize="isAuthenticated()" th:text="#{header.logout}">Logout</a></li>

@@ -36,6 +36,7 @@ spring:
 app:
   gateway-base-url: ${GATEWAY_BASE_URL:https://api-gateway-ecommerce.apps-crc.testing}
   currency: ${APP_CURRENCY:EUR}
+  store-url: ${APP_STORE_URL:https://web-portal-ecommerce.apps-crc.testing}
   keycloak-account-url: ${KEYCLOAK_ACCOUNT_URL:https://keycloak-platform.apps-crc.testing/realms/master/account}
 
 management:

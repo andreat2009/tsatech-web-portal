@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title th:text="#{account.register.title}">Register</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+</head>
+<body>
+<div th:replace="fragments/header :: header"></div>
+
+<main class="container">
+    <div class="breadcrumbs">
+        <a th:href="@{/}" th:text="#{menu.home}">Home</a>
+        <span>/</span>
+        <span th:text="#{account.register.breadcrumb}">Register</span>
+    </div>
+
+    <h1 th:text="#{account.register.heading}">Create account</h1>
+    <p class="muted" th:text="#{account.register.description}">Register your customer profile with billing data.</p>
+
+    <div class="success-box" th:if="${param.success}">
+        <strong th:text="#{account.register.success}">Registration completed.</strong>
+        <p><a th:href="@{/oauth2/authorization/keycloak}" th:text="#{account.register.login}">Go to login</a></p>
+    </div>
+
+    <div class="alert-error" th:if="${param.error != null}" th:text="${param.error[0] == 'processing' ? #messages.msg('account.register.error.processing') : #messages.msg('account.register.error.data')}">Registration error.</div>
+
+    <form class="form" th:action="@{/account/register}" method="post" th:object="${registrationForm}">
+        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+        <div class="field-grid two">
+            <div class="field">
+                <label th:text="#{checkout.field.email}">Email</label>
+                <input type="email" th:field="*{email}" required />
+            </div>
+            <div class="field">
+                <label th:text="#{checkout.field.phone}">Phone</label>
+                <input th:field="*{phone}" />
+            </div>
+            <div class="field">
+                <label th:text="#{checkout.field.first.name}">First name</label>
+                <input th:field="*{firstName}" required />
+            </div>
+            <div class="field">
+                <label th:text="#{checkout.field.last.name}">Last name</label>
+                <input th:field="*{lastName}" required />
+            </div>
+            <div class="field">
+                <label th:text="#{checkout.field.address1}">Address</label>
+                <input th:field="*{addressLine1}" required />
+            </div>
+            <div class="field">
+                <label th:text="#{checkout.field.address2}">Address line 2</label>
+                <input th:field="*{addressLine2}" />
+            </div>
+            <div class="field">
+                <label th:text="#{checkout.field.city}">City</label>
+                <input th:field="*{city}" required />
+            </div>
+            <div class="field">
+                <label th:text="#{checkout.field.region}">Region</label>
+                <input th:field="*{region}" />
+            </div>
+            <div class="field">
+                <label th:text="#{checkout.field.country}">Country</label>
+                <input th:field="*{country}" required />
+            </div>
+            <div class="field">
+                <label th:text="#{checkout.field.postal}">Postal code</label>
+                <input th:field="*{postalCode}" required />
+            </div>
+            <div class="field full-width">
+                <div class="inline-control">
+                    <input type="checkbox" th:field="*{newsletter}" />
+                    <label th:text="#{checkout.newsletter}">Subscribe to newsletter</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="actions-row">
+            <button class="btn btn-primary" type="submit" th:text="#{account.register.submit}">Register</button>
+            <a class="btn" th:href="@{/oauth2/authorization/keycloak}" th:text="#{header.login}">Login</a>
+        </div>
+    </form>
+</main>
+
+<div th:replace="fragments/footer :: footer"></div>
+</body>
+</html>

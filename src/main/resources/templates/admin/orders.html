@@ -15,6 +15,8 @@
             <tr>
                 <th>ID</th>
                 <th th:text="#{admin.carts.customer}">Cliente</th>
+                <th th:text="#{admin.orders.customer.email}">Email</th>
+                <th th:text="#{admin.orders.type}">Tipo</th>
                 <th th:text="#{common.date}">Data</th>
                 <th th:text="#{common.total}">Totale</th>
                 <th th:text="#{common.status}">Status</th>
@@ -23,7 +25,9 @@
         <tbody>
             <tr th:each="order : ${orders}">
                 <td th:text="${order.id}">1</td>
-                <td th:text="${order.customerId}">1</td>
+                <td th:text="${(order.customerFirstName != null ? order.customerFirstName : '') + ' ' + (order.customerLastName != null ? order.customerLastName : '')}">Cliente</td>
+                <td th:text="${order.customerEmail != null ? order.customerEmail : '-'}">mail@example.com</td>
+                <td th:text="${order.guestCheckout != null and order.guestCheckout ? #messages.msg('admin.orders.guest') : #messages.msg('admin.orders.registered')}">Registered</td>
                 <td th:text="${order.createdAt}">-</td>
                 <td th:text="${order.total != null ? #numbers.formatDecimal(order.total, 1, 'POINT', 2, 'POINT') : '0.00'}">0.00</td>
                 <td th:text="${order.status}">NEW</td>

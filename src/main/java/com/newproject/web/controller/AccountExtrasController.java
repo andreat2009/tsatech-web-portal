@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -41,8 +42,59 @@ public class AccountExtrasController {
     }
 
     @GetMapping("/register")
-    public String register() {
-        return "redirect:/oauth2/authorization/keycloak";
+    public String register(Model model, Authentication authentication) {
+        if (authentication != null && authentication.isAuthenticated() && !(authentication instanceof AnonymousAuthenticationToken)) {
+            return "redirect:/account";
+        }
+
+        CustomerRegistrationForm form = new CustomerRegistrationForm();
+        form.setNewsletter(false);
+        model.addAttribute("registrationForm", form);
+        return "account/register";
+    }
+
+    @PostMapping("/register")
+    public String registerSubmit(@ModelAttribute("registrationForm") CustomerRegistrationForm form) {
+        if (form.getEmail() == null || form.getEmail().isBlank()
+            || form.getFirstName() == null || form.getFirstName().isBlank()
+            || form.getLastName() == null || form.getLastName().isBlank()
+            || form.getAddressLine1() == null || form.getAddressLine1().isBlank()
+            || form.getCity() == null || form.getCity().isBlank()
+            || form.getCountry() == null || form.getCountry().isBlank()
+            || form.getPostalCode() == null || form.getPostalCode().isBlank()) {
+            return "redirect:/account/register?error=data";
+        }
+
+        CustomerRequest request = new CustomerRequest();
+        request.setKeycloakUserId(null);
+        request.setEmail(form.getEmail().trim().toLowerCase(Locale.ROOT));
+        request.setFirstName(form.getFirstName().trim());
+        request.setLastName(form.getLastName().trim());
+        request.setPhone(form.getPhone() != null ? form.getPhone().trim() : null);
+        request.setNewsletter(Boolean.TRUE.equals(form.getNewsletter()));
+        request.setActive(true);
+
+        Customer created = gatewayClient.createCustomer(request);
+        if (created == null || created.getId() == null) {
+            return "redirect:/account/register?error=processing";
+        }
+
+        AddressRequest addressRequest = new AddressRequest();
+        addressRequest.setLine1(form.getAddressLine1().trim());
+        addressRequest.setLine2(form.getAddressLine2() != null ? form.getAddressLine2().trim() : null);
+        addressRequest.setCity(form.getCity().trim());
+        addressRequest.setRegion(form.getRegion() != null ? form.getRegion().trim() : null);
+        addressRequest.setCountry(form.getCountry().trim());
+        addressRequest.setPostalCode(form.getPostalCode().trim());
+        addressRequest.setIsDefault(true);
+
+        try {
+            gatewayClient.createCustomerAddress(created.getId(), addressRequest);
+        } catch (Exception ex) {
+            return "redirect:/account/register?error=processing";
+        }
+
+        return "redirect:/account/register?success=1";
     }
 
     @GetMapping("/forgotten")

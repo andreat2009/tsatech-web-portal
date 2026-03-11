@@ -35,12 +35,43 @@
 
                 <div th:if="${!guestCheckout}" class="field">
                     <label th:text="#{checkout.shipping.address}">Shipping address</label>
-                    <select th:if="${!addresses.isEmpty()}" th:field="*{addressId}" required>
+                    <select th:if="${!addresses.isEmpty()}" th:field="*{addressId}">
                         <option th:each="address : ${addresses}" th:value="${address.id}"
                                 th:text="${address.line1 + ', ' + address.city + ' (' + address.country + ')'}">Address</option>
                     </select>
+                    <div class="inline-control" th:if="${!addresses.isEmpty()}">
+                        <input type="checkbox" th:field="*{useNewAddress}" />
+                        <label th:text="#{checkout.address.new}">Use a new address</label>
+                    </div>
                     <div th:if="${addresses.isEmpty()}" class="empty" th:text="#{checkout.addresses.empty}">Add an address first.</div>
                     <a class="inline-link" th:href="@{/account/indirizzi}" th:text="#{checkout.manage.addresses}">Manage addresses</a>
+                </div>
+
+                <div th:if="${!guestCheckout and (addresses.isEmpty() or checkoutForm.useNewAddress)}" class="field-grid two">
+                    <div class="field">
+                        <label th:text="#{checkout.field.address1}">Address</label>
+                        <input th:field="*{newAddressLine1}" />
+                    </div>
+                    <div class="field">
+                        <label th:text="#{checkout.field.address2}">Address line 2</label>
+                        <input th:field="*{newAddressLine2}" />
+                    </div>
+                    <div class="field">
+                        <label th:text="#{checkout.field.city}">City</label>
+                        <input th:field="*{newCity}" />
+                    </div>
+                    <div class="field">
+                        <label th:text="#{checkout.field.region}">Region</label>
+                        <input th:field="*{newRegion}" />
+                    </div>
+                    <div class="field">
+                        <label th:text="#{checkout.field.country}">Country</label>
+                        <input th:field="*{newCountry}" />
+                    </div>
+                    <div class="field">
+                        <label th:text="#{checkout.field.postal}">Postal code</label>
+                        <input th:field="*{newPostalCode}" />
+                    </div>
                 </div>
 
                 <div th:if="${guestCheckout}" class="field-grid two">
@@ -84,6 +115,18 @@
                         <label th:text="#{checkout.field.postal}">Postal code</label>
                         <input th:field="*{guestPostalCode}" required />
                     </div>
+                    <div class="field full-width">
+                        <div class="inline-control">
+                            <input type="checkbox" th:field="*{createAccount}" />
+                            <label th:text="#{checkout.create.account}">Create account with these details</label>
+                        </div>
+                    </div>
+                    <div class="field full-width">
+                        <div class="inline-control">
+                            <input type="checkbox" th:field="*{newsletter}" />
+                            <label th:text="#{checkout.newsletter}">Subscribe to newsletter</label>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="field-grid two">
@@ -115,7 +158,7 @@
                     <textarea th:field="*{comment}" rows="4" th:placeholder="#{checkout.comment.placeholder}"></textarea>
                 </div>
 
-                <button class="btn btn-primary" type="submit" th:disabled="${!guestCheckout and addresses.isEmpty()}" th:text="#{checkout.confirm.order}">Confirm order</button>
+                <button class="btn btn-primary" type="submit" th:text="#{checkout.confirm.order}">Confirm order</button>
             </form>
         </section>
 

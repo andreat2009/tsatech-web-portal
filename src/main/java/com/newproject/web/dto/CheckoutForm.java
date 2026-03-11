@@ -18,6 +18,17 @@ public class CheckoutForm {
     private String guestCountry;
     private String guestPostalCode;
 
+    private Boolean createAccount;
+    private Boolean newsletter;
+
+    private Boolean useNewAddress;
+    private String newAddressLine1;
+    private String newAddressLine2;
+    private String newCity;
+    private String newRegion;
+    private String newCountry;
+    private String newPostalCode;
+
     public Long getAddressId() {
         return addressId;
     }
@@ -136,5 +147,77 @@ public class CheckoutForm {
 
     public void setGuestPostalCode(String guestPostalCode) {
         this.guestPostalCode = guestPostalCode;
+    }
+
+    public Boolean getCreateAccount() {
+        return createAccount;
+    }
+
+    public void setCreateAccount(Boolean createAccount) {
+        this.createAccount = createAccount;
+    }
+
+    public Boolean getNewsletter() {
+        return newsletter;
+    }
+
+    public void setNewsletter(Boolean newsletter) {
+        this.newsletter = newsletter;
+    }
+
+    public Boolean getUseNewAddress() {
+        return useNewAddress;
+    }
+
+    public void setUseNewAddress(Boolean useNewAddress) {
+        this.useNewAddress = useNewAddress;
+    }
+
+    public String getNewAddressLine1() {
+        return newAddressLine1;
+    }
+
+    public void setNewAddressLine1(String newAddressLine1) {
+        this.newAddressLine1 = newAddressLine1;
+    }
+
+    public String getNewAddressLine2() {
+        return newAddressLine2;
+    }
+
+    public void setNewAddressLine2(String newAddressLine2) {
+        this.newAddressLine2 = newAddressLine2;
+    }
+
+    public String getNewCity() {
+        return newCity;
+    }
+
+    public void setNewCity(String newCity) {
+        this.newCity = newCity;
+    }
+
+    public String getNewRegion() {
+        return newRegion;
+    }
+
+    public void setNewRegion(String newRegion) {
+        this.newRegion = newRegion;
+    }
+
+    public String getNewCountry() {
+        return newCountry;
+    }
+
+    public void setNewCountry(String newCountry) {
+        this.newCountry = newCountry;
+    }
+
+    public String getNewPostalCode() {
+        return newPostalCode;
+    }
+
+    public void setNewPostalCode(String newPostalCode) {
+        this.newPostalCode = newPostalCode;
     }
 }

@@ -53,6 +53,7 @@ public class SecurityConfig {
                     "/checkout-rapido",
                     "/checkout/confermato",
                     "/account/register",
+                    "/account/register/start",
                     "/account/login",
                     "/account/forgotten",
                     "/css/**",
@@ -97,6 +98,7 @@ public class SecurityConfig {
             // Fallback source: access token payload (Keycloak often stores roles here).
             Map<String, Object> accessClaims = decodeAccessTokenClaims(userRequest.getAccessToken().getTokenValue());
             extractRoles(accessClaims, mapped);
+            ensureUserRole(mapped);
 
             return new DefaultOidcUser(mapped, oidcUser.getIdToken(), oidcUser.getUserInfo());
         };
@@ -129,6 +131,16 @@ public class SecurityConfig {
                     }
                 }
             }
+        }
+    }
+
+    private void ensureUserRole(Set<GrantedAuthority> mapped) {
+        boolean hasUserRole = mapped.stream()
+            .map(GrantedAuthority::getAuthority)
+            .anyMatch("ROLE_USER"::equals);
+
+        if (!hasUserRole) {
+            mapped.add(new SimpleGrantedAuthority("ROLE_USER"));
         }
     }
 

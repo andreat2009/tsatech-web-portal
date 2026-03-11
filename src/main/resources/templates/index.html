@@ -56,7 +56,7 @@
                     </option>
                 </select>
                 <button class="btn btn-primary" type="submit" th:text="#{catalog.filter}">Filter</button>
-                <span class="muted products-count" th:text="${products.size()} + ' ' + #messages.msg('catalog.products.count')">0 products</span>
+                <span class="muted products-count" th:text="${products.size() + ' ' + #messages.msg('catalog.products.count')}">0 products</span>
             </form>
 
             <section class="product-grid" th:if="${!products.isEmpty()}">

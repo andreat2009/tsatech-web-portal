@@ -683,8 +683,9 @@ main.container {
 .product-thumb {
   border: 1px solid #ddd;
   background: #fff;
-  position: relative;
-  min-height: 360px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .product-thumb .image {
@@ -705,12 +706,12 @@ main.container {
 }
 
 .product-thumb .description {
-  padding: 0 14px 56px;
+  padding: 0 14px 10px;
 }
 
 .product-thumb .description h4 {
   margin: 0 0 8px;
-  min-height: 40px;
+  min-height: 42px;
   font-size: 15px;
 }
 
@@ -718,6 +719,11 @@ main.container {
   min-height: 56px;
   margin: 0 0 10px;
   font-size: 13px;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .product-thumb .description .price {
@@ -725,12 +731,19 @@ main.container {
   font-size: 22px;
 }
 
+.product-thumb .description .price-tax {
+  margin: 0;
+  font-size: 13px;
+  color: #555;
+}
+
 .product-thumb .button {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  position: absolute;
-  bottom: 0;
-  width: 100%;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 12px;
+  margin-top: auto;
+  border-top: 1px solid #eee;
 }
 
 .product-thumb .button form,
@@ -741,31 +754,32 @@ main.container {
 .product-thumb .button button,
 .product-thumb .button .btn-link {
   width: 100%;
-  border: 0;
-  border-top: 1px solid #ddd;
-  border-right: 1px solid #ddd;
-  border-radius: 0;
-  min-height: 42px;
-  background: #f7f7f7;
-  color: #666;
+  border: 1px solid #1a82a6;
+  border-radius: 3px;
+  min-height: 40px;
+  background: linear-gradient(#229ac8, #1f90bb);
+  color: #fff;
   font-size: 12px;
+  font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   text-decoration: none;
-}
-
-.product-thumb .button > :last-child .btn-link,
-.product-thumb .button > :last-child button,
-.product-thumb .button > a:last-child {
-  border-right: 0;
+  padding: 0 10px;
 }
 
 .product-thumb .button button:hover,
 .product-thumb .button .btn-link:hover {
-  background: #ebebeb;
-  color: #444;
+  background: linear-gradient(#1f90bb, #1a82a6);
+  color: #fff;
+}
+
+.product-thumb .button button:disabled {
+  background: #d4d9de;
+  border-color: #c0c7ce;
+  color: #6f7880;
+  cursor: not-allowed;
 }
 
 .alert-error {
@@ -806,16 +820,9 @@ main.container {
     grid-template-columns: 1fr;
   }
 
-  .product-thumb {
-    min-height: 0;
-  }
-
-  .product-thumb .description {
-    padding-bottom: 12px;
-  }
-
   .product-thumb .button {
-    position: static;
+    grid-template-columns: 1fr;
+    gap: 10px;
   }
 }
 

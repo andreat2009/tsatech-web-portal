@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
 @Service
 public class GatewayClient {
@@ -1214,6 +1215,12 @@ public class GatewayClient {
         if (raw == null || raw.isBlank()) {
             return raw;
         }
+
+        String mediaProxyUrl = toPortalMediaPath(raw);
+        if (mediaProxyUrl != null) {
+            return mediaProxyUrl;
+        }
+
         if (raw.startsWith("http://") || raw.startsWith("https://")) {
             return raw;
         }
@@ -1250,4 +1257,47 @@ public class GatewayClient {
             return fallback;
         }
     }
+
+    public Optional<MediaAsset> loadCatalogMedia(String filename) {
+        if (filename == null || filename.isBlank()) {
+            return Optional.empty();
+        }
+        return safeCall(
+            () -> defaultWebClient.get()
+                .uri(baseUrl + "/api/catalog/media/{filename}", filename)
+                .exchangeToMono(response -> {
+                    if (!response.statusCode().is2xxSuccessful()) {
+                        return Mono.empty();
+                    }
+                    MediaType contentType = response.headers().contentType().orElse(MediaType.APPLICATION_OCTET_STREAM);
+                    long contentLength = response.headers().contentLength().orElse(-1L);
+                    return response.bodyToMono(byte[].class)
+                        .map(bytes -> new MediaAsset(bytes, contentType, contentLength));
+                })
+                .blockOptional(),
+            "/api/catalog/media/" + filename,
+            Optional.empty()
+        );
+    }
+
+    private String toPortalMediaPath(String raw) {
+        String marker = "/api/catalog/media/";
+        int markerIndex = raw.indexOf(marker);
+        if (markerIndex < 0) {
+            return null;
+        }
+
+        String filename = raw.substring(markerIndex + marker.length());
+        int queryStart = filename.indexOf('?');
+        if (queryStart >= 0) {
+            filename = filename.substring(0, queryStart);
+        }
+        if (filename.isBlank()) {
+            return null;
+        }
+
+        return "/catalogo/media/" + filename;
+    }
+
+    public record MediaAsset(byte[] content, MediaType contentType, long contentLength) {}
 }

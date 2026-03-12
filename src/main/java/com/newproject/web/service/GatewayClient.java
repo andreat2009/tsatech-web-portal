@@ -346,6 +346,32 @@ public class GatewayClient {
         );
     }
 
+    public CategoryAutoTranslateResponse autoTranslateCategory(CategoryAutoTranslateRequest request) {
+        return safeCall(
+            () -> client().post()
+                .uri(baseUrl + "/api/catalog/categories/translate")
+                .bodyValue(request)
+                .retrieve()
+                .bodyToMono(CategoryAutoTranslateResponse.class)
+                .block(),
+            "/api/catalog/categories/translate",
+            null
+        );
+    }
+
+    public CouponAutoTranslateResponse autoTranslateCoupon(CouponAutoTranslateRequest request) {
+        return safeCall(
+            () -> client().post()
+                .uri(baseUrl + "/api/pricing/coupons/translate")
+                .bodyValue(request)
+                .retrieve()
+                .bodyToMono(CouponAutoTranslateResponse.class)
+                .block(),
+            "/api/pricing/coupons/translate",
+            null
+        );
+    }
+
     public void deleteProduct(Long id) {
         client().delete()
             .uri(baseUrl + "/api/catalog/products/{id}", id)

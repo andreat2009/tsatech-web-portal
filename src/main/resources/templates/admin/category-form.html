@@ -28,6 +28,33 @@
             </select>
         </div>
 
+
+        <section class="translation-controls">
+            <h2 th:text="#{admin.category.translation.title}">Traduzione automatica</h2>
+            <div class="field-grid two">
+                <div class="field">
+                    <label th:text="#{admin.category.translation.source.language}">Lingua sorgente</label>
+                    <select name="translationSourceLanguage">
+                        <option th:each="lang : ${languageOptions}"
+                                th:value="${lang.code}"
+                                th:text="${lang.flag + ' ' + lang.label}"
+                                th:selected="${translationSourceLanguage == lang.code}">Italiano</option>
+                    </select>
+                </div>
+                <div class="field translation-options">
+                    <label class="inline-control">
+                        <input type="checkbox" name="autoTranslate" value="true" th:checked="${autoTranslateDefault}" />
+                        <span th:text="#{admin.category.translation.auto}">Traduci automaticamente le altre lingue</span>
+                    </label>
+                    <label class="inline-control">
+                        <input type="checkbox" name="overwriteTranslations" value="true" th:checked="${overwriteTranslationsDefault}" />
+                        <span th:text="#{admin.category.translation.overwrite}">Sovrascrivi i contenuti gia compilati</span>
+                    </label>
+                    <small class="muted" th:text="#{admin.category.translation.hint}">La traduzione avviene al salvataggio della categoria.</small>
+                </div>
+            </div>
+        </section>
+
         <section class="translation-section">
             <h2 th:text="#{common.multilingual.content}">Contenuti multilingua</h2>
             <div class="translation-grid">

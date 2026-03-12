@@ -1077,6 +1077,19 @@ public class GatewayClient {
             .block();
     }
 
+    public InformationAutoTranslateResponse autoTranslateInformationPage(InformationAutoTranslateRequest request) {
+        return safeCall(
+            () -> client().post()
+                .uri(baseUrl + "/api/cms/information/translate")
+                .bodyValue(request)
+                .retrieve()
+                .bodyToMono(InformationAutoTranslateResponse.class)
+                .block(),
+            "/api/cms/information/translate",
+            null
+        );
+    }
+
     public InformationPage updateInformationPage(Long id, InformationRequest request) {
         return client().put()
             .uri(baseUrl + "/api/cms/information/{id}", id)

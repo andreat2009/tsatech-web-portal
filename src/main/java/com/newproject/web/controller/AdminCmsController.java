@@ -2,6 +2,8 @@ package com.newproject.web.controller;
 
 import com.newproject.web.dto.BlogPost;
 import com.newproject.web.dto.BlogPostRequest;
+import com.newproject.web.dto.InformationAutoTranslateRequest;
+import com.newproject.web.dto.InformationAutoTranslateResponse;
 import com.newproject.web.dto.InformationPage;
 import com.newproject.web.dto.InformationRequest;
 import com.newproject.web.dto.LocalizedContent;
@@ -15,6 +17,8 @@ import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +27,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Controller
 @RequestMapping("/admin")
 public class AdminCmsController {
+    private static final Logger logger = LoggerFactory.getLogger(AdminCmsController.class);
     private static final int DEFAULT_LOGO_MAX_HEIGHT_PX = 96;
     private static final int DEFAULT_SITE_NAME_FONT_SIZE_PX = 28;
     private static final int MIN_LOGO_MAX_HEIGHT_PX = 32;
@@ -102,12 +107,21 @@ public class AdminCmsController {
         model.addAttribute("pageForm", form);
         model.addAttribute("formAction", "/admin/information");
         model.addAttribute("formTitleKey", "admin.information.title.new");
+        model.addAttribute("translationSourceLanguage", LanguageSupport.DEFAULT_LANGUAGE);
+        model.addAttribute("autoTranslateDefault", true);
+        model.addAttribute("overwriteTranslationsDefault", true);
         return "admin/information-form";
     }
 
     @PostMapping("/information")
-    public String informationCreate(@ModelAttribute InformationRequest form) {
+    public String informationCreate(
+        @ModelAttribute InformationRequest form,
+        @RequestParam(name = "translationSourceLanguage", required = false) String translationSourceLanguage,
+        @RequestParam(name = "autoTranslate", defaultValue = "false") boolean autoTranslate,
+        @RequestParam(name = "overwriteTranslations", defaultValue = "false") boolean overwriteTranslations
+    ) {
         normalizeInformation(form);
+        applyInformationAutoTranslationsIfRequested(form, translationSourceLanguage, autoTranslate, overwriteTranslations);
         gatewayClient.createInformationPage(form);
         return "redirect:/admin/information";
     }
@@ -129,12 +143,22 @@ public class AdminCmsController {
         model.addAttribute("pageForm", form);
         model.addAttribute("formAction", "/admin/information/" + id);
         model.addAttribute("formTitleKey", "admin.information.title.edit");
+        model.addAttribute("translationSourceLanguage", LanguageSupport.DEFAULT_LANGUAGE);
+        model.addAttribute("autoTranslateDefault", true);
+        model.addAttribute("overwriteTranslationsDefault", true);
         return "admin/information-form";
     }
 
     @PostMapping("/information/{id}")
-    public String informationUpdate(@PathVariable Long id, @ModelAttribute InformationRequest form) {
+    public String informationUpdate(
+        @PathVariable Long id,
+        @ModelAttribute InformationRequest form,
+        @RequestParam(name = "translationSourceLanguage", required = false) String translationSourceLanguage,
+        @RequestParam(name = "autoTranslate", defaultValue = "false") boolean autoTranslate,
+        @RequestParam(name = "overwriteTranslations", defaultValue = "false") boolean overwriteTranslations
+    ) {
         normalizeInformation(form);
+        applyInformationAutoTranslationsIfRequested(form, translationSourceLanguage, autoTranslate, overwriteTranslations);
         gatewayClient.updateInformationPage(id, form);
         return "redirect:/admin/information";
     }
@@ -230,6 +254,49 @@ public class AdminCmsController {
     public String contactMessageStatus(@PathVariable Long id, @RequestParam String status) {
         gatewayClient.updateContactMessageStatus(id, status);
         return "redirect:/admin/contact-messages";
+    }
+
+    private void applyInformationAutoTranslationsIfRequested(
+        InformationRequest form,
+        String translationSourceLanguage,
+        boolean autoTranslate,
+        boolean overwriteTranslations
+    ) {
+        if (!autoTranslate) {
+            return;
+        }
+
+        try {
+            String sourceLanguage = LanguageSupport.normalizeLanguage(translationSourceLanguage);
+            if (sourceLanguage == null) {
+                sourceLanguage = LanguageSupport.DEFAULT_LANGUAGE;
+            }
+
+            InformationAutoTranslateRequest translateRequest = new InformationAutoTranslateRequest();
+            translateRequest.setSourceLanguage(sourceLanguage);
+            translateRequest.setOverwriteExisting(overwriteTranslations);
+            translateRequest.setTranslations(form.getTranslations());
+
+            InformationAutoTranslateResponse translateResponse = gatewayClient.autoTranslateInformationPage(translateRequest);
+            if (translateResponse == null || translateResponse.getTranslations() == null || translateResponse.getTranslations().isEmpty()) {
+                return;
+            }
+
+            form.setTranslations(ensureInformationTranslations(translateResponse.getTranslations(), null));
+            LocalizedContent italian = form.getTranslations().get(LanguageSupport.DEFAULT_LANGUAGE);
+            form.setTitle(firstNonBlank(
+                italian != null ? italian.getTitle() : null,
+                form.getTitle(),
+                "Pagina"
+            ));
+            form.setContent(firstNonBlank(
+                italian != null ? italian.getContent() : null,
+                form.getContent(),
+                ""
+            ));
+        } catch (Exception ex) {
+            logger.warn("Information page auto-translation failed: {}", ex.getMessage());
+        }
     }
 
     private void normalizeInformation(InformationRequest form) {

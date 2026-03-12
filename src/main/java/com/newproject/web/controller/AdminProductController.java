@@ -2,6 +2,8 @@ package com.newproject.web.controller;
 
 import com.newproject.web.dto.LocalizedContent;
 import com.newproject.web.dto.Product;
+import com.newproject.web.dto.ProductAutoTranslateRequest;
+import com.newproject.web.dto.ProductAutoTranslateResponse;
 import com.newproject.web.dto.ProductRequest;
 import com.newproject.web.i18n.LanguageSupport;
 import com.newproject.web.service.GatewayClient;
@@ -14,6 +16,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -28,6 +32,8 @@ import org.springframework.web.multipart.MultipartFile;
 @Controller
 @RequestMapping({"/admin/products", "/admin/catalogo/prodotti"})
 public class AdminProductController {
+    private static final Logger logger = LoggerFactory.getLogger(AdminProductController.class);
+
     private final GatewayClient gatewayClient;
 
     public AdminProductController(GatewayClient gatewayClient) {
@@ -52,6 +58,9 @@ public class AdminProductController {
         model.addAttribute("categories", gatewayClient.listCategories(true));
         model.addAttribute("formTitleKey", "admin.product.title.new");
         model.addAttribute("formAction", "/admin/catalogo/prodotti");
+        model.addAttribute("translationSourceLanguage", LanguageSupport.DEFAULT_LANGUAGE);
+        model.addAttribute("autoTranslateDefault", true);
+        model.addAttribute("overwriteTranslationsDefault", false);
         return "admin/product-form";
     }
 
@@ -59,9 +68,13 @@ public class AdminProductController {
     public String create(
         @ModelAttribute ProductRequest request,
         @RequestParam(name = "coverImageFile", required = false) MultipartFile coverImageFile,
-        @RequestParam(name = "galleryImageFiles", required = false) MultipartFile[] galleryImageFiles
+        @RequestParam(name = "galleryImageFiles", required = false) MultipartFile[] galleryImageFiles,
+        @RequestParam(name = "translationSourceLanguage", required = false) String translationSourceLanguage,
+        @RequestParam(name = "autoTranslate", defaultValue = "false") boolean autoTranslate,
+        @RequestParam(name = "overwriteTranslations", defaultValue = "false") boolean overwriteTranslations
     ) {
         normalizeProductRequest(request);
+        applyAutoTranslationsIfRequested(request, translationSourceLanguage, autoTranslate, overwriteTranslations);
         Product created = gatewayClient.createProduct(request);
 
         if (created != null && created.getId() != null) {
@@ -93,6 +106,9 @@ public class AdminProductController {
         model.addAttribute("categories", gatewayClient.listCategories(true));
         model.addAttribute("formTitleKey", "admin.product.title.edit");
         model.addAttribute("formAction", "/admin/catalogo/prodotti/" + id);
+        model.addAttribute("translationSourceLanguage", LanguageSupport.DEFAULT_LANGUAGE);
+        model.addAttribute("autoTranslateDefault", true);
+        model.addAttribute("overwriteTranslationsDefault", false);
         return "admin/product-form";
     }
 
@@ -103,9 +119,13 @@ public class AdminProductController {
         @RequestParam(name = "coverImageFile", required = false) MultipartFile coverImageFile,
         @RequestParam(name = "galleryImageFiles", required = false) MultipartFile[] galleryImageFiles,
         @RequestParam(name = "deleteImageIds", required = false) List<Long> deleteImageIds,
-        @RequestParam(name = "selectedCoverImageId", required = false) Long selectedCoverImageId
+        @RequestParam(name = "selectedCoverImageId", required = false) Long selectedCoverImageId,
+        @RequestParam(name = "translationSourceLanguage", required = false) String translationSourceLanguage,
+        @RequestParam(name = "autoTranslate", defaultValue = "false") boolean autoTranslate,
+        @RequestParam(name = "overwriteTranslations", defaultValue = "false") boolean overwriteTranslations
     ) {
         normalizeProductRequest(request);
+        applyAutoTranslationsIfRequested(request, translationSourceLanguage, autoTranslate, overwriteTranslations);
         gatewayClient.updateProduct(id, request);
 
         Set<Long> removedIds = Set.of();
@@ -143,6 +163,49 @@ public class AdminProductController {
             if (!files.isEmpty()) {
                 gatewayClient.uploadProductGallery(productId, files);
             }
+        }
+    }
+
+    private void applyAutoTranslationsIfRequested(
+        ProductRequest request,
+        String translationSourceLanguage,
+        boolean autoTranslate,
+        boolean overwriteTranslations
+    ) {
+        if (!autoTranslate) {
+            return;
+        }
+
+        try {
+            String sourceLanguage = LanguageSupport.normalizeLanguage(translationSourceLanguage);
+            if (sourceLanguage == null) {
+                sourceLanguage = LanguageSupport.DEFAULT_LANGUAGE;
+            }
+
+            ProductAutoTranslateRequest translateRequest = new ProductAutoTranslateRequest();
+            translateRequest.setSourceLanguage(sourceLanguage);
+            translateRequest.setOverwriteExisting(overwriteTranslations);
+            translateRequest.setTranslations(request.getTranslations());
+
+            ProductAutoTranslateResponse translateResponse = gatewayClient.autoTranslateProduct(translateRequest);
+            if (translateResponse == null || translateResponse.getTranslations() == null || translateResponse.getTranslations().isEmpty()) {
+                return;
+            }
+
+            request.setTranslations(ensureProductTranslations(translateResponse.getTranslations(), null));
+            LocalizedContent italian = request.getTranslations().get(LanguageSupport.DEFAULT_LANGUAGE);
+            request.setName(firstNonBlank(
+                italian != null ? italian.getName() : null,
+                request.getName(),
+                request.getSku()
+            ));
+            request.setDescription(firstNonBlank(
+                italian != null ? italian.getDescription() : null,
+                request.getDescription(),
+                ""
+            ));
+        } catch (Exception ex) {
+            logger.warn("Product auto-translation failed: {}", ex.getMessage());
         }
     }
 

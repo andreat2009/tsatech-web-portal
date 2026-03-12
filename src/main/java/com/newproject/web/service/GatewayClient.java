@@ -333,6 +333,19 @@ public class GatewayClient {
         return product;
     }
 
+    public ProductAutoTranslateResponse autoTranslateProduct(ProductAutoTranslateRequest request) {
+        return safeCall(
+            () -> client().post()
+                .uri(baseUrl + "/api/catalog/products/translate")
+                .bodyValue(request)
+                .retrieve()
+                .bodyToMono(ProductAutoTranslateResponse.class)
+                .block(),
+            "/api/catalog/products/translate",
+            null
+        );
+    }
+
     public void deleteProduct(Long id) {
         client().delete()
             .uri(baseUrl + "/api/catalog/products/{id}", id)

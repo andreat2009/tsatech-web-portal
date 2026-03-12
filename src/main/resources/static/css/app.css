@@ -1250,6 +1250,26 @@ h1, h2, h3 {
   font-weight: 700;
 }
 
+.translation-controls {
+  margin-top: 12px;
+  margin-bottom: 16px;
+  padding: 14px;
+  border: 1px solid var(--oc-border);
+  border-radius: 3px;
+  background: #fafafa;
+}
+
+.translation-controls h2 {
+  margin: 0 0 10px;
+  font-size: 18px;
+}
+
+.translation-options {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+
 .translation-section {
   margin-top: 18px;
 }

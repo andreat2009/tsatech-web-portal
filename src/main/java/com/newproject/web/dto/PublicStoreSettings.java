@@ -3,6 +3,8 @@ package com.newproject.web.dto;
 public class PublicStoreSettings {
     private String siteName;
     private String logoUrl;
+    private Integer logoMaxHeightPx;
+    private Integer siteNameFontSizePx;
     private String contactEmail;
     private String supportEmail;
     private String supportPhone;
@@ -17,6 +19,10 @@ public class PublicStoreSettings {
     public void setSiteName(String siteName) { this.siteName = siteName; }
     public String getLogoUrl() { return logoUrl; }
     public void setLogoUrl(String logoUrl) { this.logoUrl = logoUrl; }
+    public Integer getLogoMaxHeightPx() { return logoMaxHeightPx; }
+    public void setLogoMaxHeightPx(Integer logoMaxHeightPx) { this.logoMaxHeightPx = logoMaxHeightPx; }
+    public Integer getSiteNameFontSizePx() { return siteNameFontSizePx; }
+    public void setSiteNameFontSizePx(Integer siteNameFontSizePx) { this.siteNameFontSizePx = siteNameFontSizePx; }
     public String getContactEmail() { return contactEmail; }
     public void setContactEmail(String contactEmail) { this.contactEmail = contactEmail; }
     public String getSupportEmail() { return supportEmail; }

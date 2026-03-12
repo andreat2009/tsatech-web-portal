@@ -32,10 +32,20 @@
                 <label th:text="#{admin.settings.logo.url}">Logo URL</label>
                 <input th:field="*{logoUrl}" placeholder="https://..." />
             </div>
+            <div class="field">
+                <label th:text="#{admin.settings.logo.size}">Logo height (px)</label>
+                <input type="number" min="32" max="220" step="1" th:field="*{logoMaxHeightPx}" />
+                <small class="muted" th:text="#{admin.settings.logo.size.hint}">Allowed range: 32-220 px.</small>
+            </div>
+            <div class="field">
+                <label th:text="#{admin.settings.site.name.size}">Site name size (px)</label>
+                <input type="number" min="14" max="56" step="1" th:field="*{siteNameFontSizePx}" />
+                <small class="muted" th:text="#{admin.settings.site.name.size.hint}">Allowed range: 14-56 px.</small>
+            </div>
             <div class="field full-width">
                 <label th:text="#{admin.settings.logo.current}">Current logo</label>
                 <div class="store-logo-preview" th:if="${settingsForm.logoUrl != null and !#strings.isEmpty(settingsForm.logoUrl)}">
-                    <img th:src="${settingsForm.logoUrl}" th:alt="#{admin.settings.logo.current}" />
+                    <img th:src="${settingsForm.logoUrl}" th:alt="#{admin.settings.logo.current}" th:style="${'max-height: '+ ((settingsForm.logoMaxHeightPx != null) ? settingsForm.logoMaxHeightPx : 96) + 'px;'}" />
                 </div>
                 <small class="muted" th:if="${settingsForm.logoUrl == null or #strings.isEmpty(settingsForm.logoUrl)}" th:text="#{admin.settings.logo.current.none}">No logo configured.</small>
             </div>

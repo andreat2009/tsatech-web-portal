@@ -1253,6 +1253,8 @@ public class GatewayClient {
     private PublicStoreSettings defaultPublicStoreSettings() {
         PublicStoreSettings fallback = new PublicStoreSettings();
         fallback.setSiteName("TSATech Store");
+        fallback.setLogoMaxHeightPx(96);
+        fallback.setSiteNameFontSizePx(28);
         fallback.setContactEmail("andrea.terrasi78@gmail.com");
         fallback.setSupportEmail("andrea.terrasi78@gmail.com");
         fallback.setSupportPhone("+39 800 000 000");

@@ -23,6 +23,13 @@ import org.springframework.web.multipart.MultipartFile;
 @Controller
 @RequestMapping("/admin")
 public class AdminCmsController {
+    private static final int DEFAULT_LOGO_MAX_HEIGHT_PX = 96;
+    private static final int DEFAULT_SITE_NAME_FONT_SIZE_PX = 28;
+    private static final int MIN_LOGO_MAX_HEIGHT_PX = 32;
+    private static final int MAX_LOGO_MAX_HEIGHT_PX = 220;
+    private static final int MIN_SITE_NAME_FONT_SIZE_PX = 14;
+    private static final int MAX_SITE_NAME_FONT_SIZE_PX = 56;
+
     private final GatewayClient gatewayClient;
 
     public AdminCmsController(GatewayClient gatewayClient) {
@@ -37,6 +44,8 @@ public class AdminCmsController {
             PublicStoreSettings fallback = gatewayClient.getPublicStoreSettings();
             settings.setSiteName(fallback.getSiteName());
             settings.setLogoUrl(fallback.getLogoUrl());
+            settings.setLogoMaxHeightPx(fallback.getLogoMaxHeightPx());
+            settings.setSiteNameFontSizePx(fallback.getSiteNameFontSizePx());
             settings.setContactEmail(fallback.getContactEmail());
             settings.setSupportEmail(fallback.getSupportEmail());
             settings.setSupportPhone(fallback.getSupportPhone());
@@ -56,6 +65,7 @@ public class AdminCmsController {
             settings.setMailFromName(firstNonBlank(fallback.getSiteName(), "TSATech Store"));
         }
 
+        normalizeStoreSettings(settings);
         settings.setSmtpPassword("");
         model.addAttribute("settingsForm", settings);
         return "admin/store-settings";
@@ -335,6 +345,8 @@ public class AdminCmsController {
     private void normalizeStoreSettings(StoreSettings form) {
         form.setSiteName(firstNonBlank(form.getSiteName(), "TSATech Store"));
         form.setLogoUrl(trimToNull(form.getLogoUrl()));
+        form.setLogoMaxHeightPx(clampInt(form.getLogoMaxHeightPx(), DEFAULT_LOGO_MAX_HEIGHT_PX, MIN_LOGO_MAX_HEIGHT_PX, MAX_LOGO_MAX_HEIGHT_PX));
+        form.setSiteNameFontSizePx(clampInt(form.getSiteNameFontSizePx(), DEFAULT_SITE_NAME_FONT_SIZE_PX, MIN_SITE_NAME_FONT_SIZE_PX, MAX_SITE_NAME_FONT_SIZE_PX));
         form.setContactEmail(trimToNull(form.getContactEmail()));
         form.setSupportEmail(trimToNull(form.getSupportEmail()));
         form.setSupportPhone(trimToNull(form.getSupportPhone()));
@@ -367,6 +379,17 @@ public class AdminCmsController {
             String trimmed = form.getSmtpPassword().trim();
             form.setSmtpPassword(trimmed.isEmpty() ? null : trimmed);
         }
+    }
+
+    private Integer clampInt(Integer value, int defaultValue, int min, int max) {
+        int resolved = value != null ? value : defaultValue;
+        if (resolved < min) {
+            return min;
+        }
+        if (resolved > max) {
+            return max;
+        }
+        return resolved;
     }
 
     private String trimToNull(String value) {

@@ -60,7 +60,7 @@ public class AdminProductController {
         model.addAttribute("formAction", "/admin/catalogo/prodotti");
         model.addAttribute("translationSourceLanguage", LanguageSupport.DEFAULT_LANGUAGE);
         model.addAttribute("autoTranslateDefault", true);
-        model.addAttribute("overwriteTranslationsDefault", false);
+        model.addAttribute("overwriteTranslationsDefault", true);
         return "admin/product-form";
     }
 
@@ -108,7 +108,7 @@ public class AdminProductController {
         model.addAttribute("formAction", "/admin/catalogo/prodotti/" + id);
         model.addAttribute("translationSourceLanguage", LanguageSupport.DEFAULT_LANGUAGE);
         model.addAttribute("autoTranslateDefault", true);
-        model.addAttribute("overwriteTranslationsDefault", false);
+        model.addAttribute("overwriteTranslationsDefault", true);
         return "admin/product-form";
     }
 

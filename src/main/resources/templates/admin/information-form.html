@@ -9,9 +9,9 @@
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
 <main class="container">
-    <section class="form section-pad centered-form">
+    <section class="form section-pad centered-form information-editor-form">
         <h1 th:text="${#messages.msg(formTitleKey)}">Form</h1>
-        <form method="post" th:action="${formAction}" th:object="${pageForm}">
+        <form method="post" th:action="${formAction}" th:object="${pageForm}" class="information-editor-form">
             <div class="field"><label>Slug</label><input type="text" th:field="*{slug}" /></div>
             <div class="field"><label th:text="#{common.sort.order}">Sort order</label><input type="number" th:field="*{sortOrder}" /></div>
             <div class="field"><label><input type="checkbox" th:field="*{active}" /> <span th:text="#{common.active}">Attiva</span></label></div>
@@ -19,20 +19,59 @@
             <section class="translation-section">
                 <h2 th:text="#{common.multilingual.content}">Contenuti multilingua</h2>
                 <div class="translation-grid">
-                    <div class="translation-card" th:each="lang : ${languageOptions}">
+                    <div class="translation-card" th:each="lang : ${languageOptions}" th:with="sourceId=${'info-content-' + lang.code}, editorId=${'info-editor-' + lang.code}">
                         <h3><span class="lang-flag" th:text="${lang.flag}">IT</span> <span th:text="${lang.label}">Italiano</span></h3>
                         <div class="field">
                             <label th:text="#{common.title}">Titolo</label>
-                            <input type="text"
+                            <input class="info-title-input"
+                                   type="text"
                                    th:name="${'translations[' + lang.code + '].title'}"
                                    th:value="${pageForm.translations != null and pageForm.translations[lang.code] != null ? pageForm.translations[lang.code].title : ''}"
                                    th:required="${lang.code == 'it'}" />
                         </div>
                         <div class="field">
                             <label th:text="#{admin.information.content.html}">Contenuto (HTML)</label>
-                            <textarea rows="8"
+
+                            <textarea class="wysiwyg-source"
+                                      th:id="${sourceId}"
+                                      rows="12"
                                       th:name="${'translations[' + lang.code + '].content'}"
                                       th:text="${pageForm.translations != null and pageForm.translations[lang.code] != null ? pageForm.translations[lang.code].content : ''}"></textarea>
+
+                            <div class="wysiwyg-wrap">
+                                <div class="wysiwyg-toolbar" th:attr="data-editor-id=${editorId},data-source-id=${sourceId}">
+                                    <select data-cmd="formatBlock">
+                                        <option value="p">P</option>
+                                        <option value="h2">H2</option>
+                                        <option value="h3">H3</option>
+                                    </select>
+                                    <select data-cmd="fontName">
+                                        <option value="Arial">Arial</option>
+                                        <option value="Verdana">Verdana</option>
+                                        <option value="Georgia">Georgia</option>
+                                        <option value="Trebuchet MS">Trebuchet</option>
+                                        <option value="Times New Roman">Times</option>
+                                    </select>
+                                    <select data-cmd="fontSize">
+                                        <option value="2">12</option>
+                                        <option value="3" selected>14</option>
+                                        <option value="4">18</option>
+                                        <option value="5">24</option>
+                                    </select>
+                                    <button type="button" data-cmd="bold"><strong>B</strong></button>
+                                    <button type="button" data-cmd="italic"><em>I</em></button>
+                                    <button type="button" data-cmd="underline"><u>U</u></button>
+                                    <button type="button" data-cmd="justifyLeft">L</button>
+                                    <button type="button" data-cmd="justifyCenter">C</button>
+                                    <button type="button" data-cmd="justifyRight">R</button>
+                                    <button type="button" data-cmd="insertUnorderedList">UL</button>
+                                    <button type="button" data-cmd="insertOrderedList">OL</button>
+                                    <button type="button" data-cmd="createLink">Link</button>
+                                    <button type="button" data-cmd="unlink">Unlink</button>
+                                    <button type="button" data-cmd="removeFormat">Clear</button>
+                                </div>
+                                <div class="wysiwyg-editor" contenteditable="true" th:id="${editorId}" th:attr="data-source-id=${sourceId}"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -44,5 +83,6 @@
     </section>
 </main>
 <div th:replace="~{fragments/footer :: footer}"></div>
+<script th:src="@{/js/admin-information-editor.js}"></script>
 </body>
 </html>

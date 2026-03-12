@@ -1300,6 +1300,75 @@ h1, h2, h3 {
   gap: 6px;
 }
 
+.information-editor-form {
+  max-width: 1240px;
+  margin: 0 auto;
+}
+
+.information-editor-form .translation-grid {
+  grid-template-columns: repeat(auto-fit, minmax(520px, 1fr));
+  gap: 16px;
+}
+
+.information-editor-form .translation-card {
+  background: #fff;
+}
+
+.info-title-input {
+  min-height: 44px;
+  font-size: 15px;
+}
+
+.wysiwyg-source {
+  display: none;
+}
+
+.wysiwyg-wrap {
+  display: grid;
+  gap: 8px;
+}
+
+.wysiwyg-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid #d7dde5;
+  border-radius: 4px;
+  background: #f7f9fc;
+}
+
+.wysiwyg-toolbar button,
+.wysiwyg-toolbar select {
+  min-height: 34px;
+  padding: 6px 8px;
+  border: 1px solid #cfd5dc;
+  border-radius: 4px;
+  background: #fff;
+  color: #333;
+  font-size: 13px;
+}
+
+.wysiwyg-toolbar button:hover {
+  background: #eef4fb;
+}
+
+.wysiwyg-editor {
+  min-height: 300px;
+  border: 1px solid #cfd5dc;
+  border-radius: 4px;
+  padding: 12px;
+  background: #fff;
+  overflow: auto;
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+.wysiwyg-editor:focus {
+  outline: 2px solid rgba(34, 154, 200, 0.25);
+  outline-offset: 0;
+}
+
 @media (max-width: 900px) {
   .top-row {
     flex-wrap: wrap;
@@ -1315,5 +1384,13 @@ h1, h2, h3 {
 
   .translation-grid {
     grid-template-columns: 1fr;
+  }
+
+  .information-editor-form .translation-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .wysiwyg-editor {
+    min-height: 220px;
   }
 }

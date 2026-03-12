@@ -4,10 +4,11 @@
             <div>
                 <h5 th:text="#{footer.info}">Informazioni</h5>
                 <ul>
-                    <li><a th:href="@{/catalogo}" th:text="#{menu.catalog}">Catalogo</a></li>
-                    <li><a th:href="@{/catalogo/offerte}" th:text="#{menu.specials}">Offerte</a></li>
                     <li><a th:href="@{/news}" th:text="#{menu.blog}">Blog</a></li>
                     <li><a th:href="@{/mappa-sito}" th:text="#{menu.sitemap}">Sitemap</a></li>
+                    <li th:each="page : ${footerInformationPages}">
+                        <a th:href="@{/information/{slug}(slug=${page.slug})}" th:text="${page.title}">Informazione</a>
+                    </li>
                 </ul>
             </div>
             <div>

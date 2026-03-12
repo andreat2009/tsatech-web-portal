@@ -13,23 +13,23 @@
         <h1 th:text="#{info.sitemap.heading}">Sitemap</h1>
     </section>
     <section class="card section-pad block">
-        <h2 th:text="#{info.sitemap.pages}">Information pages</h2>
-        <ul>
-            <li th:each="p : ${informationPages}">
-                <a th:href="@{/information/{slug}(slug=${p.slug})}" th:text="${p.title}">Info</a>
-            </li>
-        </ul>
-    </section>
-    <section class="card section-pad block">
         <h2 th:text="#{info.sitemap.blog}">Blog</h2>
         <ul>
             <li th:each="post : ${blogPosts}"><a th:href="@{/news/{slug}(slug=${post.slug})}" th:text="${post.title}">Post</a></li>
         </ul>
     </section>
-    <section class="card section-pad">
+    <section class="card section-pad block">
         <h2 th:text="#{info.sitemap.categories}">Categories</h2>
         <ul>
             <li th:each="c : ${categories}"><a th:href="@{/catalogo(categoryId=${c.id})}" th:text="${c.name}">Category</a></li>
+        </ul>
+    </section>
+    <section class="card section-pad">
+        <h2 th:text="#{info.sitemap.pages}">Information pages</h2>
+        <ul>
+            <li th:each="p : ${informationPages}">
+                <a th:href="@{/information/{slug}(slug=${p.slug})}" th:text="${p.title}">Info</a>
+            </li>
         </ul>
     </section>
 </main>

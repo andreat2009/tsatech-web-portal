@@ -1,9 +1,11 @@
 package com.newproject.web.controller;
 
+import com.newproject.web.dto.InformationPage;
 import com.newproject.web.dto.PublicStoreSettings;
 import com.newproject.web.i18n.LanguageSupport;
 import com.newproject.web.service.GatewayClient;
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -36,9 +38,17 @@ public class GlobalModelAttributes {
 
         PublicStoreSettings settings = gatewayClient.getPublicStoreSettings();
 
+        List<InformationPage> footerInformationPages;
+        try {
+            footerInformationPages = gatewayClient.listInformationPages(true);
+        } catch (Exception ex) {
+            footerInformationPages = Collections.emptyList();
+        }
+
         model.addAttribute("languageOptions", options);
         model.addAttribute("currentLanguage", current);
         model.addAttribute("currentRequestUri", currentRequestUri);
         model.addAttribute("storeSettings", settings);
+        model.addAttribute("footerInformationPages", footerInformationPages);
     }
 }

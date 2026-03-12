@@ -794,25 +794,25 @@ main.container {
 
 #footer {
   margin-top: 30px;
-  background: #303030;
-  border-top: 1px solid #666;
-  color: #e2e2e2;
+  background: linear-gradient(#229ac8, #1f90bb);
+  border-top: 1px solid #1a82a6;
+  color: #eef8fc;
 }
 
 #footer h5 {
-  color: #fff;
+  color: #ffffff;
 }
 
 #footer a {
-  color: #ccc;
+  color: #eef8fc;
 }
 
 #footer a:hover {
-  color: #fff;
+  color: #ffffff;
 }
 
 .powered {
-  color: #bbb;
+  color: #d8eef7;
 }
 
 @media (max-width: 640px) {

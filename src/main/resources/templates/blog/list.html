@@ -11,10 +11,12 @@
 <main class="container">
     <section class="card section-pad">
         <h1 th:text="#{blog.list.heading}">Blog</h1>
-        <div th:each="post : ${posts}" class="list-divider">
-            <h3><a th:href="@{/news/{slug}(slug=${post.slug})}" th:text="${post.title}">Title</a></h3>
-            <p th:text="${post.excerpt}">Excerpt</p>
-            <small th:text="${post.publishedAt}">2026-01-01</small>
+        <div class="blog-list" data-paginate-collection="true" data-paginate="10" data-pagination-item=".list-divider">
+            <div th:each="post : ${posts}" class="list-divider">
+                <h3><a th:href="@{/news/{slug}(slug=${post.slug})}" th:text="${post.title}">Title</a></h3>
+                <p th:text="${post.excerpt}">Excerpt</p>
+                <small th:text="${post.publishedAt}">2026-01-01</small>
+            </div>
         </div>
         <p th:if="${#lists.isEmpty(posts)}" th:text="#{blog.list.empty}">No articles published.</p>
     </section>

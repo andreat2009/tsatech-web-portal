@@ -155,7 +155,7 @@
         <div class="field-grid two analytics-grid">
             <div class="card-lite analytics-list-box">
                 <h3 th:text="#{admin.dashboard.analytics.top.paths}">Pagine piu viste</h3>
-                <ul class="analytics-top-paths">
+                <ul class="analytics-top-paths" data-paginate-collection="true" data-paginate="10" data-pagination-item="li">
                     <li th:if="${analyticsSummary == null or analyticsSummary.topPaths == null or analyticsSummary.topPaths.isEmpty()}" class="muted" th:text="#{common.no.data}">Nessun dato</li>
                     <li th:each="pathStat : ${analyticsSummary != null ? analyticsSummary.topPaths : T(java.util.List).of()}">
                         <span class="path" th:text="${pathStat.path}">/catalogo</span>

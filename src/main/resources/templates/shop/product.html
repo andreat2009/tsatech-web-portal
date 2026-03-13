@@ -78,6 +78,7 @@
     <section class="reviews">
         <h2 th:text="#{shop.product.reviews}">Reviews</h2>
         <div th:if="${reviews.isEmpty()}" class="empty" th:text="#{shop.product.reviews.empty}">No approved reviews.</div>
+        <div class="reviews-list" data-paginate-collection="true" data-paginate="10" data-pagination-item=".review-card">
         <div class="review-card" th:each="review : ${reviews}">
             <div class="review-head">
                 <strong th:text="${review.authorName}">Author</strong>
@@ -86,6 +87,7 @@
             <div class="review-rating" th:text="#{shop.product.review.rating} + ': ' + ${review.rating} + '/5'">Rating</div>
             <h3 th:text="${review.title}">Title</h3>
             <p th:text="${review.text}">Text</p>
+        </div>
         </div>
 
         <div sec:authorize="isAuthenticated()" class="review-form-wrap">

@@ -13,7 +13,7 @@
         <h1 th:text="#{account.payment.method.heading}">Default payment method</h1>
         <p th:text="#{account.payment.method.description}">Payment methods are managed in checkout and Keycloak.</p>
         <h2 th:text="#{account.payment.method.addresses}">Available addresses</h2>
-        <ul>
+        <ul data-paginate-collection="true" data-paginate="10" data-pagination-item="li">
             <li th:each="a : ${addresses}">
                 <span th:text="${a.line1 + ', ' + a.city + ' (' + a.country + ')'}">address</span>
                 <strong th:if="${a.isDefault}" th:text="#{account.payment.method.default}"> [Default]</strong>

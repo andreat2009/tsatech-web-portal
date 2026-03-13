@@ -17,7 +17,7 @@
 
     <section class="card section-pad">
         <h1 th:text="#{shop.special.heading}">Special offers</h1>
-        <div class="product-grid">
+        <div class="product-grid" data-paginate-collection="true" data-paginate="10" data-pagination-item=".product-card">
             <article class="product-card" th:each="p : ${products}">
                 <div class="product-media-small">
                     <img th:if="${p.primaryImageUrl != null and !p.primaryImageUrl.isBlank()}" th:src="${p.primaryImageUrl}" th:alt="${p.name}" loading="lazy" />

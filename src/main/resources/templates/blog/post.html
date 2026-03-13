@@ -17,10 +17,12 @@
 
     <section class="card section-pad block">
         <h2 th:text="#{blog.post.comments}">Comments</h2>
-        <div th:each="c : ${comments}" class="list-divider-sm">
-            <strong th:text="${c.authorName}">Author</strong>
-            <small th:text="${c.createdAt}">2026-01-01</small>
-            <p th:text="${c.comment}">Comment</p>
+        <div class="blog-comments-list" data-paginate-collection="true" data-paginate="10" data-pagination-item=".list-divider-sm">
+            <div th:each="c : ${comments}" class="list-divider-sm">
+                <strong th:text="${c.authorName}">Author</strong>
+                <small th:text="${c.createdAt}">2026-01-01</small>
+                <p th:text="${c.comment}">Comment</p>
+            </div>
         </div>
         <p th:if="${#lists.isEmpty(comments)}" th:text="#{blog.post.empty.comments}">No approved comments.</p>
     </section>

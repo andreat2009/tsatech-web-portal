@@ -60,7 +60,7 @@
                 <span class="muted products-count" th:text="${products.size() + ' ' + #messages.msg('catalog.products.count')}">0 products</span>
             </form>
 
-            <section class="product-grid" th:if="${!products.isEmpty()}">
+            <section class="product-grid" th:if="${!products.isEmpty()}" data-paginate-collection="true" data-paginate="10" data-pagination-item=".product-thumb">
                 <article class="product-thumb" th:each="product : ${products}">
                     <div class="image">
                         <a th:href="${product.seoPath}">

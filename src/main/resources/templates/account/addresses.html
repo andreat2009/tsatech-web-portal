@@ -18,11 +18,13 @@
         <div>
             <h2 th:text="#{account.addresses.list.title}">Address list</h2>
             <div th:if="${addresses.isEmpty()}" class="empty" th:text="#{account.addresses.empty}">No addresses configured.</div>
+            <div class="address-list" data-paginate-collection="true" data-paginate="10" data-pagination-item=".address-card">
             <div class="address-card" th:each="address : ${addresses}">
                 <div class="address-line" th:text="${address.line1}">Line1</div>
                 <div class="address-line muted" th:text="${address.line2}">Line2</div>
                 <div class="address-line" th:text="${address.city + ', ' + address.country + ' ' + address.postalCode}">City</div>
                 <span class="badge" th:if="${address.isDefault}" th:text="#{account.addresses.default}">Default</span>
+            </div>
             </div>
         </div>
 

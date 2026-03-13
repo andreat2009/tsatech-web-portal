@@ -1552,3 +1552,47 @@ h1, h2, h3 {
     height: 44px;
   }
 }
+
+.app-pagination-host {
+  margin-top: 14px;
+}
+
+.app-pagination {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.app-pagination-btn {
+  min-width: 34px;
+  padding: 6px 10px;
+  border: 1px solid var(--oc-border);
+  border-radius: 3px;
+  background: #fff;
+  color: var(--oc-text);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.app-pagination-btn:hover:not(:disabled) {
+  border-color: var(--oc-blue-dark);
+  background: #f3fbff;
+}
+
+.app-pagination-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.app-pagination-btn.is-active {
+  background: var(--oc-blue);
+  border-color: var(--oc-blue-dark);
+  color: #fff;
+  font-weight: 700;
+}
+
+.app-pagination-ellipsis {
+  color: var(--oc-muted);
+  font-size: 13px;
+}

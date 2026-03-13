@@ -15,6 +15,8 @@
         <a class="btn btn-primary" th:href="@{/admin/catalogo/prodotti/nuovo}" th:text="#{admin.product.new}">Nuovo prodotto</a>
     </div>
 
+    <p class="alert-error" th:if="${uploadError}" th:text="#{admin.products.upload.error}">Upload immagini non valido. Riprova dalla schermata prodotto.</p>
+
     <div class="table-wrap">
         <table class="table">
             <thead>

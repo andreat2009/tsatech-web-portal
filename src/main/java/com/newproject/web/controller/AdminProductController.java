@@ -18,15 +18,16 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.multipart.MultipartFile;
 
 @Controller
@@ -41,9 +42,10 @@ public class AdminProductController {
     }
 
     @GetMapping
-    public String list(Model model) {
+    public String list(@RequestParam(name = "uploadError", required = false) String uploadError, Model model) {
         List<Product> products = gatewayClient.listProducts();
         model.addAttribute("products", products);
+        model.addAttribute("uploadError", uploadError != null);
         return "admin/products";
     }
 
@@ -64,7 +66,7 @@ public class AdminProductController {
         return "admin/product-form";
     }
 
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping
     public String create(
         @ModelAttribute ProductRequest request,
         @RequestParam(name = "coverImageFile", required = false) MultipartFile coverImageFile,
@@ -113,7 +115,7 @@ public class AdminProductController {
         return "admin/product-form";
     }
 
-    @PostMapping(path = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(path = "/{id}")
     public String update(
         @PathVariable Long id,
         @ModelAttribute ProductRequest request,
@@ -150,6 +152,12 @@ public class AdminProductController {
     public String delete(@PathVariable Long id) {
         gatewayClient.deleteProduct(id);
         return "redirect:/admin/catalogo/prodotti";
+    }
+
+    @ExceptionHandler(MultipartException.class)
+    public String handleMultipartException(MultipartException ex) {
+        logger.warn("Multipart upload issue in product admin flow: {}", ex.getMessage());
+        return "redirect:/admin/catalogo/prodotti?uploadError=1";
     }
 
     private void uploadImages(Long productId, MultipartFile coverImageFile, MultipartFile[] galleryImageFiles) {

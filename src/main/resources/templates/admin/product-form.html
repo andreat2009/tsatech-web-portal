@@ -29,6 +29,12 @@
             </div>
         </div>
 
+        <div class="field">
+            <label th:text="#{admin.seo.keywords}">Parole chiave SEO</label>
+            <input type="text" name="seoKeywords" th:value="${product.seoKeywords}" placeholder="smartphone, telefono 5g, offerta" />
+            <small class="muted" th:text="#{admin.seo.keywords.hint}">Usa parole separate da virgola.</small>
+        </div>
+
         <section class="translation-controls">
             <h2 th:text="#{admin.product.translation.title}">Traduzione automatica</h2>
             <div class="field-grid two">

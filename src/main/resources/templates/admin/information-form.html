@@ -13,6 +13,11 @@
         <h1 th:text="${#messages.msg(formTitleKey)}">Form</h1>
         <form method="post" th:action="${formAction}" th:object="${pageForm}" class="information-editor-form">
             <div class="field"><label>Slug</label><input type="text" th:field="*{slug}" /></div>
+            <div class="field">
+                <label th:text="#{admin.seo.keywords}">Parole chiave SEO</label>
+                <input type="text" th:field="*{seoKeywords}" placeholder="privacy, spedizioni, resi" />
+                <small class="muted" th:text="#{admin.seo.keywords.hint}">Usa parole separate da virgola.</small>
+            </div>
             <div class="field"><label th:text="#{common.sort.order}">Sort order</label><input type="number" th:field="*{sortOrder}" /></div>
             <div class="field"><label><input type="checkbox" th:field="*{active}" /> <span th:text="#{common.active}">Attiva</span></label></div>
 

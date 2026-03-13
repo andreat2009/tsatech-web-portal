@@ -97,6 +97,7 @@ public class AdminProductController {
         request.setQuantity(product.getQuantity());
         request.setActive(product.getActive());
         request.setImage(product.getImage());
+        request.setSeoKeywords(product.getSeoKeywords());
         request.setManufacturerId(product.getManufacturerId());
         request.setCategoryIds(product.getCategoryIds());
         request.setTranslations(ensureProductTranslations(product.getTranslations(), product));
@@ -240,6 +241,7 @@ public class AdminProductController {
         if (request.getCategoryIds() == null) {
             request.setCategoryIds(new HashSet<>());
         }
+        request.setSeoKeywords(trimToNull(request.getSeoKeywords()));
 
         request.setTranslations(ensureProductTranslations(request.getTranslations(), null));
 
@@ -254,6 +256,14 @@ public class AdminProductController {
             request.getDescription(),
             ""
         ));
+    }
+
+    private String trimToNull(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     private String firstNonBlank(String... values) {

@@ -48,6 +48,7 @@ public class AdminCmsController {
             settings = new StoreSettings();
             PublicStoreSettings fallback = gatewayClient.getPublicStoreSettings();
             settings.setSiteName(fallback.getSiteName());
+            settings.setSiteMetaKeywords(fallback.getSiteMetaKeywords());
             settings.setLogoUrl(fallback.getLogoUrl());
             settings.setLogoMaxHeightPx(fallback.getLogoMaxHeightPx());
             settings.setSiteNameFontSizePx(fallback.getSiteNameFontSizePx());
@@ -136,6 +137,7 @@ public class AdminCmsController {
         form.setTitle(page.getTitle());
         form.setSlug(page.getSlug());
         form.setContent(page.getContent());
+        form.setSeoKeywords(page.getSeoKeywords());
         form.setSortOrder(page.getSortOrder());
         form.setActive(page.getActive());
         form.setTranslations(ensureInformationTranslations(page.getTranslations(), page));
@@ -307,6 +309,7 @@ public class AdminCmsController {
             form.setActive(true);
         }
 
+        form.setSeoKeywords(trimToNull(form.getSeoKeywords()));
         form.setTranslations(ensureInformationTranslations(form.getTranslations(), null));
         LocalizedContent italian = form.getTranslations().get(LanguageSupport.DEFAULT_LANGUAGE);
         form.setTitle(firstNonBlank(
@@ -412,6 +415,7 @@ public class AdminCmsController {
     private void normalizeStoreSettings(StoreSettings form) {
         form.setSiteName(firstNonBlank(form.getSiteName(), "TSATech Store"));
         form.setLogoUrl(trimToNull(form.getLogoUrl()));
+        form.setSiteMetaKeywords(trimToNull(form.getSiteMetaKeywords()));
         form.setLogoMaxHeightPx(clampInt(form.getLogoMaxHeightPx(), DEFAULT_LOGO_MAX_HEIGHT_PX, MIN_LOGO_MAX_HEIGHT_PX, MAX_LOGO_MAX_HEIGHT_PX));
         form.setSiteNameFontSizePx(clampInt(form.getSiteNameFontSizePx(), DEFAULT_SITE_NAME_FONT_SIZE_PX, MIN_SITE_NAME_FONT_SIZE_PX, MAX_SITE_NAME_FONT_SIZE_PX));
         form.setContactEmail(trimToNull(form.getContactEmail()));

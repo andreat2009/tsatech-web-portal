@@ -49,4 +49,17 @@
         <hr>
         <p class="powered" th:text="#{footer.powered}">TSATech Commerce - OpenCart-like experience su Spring Boot + OpenShift</p>
     </div>
+
+    <div id="cookie-consent-banner" class="cookie-banner hidden" role="dialog" aria-live="polite" aria-label="Cookie consent">
+        <div class="cookie-banner-content">
+            <strong th:text="#{cookie.banner.title}">Cookie e analytics</strong>
+            <p th:text="#{cookie.banner.text}">Usiamo cookie tecnici e analytics per migliorare l'esperienza.</p>
+            <div class="cookie-banner-actions">
+                <button id="cookie-accept-btn" class="btn btn-primary" type="button" th:text="#{cookie.banner.accept}">Accetta</button>
+                <button id="cookie-reject-btn" class="btn" type="button" th:text="#{cookie.banner.reject}">Rifiuta</button>
+            </div>
+        </div>
+    </div>
+    <script th:src="@{/js/cookies-analytics.js}" defer></script>
+
 </footer>

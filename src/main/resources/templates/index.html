@@ -5,10 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title th:text="#{catalog.title}">Product catalog | TSATech Commerce</title>
     <meta name="description" th:content="#{catalog.meta.description}" />
+    <meta name="keywords" th:content="${storeSettings != null ? storeSettings.siteMetaKeywords : null}" />
     <link rel="canonical" th:href="@{/catalogo}" />
     <link rel="stylesheet" th:href="@{/css/app.css}" />
 </head>
-<body>
+<body th:attr="data-entity-type='home'">
 <div th:replace="fragments/header :: header"></div>
 
 <main class="container">

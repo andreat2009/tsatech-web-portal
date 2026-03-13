@@ -1394,3 +1394,161 @@ h1, h2, h3 {
     min-height: 220px;
   }
 }
+
+/* Dashboard icons + analytics */
+.dashboard-tile {
+  position: relative;
+  min-height: 128px;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  column-gap: 12px;
+  align-items: center;
+}
+
+.dashboard-tile-icon {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  border-radius: 12px;
+  align-self: start;
+}
+
+.dashboard-tile .stat-label,
+.dashboard-tile .stat-value,
+.dashboard-tile .btn,
+.dashboard-tile .muted {
+  grid-column: 2;
+}
+
+.analytics-section {
+  margin-top: 24px;
+}
+
+.analytics-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+  margin-top: 12px;
+}
+
+.analytics-box {
+  border: 1px solid #d8e7ee;
+  border-radius: 10px;
+  background: #fff;
+  padding: 14px;
+}
+
+.analytics-box-icon {
+  width: 34px;
+  height: 34px;
+  margin-bottom: 8px;
+}
+
+.analytics-box-title {
+  font-size: 0.92rem;
+  color: #4f6370;
+}
+
+.analytics-box-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #1d3949;
+  line-height: 1.15;
+}
+
+.analytics-grid {
+  margin-top: 16px;
+}
+
+.analytics-list-box {
+  padding: 14px;
+}
+
+.analytics-top-paths {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.analytics-top-paths li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid #edf3f6;
+}
+
+.analytics-top-paths li:last-child {
+  border-bottom: none;
+}
+
+.analytics-top-paths .path {
+  color: #1d3949;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.analytics-top-paths .views {
+  font-weight: 700;
+  color: #0c7da5;
+}
+
+/* Cookie consent */
+.cookie-banner {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 1200;
+  max-width: 460px;
+  border: 1px solid #a9d8e8;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+}
+
+.cookie-banner.hidden {
+  display: none;
+}
+
+.cookie-banner-content {
+  padding: 14px 16px;
+}
+
+.cookie-banner-content p {
+  margin: 8px 0 12px;
+  color: #415865;
+}
+
+.cookie-banner-actions {
+  display: flex;
+  gap: 8px;
+}
+
+@media (max-width: 768px) {
+  .cookie-banner {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    max-width: none;
+  }
+
+  .dashboard-tile {
+    padding-left: 20px;
+    grid-template-columns: 1fr;
+    row-gap: 8px;
+  }
+
+  .dashboard-tile .stat-label,
+  .dashboard-tile .stat-value,
+  .dashboard-tile .btn,
+  .dashboard-tile .muted {
+    grid-column: auto;
+  }
+
+  .dashboard-tile-icon {
+    width: 44px;
+    height: 44px;
+  }
+}

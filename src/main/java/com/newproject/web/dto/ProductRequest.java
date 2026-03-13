@@ -14,6 +14,7 @@ public class ProductRequest {
     private Integer quantity;
     private Boolean active;
     private String image;
+    private String seoKeywords;
     private Long manufacturerId;
     private Set<Long> categoryIds;
     private Map<String, LocalizedContent> translations = new LinkedHashMap<>();
@@ -34,6 +35,8 @@ public class ProductRequest {
     public void setActive(Boolean active) { this.active = active; }
     public String getImage() { return image; }
     public void setImage(String image) { this.image = image; }
+    public String getSeoKeywords() { return seoKeywords; }
+    public void setSeoKeywords(String seoKeywords) { this.seoKeywords = seoKeywords; }
     public Long getManufacturerId() { return manufacturerId; }
     public void setManufacturerId(Long manufacturerId) { this.manufacturerId = manufacturerId; }
     public Set<Long> getCategoryIds() { return categoryIds; }

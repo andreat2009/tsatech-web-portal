@@ -4,9 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title th:text="${page.title}">Informazioni</title>
+    <meta name="keywords" th:content="${page.seoKeywords != null and !#strings.isEmpty(page.seoKeywords) ? page.seoKeywords : (storeSettings != null ? storeSettings.siteMetaKeywords : null)}" />
     <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css" />
 </head>
-<body>
+<body th:attr="data-entity-type='information',data-entity-id=${page.id}">
 <div th:replace="~{fragments/header :: header}"></div>
 <main class="container">
     <article class="card section-pad">

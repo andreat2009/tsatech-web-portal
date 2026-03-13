@@ -9,6 +9,7 @@ public class InformationPage {
     private String title;
     private String slug;
     private String content;
+    private String seoKeywords;
     private Integer sortOrder;
     private Boolean active;
     private OffsetDateTime createdAt;
@@ -23,6 +24,8 @@ public class InformationPage {
     public void setSlug(String slug) { this.slug = slug; }
     public String getContent() { return content; }
     public void setContent(String content) { this.content = content; }
+    public String getSeoKeywords() { return seoKeywords; }
+    public void setSeoKeywords(String seoKeywords) { this.seoKeywords = seoKeywords; }
     public Integer getSortOrder() { return sortOrder; }
     public void setSortOrder(Integer sortOrder) { this.sortOrder = sortOrder; }
     public Boolean getActive() { return active; }

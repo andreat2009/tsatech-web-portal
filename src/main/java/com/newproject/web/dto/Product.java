@@ -19,6 +19,7 @@ public class Product {
     private Integer quantity;
     private Boolean active;
     private String image;
+    private String seoKeywords;
     private String coverImageUrl;
     private List<ProductImage> galleryImages;
     private Long manufacturerId;
@@ -45,6 +46,8 @@ public class Product {
     public void setActive(Boolean active) { this.active = active; }
     public String getImage() { return image; }
     public void setImage(String image) { this.image = image; }
+    public String getSeoKeywords() { return seoKeywords; }
+    public void setSeoKeywords(String seoKeywords) { this.seoKeywords = seoKeywords; }
 
     public String getCoverImageUrl() {
         return coverImageUrl;

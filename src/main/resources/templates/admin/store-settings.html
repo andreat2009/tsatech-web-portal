@@ -29,6 +29,11 @@
                 <input th:field="*{siteName}" required />
             </div>
             <div class="field">
+                <label th:text="#{admin.settings.site.meta.keywords}">Parole chiave SEO sito</label>
+                <input th:field="*{siteMetaKeywords}" placeholder="ecommerce, shop online, offerte" />
+                <small class="muted" th:text="#{admin.seo.keywords.hint}">Usa parole separate da virgola.</small>
+            </div>
+            <div class="field">
                 <label th:text="#{admin.settings.logo.url}">Logo URL</label>
                 <input th:field="*{logoUrl}" placeholder="https://..." />
             </div>

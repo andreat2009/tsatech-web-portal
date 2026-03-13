@@ -11,102 +11,187 @@
 <main class="container admin">
     <h1 th:text="#{admin.dashboard.title}">Dashboard Admin</h1>
     <div class="grid stats">
-        <div class="card">
+        <div class="card dashboard-tile tile-products">
+            <img class="dashboard-tile-icon" th:src="@{/img/dashboard/products.svg}" alt="Products" />
             <div class="stat-label" th:text="#{admin.dashboard.products}">Prodotti</div>
             <div class="stat-value" th:text="${productCount}">0</div>
             <a class="btn" th:href="@{/admin/catalogo/prodotti}" th:text="#{admin.dashboard.manage.products}">Gestisci prodotti</a>
         </div>
-        <div class="card">
+        <div class="card dashboard-tile tile-categories">
+            <img class="dashboard-tile-icon" th:src="@{/img/dashboard/categories.svg}" alt="Categories" />
             <div class="stat-label" th:text="#{admin.dashboard.categories}">Categorie</div>
             <div class="stat-value" th:text="${categoryCount}">0</div>
             <a class="btn" th:href="@{/admin/catalogo/categorie}" th:text="#{admin.dashboard.manage.categories}">Gestisci categorie</a>
         </div>
-        <div class="card">
+        <div class="card dashboard-tile tile-manufacturers">
+            <img class="dashboard-tile-icon" th:src="@{/img/dashboard/manufacturers.svg}" alt="Manufacturers" />
             <div class="stat-label" th:text="#{admin.dashboard.manufacturers}">Produttori</div>
             <div class="stat-value" th:text="${manufacturerCount}">0</div>
             <a class="btn" th:href="@{/admin/catalogo/produttori}" th:text="#{admin.dashboard.manage.manufacturers}">Gestisci produttori</a>
         </div>
-        <div class="card">
+        <div class="card dashboard-tile tile-customers">
+            <img class="dashboard-tile-icon" th:src="@{/img/dashboard/customers.svg}" alt="Customers" />
             <div class="stat-label" th:text="#{admin.dashboard.customers}">Clienti</div>
             <div class="stat-value" th:text="${customerCount}">0</div>
             <a class="btn" th:href="@{/admin/customers}" th:text="#{admin.dashboard.list.customers}">Elenco clienti</a>
         </div>
-        <div class="card">
+        <div class="card dashboard-tile tile-carts">
+            <img class="dashboard-tile-icon" th:src="@{/img/dashboard/carts.svg}" alt="Carts" />
             <div class="stat-label" th:text="#{admin.dashboard.carts}">Carrelli</div>
             <div class="stat-value" th:text="${cartCount}">0</div>
             <a class="btn" th:href="@{/admin/carts}" th:text="#{admin.dashboard.list.carts}">Elenco carrelli</a>
         </div>
-        <div class="card">
+        <div class="card dashboard-tile tile-orders">
+            <img class="dashboard-tile-icon" th:src="@{/img/dashboard/orders.svg}" alt="Orders" />
             <div class="stat-label" th:text="#{menu.orders}">Ordini</div>
             <div class="stat-value" th:text="${orderCount}">0</div>
             <a class="btn" th:href="@{/admin/orders}" th:text="#{admin.dashboard.manage.orders}">Gestisci ordini</a>
         </div>
-        <div class="card">
+        <div class="card dashboard-tile tile-returns">
+            <img class="dashboard-tile-icon" th:src="@{/img/dashboard/returns.svg}" alt="Returns" />
             <div class="stat-label" th:text="#{menu.returns}">Resi</div>
             <div class="stat-value" th:text="${returnCount}">0</div>
             <a class="btn" th:href="@{/admin/returns}" th:text="#{admin.dashboard.manage.returns}">Gestisci resi</a>
         </div>
-        <div class="card">
+        <div class="card dashboard-tile tile-inventory">
+            <img class="dashboard-tile-icon" th:src="@{/img/dashboard/inventory.svg}" alt="Inventory" />
             <div class="stat-label" th:text="#{admin.dashboard.inventory}">Inventario</div>
             <div class="stat-value" th:text="${inventoryCount}">0</div>
             <a class="btn" th:href="@{/admin/inventory}" th:text="#{admin.dashboard.view.stock}">Vedi stock</a>
         </div>
-        <div class="card">
+        <div class="card dashboard-tile tile-pricing">
+            <img class="dashboard-tile-icon" th:src="@{/img/dashboard/pricing.svg}" alt="Pricing" />
             <div class="stat-label" th:text="#{admin.dashboard.prices}">Prezzi</div>
             <div class="stat-value" th:text="${priceCount}">0</div>
             <a class="btn" th:href="@{/admin/pricing}" th:text="#{admin.dashboard.view.prices}">Vedi prezzi</a>
         </div>
-        <div class="card">
+        <div class="card dashboard-tile tile-coupons">
+            <img class="dashboard-tile-icon" th:src="@{/img/dashboard/coupons.svg}" alt="Coupons" />
             <div class="stat-label" th:text="#{admin.dashboard.coupons}">Coupon</div>
             <div class="stat-value" th:text="${couponCount}">0</div>
             <a class="btn" th:href="@{/admin/marketing/coupon}" th:text="#{admin.dashboard.manage.coupons}">Gestisci coupon</a>
         </div>
-        <div class="card">
+        <div class="card dashboard-tile tile-payments">
+            <img class="dashboard-tile-icon" th:src="@{/img/dashboard/payments.svg}" alt="Payments" />
             <div class="stat-label" th:text="#{admin.dashboard.payments}">Pagamenti</div>
             <div class="stat-value" th:text="${paymentCount}">0</div>
             <a class="btn" th:href="@{/admin/payments}" th:text="#{admin.dashboard.manage.payments}">Gestisci pagamenti</a>
         </div>
-        <div class="card">
+        <div class="card dashboard-tile tile-shipments">
+            <img class="dashboard-tile-icon" th:src="@{/img/dashboard/shipments.svg}" alt="Shipments" />
             <div class="stat-label" th:text="#{admin.dashboard.shipments}">Spedizioni</div>
             <div class="stat-value" th:text="${shipmentCount}">0</div>
             <a class="btn" th:href="@{/admin/shipments}" th:text="#{admin.dashboard.manage.shipments}">Gestisci spedizioni</a>
         </div>
-        <div class="card">
+        <div class="card dashboard-tile tile-reviews">
+            <img class="dashboard-tile-icon" th:src="@{/img/dashboard/reviews.svg}" alt="Reviews" />
             <div class="stat-label" th:text="#{admin.dashboard.reviews}">Recensioni</div>
             <div class="stat-value" th:text="#{admin.dashboard.moderation}">Moderazione</div>
             <a class="btn" th:href="@{/admin/reviews}" th:text="#{admin.dashboard.manage.reviews}">Gestisci recensioni</a>
         </div>
-        <div class="card">
+        <div class="card dashboard-tile tile-information">
+            <img class="dashboard-tile-icon" th:src="@{/img/dashboard/information.svg}" alt="Information pages" />
             <div class="stat-label" th:text="#{admin.dashboard.info.pages}">Pagine Info</div>
             <div class="stat-value" th:text="${informationCount}">0</div>
             <a class="btn" th:href="@{/admin/information}" th:text="#{admin.dashboard.manage.contents}">Gestisci contenuti</a>
         </div>
-        <div class="card">
+        <div class="card dashboard-tile tile-blog">
+            <img class="dashboard-tile-icon" th:src="@{/img/dashboard/blog.svg}" alt="Blog posts" />
             <div class="stat-label" th:text="#{admin.dashboard.blog.posts}">Blog Posts</div>
             <div class="stat-value" th:text="${blogPostCount}">0</div>
             <a class="btn" th:href="@{/admin/blog/posts}" th:text="#{admin.dashboard.manage.blog}">Gestisci blog</a>
         </div>
-        <div class="card">
+        <div class="card dashboard-tile tile-comments">
+            <img class="dashboard-tile-icon" th:src="@{/img/dashboard/comments.svg}" alt="Blog comments" />
             <div class="stat-label" th:text="#{admin.dashboard.blog.comments}">Blog Commenti</div>
             <div class="stat-value" th:text="${blogCommentCount}">0</div>
             <a class="btn" th:href="@{/admin/blog/comments}" th:text="#{admin.dashboard.moderate.comments}">Modera commenti</a>
         </div>
-        <div class="card">
+        <div class="card dashboard-tile tile-contact">
+            <img class="dashboard-tile-icon" th:src="@{/img/dashboard/contact.svg}" alt="Contact messages" />
             <div class="stat-label" th:text="#{admin.dashboard.contact.messages}">Messaggi Contatto</div>
             <div class="stat-value" th:text="${contactMessageCount}">0</div>
             <a class="btn" th:href="@{/admin/contact-messages}" th:text="#{admin.dashboard.contact.inbox}">Inbox contatti</a>
         </div>
-        <div class="card">
+        <div class="card dashboard-tile tile-settings">
+            <img class="dashboard-tile-icon" th:src="@{/img/dashboard/settings.svg}" alt="Store settings" />
             <div class="stat-label" th:text="#{admin.dashboard.store.settings}">Store settings</div>
             <div class="stat-value" th:text="#{admin.dashboard.store.settings.value}">Config</div>
             <a class="btn" th:href="@{/admin/store-settings}" th:text="#{admin.dashboard.manage.settings}">Configure store</a>
         </div>
-        <div class="card">
+        <div class="card dashboard-tile tile-notifications">
+            <img class="dashboard-tile-icon" th:src="@{/img/dashboard/notifications.svg}" alt="Notifications" />
             <div class="stat-label" th:text="#{admin.dashboard.notifications}">Notification Service</div>
             <div class="stat-value" th:text="${notificationStatus}">unknown</div>
             <span class="muted" th:text="#{admin.dashboard.kafka.health}">Kafka consumer health</span>
         </div>
     </div>
+
+    <section class="card section-pad analytics-section">
+        <h2 th:text="#{admin.dashboard.analytics.heading}">Analytics visitatori</h2>
+        <div class="analytics-summary-grid">
+            <div class="analytics-box">
+                <img class="analytics-box-icon" th:src="@{/img/dashboard/visitors.svg}" alt="Visitors" />
+                <div class="analytics-box-title" th:text="#{admin.dashboard.analytics.total.visitors}">Visitatori totali</div>
+                <div class="analytics-box-value" th:text="${analyticsSummary != null ? analyticsSummary.totalVisitors : 0}">0</div>
+            </div>
+            <div class="analytics-box">
+                <img class="analytics-box-icon" th:src="@{/img/dashboard/views.svg}" alt="Views" />
+                <div class="analytics-box-title" th:text="#{admin.dashboard.analytics.page.views}">Pagine viste</div>
+                <div class="analytics-box-value" th:text="${analyticsSummary != null ? analyticsSummary.totalPageViews : 0}">0</div>
+            </div>
+            <div class="analytics-box">
+                <img class="analytics-box-icon" th:src="@{/img/dashboard/today.svg}" alt="Today" />
+                <div class="analytics-box-title" th:text="#{admin.dashboard.analytics.today.visitors}">Visitatori oggi</div>
+                <div class="analytics-box-value" th:text="${analyticsSummary != null ? analyticsSummary.todayVisitors : 0}">0</div>
+            </div>
+            <div class="analytics-box">
+                <img class="analytics-box-icon" th:src="@{/img/dashboard/products.svg}" alt="Products" />
+                <div class="analytics-box-title" th:text="#{admin.dashboard.analytics.unique.products}">Prodotti visti</div>
+                <div class="analytics-box-value" th:text="${analyticsSummary != null ? analyticsSummary.uniqueProductsViewed : 0}">0</div>
+            </div>
+        </div>
+
+        <div class="field-grid two analytics-grid">
+            <div class="card-lite analytics-list-box">
+                <h3 th:text="#{admin.dashboard.analytics.top.paths}">Pagine piu viste</h3>
+                <ul class="analytics-top-paths">
+                    <li th:if="${analyticsSummary == null or analyticsSummary.topPaths == null or analyticsSummary.topPaths.isEmpty()}" class="muted" th:text="#{common.no.data}">Nessun dato</li>
+                    <li th:each="pathStat : ${analyticsSummary != null ? analyticsSummary.topPaths : T(java.util.List).of()}">
+                        <span class="path" th:text="${pathStat.path}">/catalogo</span>
+                        <span class="views" th:text="${pathStat.views}">0</span>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-lite analytics-list-box">
+                <h3 th:text="#{admin.dashboard.analytics.recent.events}">Ultimi accessi</h3>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th th:text="#{admin.dashboard.analytics.visitor}">Visitor</th>
+                            <th th:text="#{admin.dashboard.analytics.ip}">IP</th>
+                            <th th:text="#{admin.dashboard.analytics.path}">Path</th>
+                            <th th:text="#{common.date}">Data</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:if="${recentAnalyticsEvents == null or recentAnalyticsEvents.isEmpty()}">
+                            <td colspan="4" class="muted" th:text="#{common.no.data}">Nessun dato</td>
+                        </tr>
+                        <tr th:each="event : ${recentAnalyticsEvents}">
+                            <td th:text="${event.visitorId}">visitor</td>
+                            <td th:text="${event.ip}">ip</td>
+                            <td th:text="${event.path}">/</td>
+                            <td th:text="${event.createdAt}">now</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
 </main>
 
 <div th:replace="fragments/footer :: footer"></div>

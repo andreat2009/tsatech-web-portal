@@ -1,6 +1,23 @@
 package com.newproject.web.controller;
 
-import com.newproject.web.dto.*;
+import com.newproject.web.dto.AnalyticsEvent;
+import com.newproject.web.dto.AnalyticsSummary;
+import com.newproject.web.dto.BlogComment;
+import com.newproject.web.dto.BlogPost;
+import com.newproject.web.dto.Cart;
+import com.newproject.web.dto.Category;
+import com.newproject.web.dto.ContactMessage;
+import com.newproject.web.dto.Coupon;
+import com.newproject.web.dto.Customer;
+import com.newproject.web.dto.InformationPage;
+import com.newproject.web.dto.InventoryItem;
+import com.newproject.web.dto.Manufacturer;
+import com.newproject.web.dto.Order;
+import com.newproject.web.dto.OrderReturn;
+import com.newproject.web.dto.Payment;
+import com.newproject.web.dto.Product;
+import com.newproject.web.dto.ProductPrice;
+import com.newproject.web.dto.Shipment;
 import com.newproject.web.service.GatewayClient;
 import java.util.List;
 import org.springframework.stereotype.Controller;
@@ -35,6 +52,8 @@ public class AdminController {
         List<BlogPost> blogPosts = gatewayClient.listBlogPosts(null);
         List<BlogComment> blogComments = gatewayClient.listBlogComments(null);
         List<ContactMessage> contactMessages = gatewayClient.listContactMessages(null);
+        AnalyticsSummary analyticsSummary = gatewayClient.getAnalyticsSummary();
+        List<AnalyticsEvent> recentAnalyticsEvents = gatewayClient.listAnalyticsEvents(30);
 
         model.addAttribute("productCount", products.size());
         model.addAttribute("categoryCount", categories.size());
@@ -53,6 +72,8 @@ public class AdminController {
         model.addAttribute("blogCommentCount", blogComments.size());
         model.addAttribute("contactMessageCount", contactMessages.size());
         model.addAttribute("notificationStatus", gatewayClient.notificationPing());
+        model.addAttribute("analyticsSummary", analyticsSummary);
+        model.addAttribute("recentAnalyticsEvents", recentAnalyticsEvents);
         return "admin/dashboard";
     }
 
@@ -66,10 +87,6 @@ public class AdminController {
     @GetMapping("/returns")
     public String returns(Model model) {
         List<OrderReturn> returns = gatewayClient.listReturns(null, null);
-        List<InformationPage> informationPages = gatewayClient.listInformationPages(null);
-        List<BlogPost> blogPosts = gatewayClient.listBlogPosts(null);
-        List<BlogComment> blogComments = gatewayClient.listBlogComments(null);
-        List<ContactMessage> contactMessages = gatewayClient.listContactMessages(null);
         model.addAttribute("returns", returns);
         return "admin/returns";
     }

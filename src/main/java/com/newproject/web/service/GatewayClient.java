@@ -1107,6 +1107,48 @@ public class GatewayClient {
             .block();
     }
 
+
+
+    public AnalyticsEvent trackAnalyticsEvent(AnalyticsEventRequest request) {
+        return safeCall(
+            () -> client().post()
+                .uri(baseUrl + "/api/cms/analytics/events")
+                .bodyValue(request)
+                .retrieve()
+                .bodyToMono(AnalyticsEvent.class)
+                .block(),
+            "/api/cms/analytics/events",
+            null
+        );
+    }
+
+    public AnalyticsSummary getAnalyticsSummary() {
+        return safeCall(
+            () -> client().get()
+                .uri(baseUrl + "/api/cms/analytics/summary")
+                .retrieve()
+                .bodyToMono(AnalyticsSummary.class)
+                .block(),
+            "/api/cms/analytics/summary",
+            null
+        );
+    }
+
+    public List<AnalyticsEvent> listAnalyticsEvents(Integer limit) {
+        return safeList(
+            () -> client().get()
+                .uri(uriBuilder -> uriBuilder
+                    .path(baseUrl + "/api/cms/analytics/events")
+                    .queryParamIfPresent("limit", Optional.ofNullable(limit))
+                    .build())
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<List<AnalyticsEvent>>() {})
+                .blockOptional()
+                .orElse(List.of()),
+            "/api/cms/analytics/events"
+        );
+    }
+
     public List<BlogPost> listBlogPosts(Boolean active) {
         return safeList(
             () -> client().get()

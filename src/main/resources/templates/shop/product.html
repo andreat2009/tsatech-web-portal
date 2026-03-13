@@ -5,10 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title th:text="${product.name} + ' | TSATech Store'">Product</title>
     <meta name="description" th:content="${product.description != null ? product.description : #messages.msg('shop.product.description.fallback')}" />
+    <meta name="keywords" th:content="${product.seoKeywords != null and !#strings.isEmpty(product.seoKeywords) ? product.seoKeywords : (storeSettings != null ? storeSettings.siteMetaKeywords : null)}" />
     <link rel="canonical" th:href="${product.seoPath}" />
     <link rel="stylesheet" th:href="@{/css/app.css}" />
 </head>
-<body>
+<body th:attr="data-entity-type='product',data-entity-id=${product.id}">
 <div th:replace="fragments/header :: header"></div>
 
 <main class="container">

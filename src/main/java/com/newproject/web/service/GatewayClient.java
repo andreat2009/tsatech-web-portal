@@ -539,6 +539,26 @@ public class GatewayClient {
             .block();
     }
 
+    public Order updateOrderStatus(Long orderId, String status) {
+        Order existing = getOrderSafe(orderId)
+            .orElseThrow(() -> new IllegalStateException("Order not found: " + orderId));
+
+        OrderRequest request = new OrderRequest();
+        request.setCustomerId(existing.getCustomerId());
+        request.setCurrency(existing.getCurrency());
+        request.setTotal(existing.getTotal());
+        request.setStatus(status);
+        request.setCustomerEmail(existing.getCustomerEmail());
+        request.setCustomerFirstName(existing.getCustomerFirstName());
+        request.setCustomerLastName(existing.getCustomerLastName());
+        request.setCustomerPhone(existing.getCustomerPhone());
+        request.setCustomerLocale(existing.getCustomerLocale());
+        request.setOrderComment(existing.getOrderComment());
+        request.setGuestCheckout(existing.getGuestCheckout());
+
+        return updateOrder(orderId, request);
+    }
+
     public void addOrderItem(Long orderId, OrderItemRequest request) {
         client().post()
             .uri(baseUrl + "/api/orders/{orderId}/items", orderId)

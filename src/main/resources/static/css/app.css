@@ -1554,7 +1554,20 @@ h1, h2, h3 {
 }
 
 .app-pagination-host {
-  margin-top: 14px;
+  margin-top: 18px;
+  padding-top: 8px;
+}
+
+.table-wrap .app-pagination-host {
+  margin-top: 0;
+  padding: 14px 12px 10px;
+}
+
+@media (max-width: 768px) {
+  .table-wrap .app-pagination-host {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
 }
 
 .app-pagination {

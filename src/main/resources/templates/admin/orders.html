@@ -10,6 +10,11 @@
 
 <main class="container admin">
     <h1 th:text="#{admin.orders.title}">Ordini</h1>
+
+    <p class="alert-success" th:if="${statusUpdated}" th:text="#{admin.orders.status.updated}">Stato ordine aggiornato.</p>
+    <p class="alert-error" th:if="${statusError != null and statusError == 'invalid'}" th:text="#{admin.orders.status.invalid}">Stato non valido.</p>
+    <p class="alert-error" th:if="${statusError != null and statusError == 'update'}" th:text="#{admin.orders.status.error}">Impossibile aggiornare lo stato ordine.</p>
+
     <table class="table">
         <thead>
             <tr>
@@ -20,6 +25,7 @@
                 <th th:text="#{common.date}">Data</th>
                 <th th:text="#{common.total}">Totale</th>
                 <th th:text="#{common.status}">Status</th>
+                <th th:text="#{common.actions}">Azioni</th>
             </tr>
         </thead>
         <tbody>
@@ -30,7 +36,19 @@
                 <td th:text="${order.guestCheckout != null and order.guestCheckout ? #messages.msg('admin.orders.guest') : #messages.msg('admin.orders.registered')}">Registered</td>
                 <td th:text="${order.createdAt}">-</td>
                 <td th:text="${order.total != null ? #numbers.formatDecimal(order.total, 1, 'POINT', 2, 'POINT') : '0.00'}">0.00</td>
-                <td th:text="${order.status}">NEW</td>
+                <td th:text="${order.status}">Confirmed</td>
+                <td>
+                    <form method="post" th:action="@{/admin/orders/{id}/status(id=${order.id})}" class="inline-form-action">
+                        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                        <select name="status">
+                            <option th:each="statusOption : ${orderStatusOptions}"
+                                    th:value="${statusOption}"
+                                    th:text="${statusOption}"
+                                    th:selected="${order.status == statusOption}">Confirmed</option>
+                        </select>
+                        <button class="btn btn-primary" type="submit" th:text="#{admin.orders.update.status}">Aggiorna stato</button>
+                    </form>
+                </td>
             </tr>
         </tbody>
     </table>

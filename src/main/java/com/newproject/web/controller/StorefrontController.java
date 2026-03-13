@@ -437,7 +437,7 @@ public class StorefrontController {
             orderRequest.setCustomerId(customerId);
             orderRequest.setCurrency(currency);
             orderRequest.setTotal(total);
-            orderRequest.setStatus("PENDING_PAYMENT");
+            orderRequest.setStatus("Confirmed");
             orderRequest.setCustomerEmail(customer != null ? customer.getEmail() : null);
             orderRequest.setCustomerFirstName(customer != null ? customer.getFirstName() : null);
             orderRequest.setCustomerLastName(customer != null ? customer.getLastName() : null);
@@ -487,8 +487,6 @@ public class StorefrontController {
             shipmentRequest.setStatus("CREATED");
             gatewayClient.createShipment(shipmentRequest);
 
-            orderRequest.setStatus("CONFIRMED");
-            gatewayClient.updateOrder(order.getId(), orderRequest);
 
             sendOrderConfirmationEmail(
                 order,
@@ -537,7 +535,7 @@ public class StorefrontController {
             orderRequest.setCustomerId(guestCustomer.getId());
             orderRequest.setCurrency(currency);
             orderRequest.setTotal(total);
-            orderRequest.setStatus("PENDING_PAYMENT");
+            orderRequest.setStatus("Confirmed");
             orderRequest.setCustomerEmail(normalizeGuestEmail(checkoutForm.getGuestEmail()));
             orderRequest.setCustomerFirstName(safeTrim(checkoutForm.getGuestFirstName()));
             orderRequest.setCustomerLastName(safeTrim(checkoutForm.getGuestLastName()));
@@ -585,8 +583,6 @@ public class StorefrontController {
             shipmentRequest.setStatus("CREATED");
             gatewayClient.createShipment(shipmentRequest);
 
-            orderRequest.setStatus("CONFIRMED");
-            gatewayClient.updateOrder(order.getId(), orderRequest);
 
             saveGuestOrderSummary(session, order, summary.items());
             clearGuestCart(session);

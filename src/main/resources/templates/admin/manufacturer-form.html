@@ -17,21 +17,10 @@
     <form class="form" th:action="${formAction}" method="post" th:object="${manufacturer}">
         <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 
-        <section class="translation-section">
-            <h2 th:text="#{common.multilingual.content}">Contenuti multilingua</h2>
-            <div class="translation-grid">
-                <div class="translation-card" th:each="lang : ${languageOptions}">
-                    <h3><span class="lang-flag" th:text="${lang.flag}">IT</span> <span th:text="${lang.label}">Italiano</span></h3>
-                    <div class="field">
-                        <label th:text="#{admin.manufacturer.field.name}">Nome produttore</label>
-                        <input type="text"
-                               th:name="${'translations[' + lang.code + '].name'}"
-                               th:value="${manufacturer.translations != null and manufacturer.translations[lang.code] != null ? manufacturer.translations[lang.code].name : ''}"
-                               th:required="${lang.code == 'it'}" />
-                    </div>
-                </div>
-            </div>
-        </section>
+        <div class="field">
+            <label th:text="#{admin.manufacturer.field.name}">Nome produttore</label>
+            <input type="text" th:field="*{name}" required />
+        </div>
 
         <div class="field">
             <label th:text="#{admin.manufacturer.image.url}">URL immagine/logo</label>

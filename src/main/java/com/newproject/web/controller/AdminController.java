@@ -23,11 +23,22 @@ import java.util.List;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 @RequestMapping({"/admin", "/amministrazione"})
 public class AdminController {
+    private static final List<String> ORDER_STATUS_OPTIONS = List.of(
+        "Confirmed",
+        "Being prepared",
+        "Shipped",
+        "Delivered",
+        "Returned"
+    );
+
     private final GatewayClient gatewayClient;
 
     public AdminController(GatewayClient gatewayClient) {
@@ -78,10 +89,32 @@ public class AdminController {
     }
 
     @GetMapping("/orders")
-    public String orders(Model model) {
+    public String orders(
+        @RequestParam(name = "statusUpdated", required = false) String statusUpdated,
+        @RequestParam(name = "statusError", required = false) String statusError,
+        Model model
+    ) {
         List<Order> orders = gatewayClient.listOrders(null);
         model.addAttribute("orders", orders);
+        model.addAttribute("orderStatusOptions", ORDER_STATUS_OPTIONS);
+        model.addAttribute("statusUpdated", statusUpdated != null);
+        model.addAttribute("statusError", statusError);
         return "admin/orders";
+    }
+
+    @PostMapping("/orders/{id}/status")
+    public String updateOrderStatus(@PathVariable Long id, @RequestParam String status) {
+        String normalizedStatus = normalizeOrderStatus(status);
+        if (normalizedStatus == null) {
+            return "redirect:/admin/orders?statusError=invalid";
+        }
+
+        try {
+            gatewayClient.updateOrderStatus(id, normalizedStatus);
+            return "redirect:/admin/orders?statusUpdated=1";
+        } catch (Exception ex) {
+            return "redirect:/admin/orders?statusError=update";
+        }
     }
 
     @GetMapping("/returns")
@@ -131,5 +164,21 @@ public class AdminController {
         List<ProductPrice> prices = gatewayClient.listPrices();
         model.addAttribute("prices", prices);
         return "admin/pricing";
+    }
+
+    private String normalizeOrderStatus(String status) {
+        if (status == null) {
+            return null;
+        }
+
+        String normalized = status.trim().toLowerCase();
+        return switch (normalized) {
+            case "confirmed" -> "Confirmed";
+            case "being prepared", "being_prepared", "prepared" -> "Being prepared";
+            case "shipped" -> "Shipped";
+            case "delivered" -> "Delivered";
+            case "returned" -> "Returned";
+            default -> null;
+        };
     }
 }

@@ -1,13 +1,8 @@
 package com.newproject.web.controller;
 
-import com.newproject.web.dto.LocalizedContent;
 import com.newproject.web.dto.Manufacturer;
 import com.newproject.web.dto.ManufacturerRequest;
-import com.newproject.web.i18n.LanguageSupport;
 import com.newproject.web.service.GatewayClient;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,7 +30,6 @@ public class AdminManufacturerController {
     public String createForm(Model model) {
         ManufacturerRequest form = new ManufacturerRequest();
         form.setActive(true);
-        form.setTranslations(ensureTranslations(null, null));
         model.addAttribute("manufacturer", form);
         model.addAttribute("formTitleKey", "admin.manufacturer.title.new");
         model.addAttribute("formAction", "/admin/catalogo/produttori");
@@ -60,7 +54,6 @@ public class AdminManufacturerController {
         form.setName(manufacturer.getName());
         form.setImage(manufacturer.getImage());
         form.setActive(manufacturer.getActive());
-        form.setTranslations(ensureTranslations(manufacturer.getTranslations(), manufacturer));
 
         model.addAttribute("manufacturer", form);
         model.addAttribute("formTitleKey", "admin.manufacturer.title.edit");
@@ -85,36 +78,16 @@ public class AdminManufacturerController {
         if (request.getActive() == null) {
             request.setActive(true);
         }
-        request.setTranslations(ensureTranslations(request.getTranslations(), null));
 
-        LocalizedContent italian = request.getTranslations().get(LanguageSupport.DEFAULT_LANGUAGE);
-        request.setName(firstNonBlank(
-            italian != null ? italian.getName() : null,
-            request.getName(),
-            "Manufacturer"
-        ));
-    }
+        String name = request.getName() != null ? request.getName().trim() : "";
+        request.setName(name.isBlank() ? "Manufacturer" : name);
 
-    private Map<String, LocalizedContent> ensureTranslations(Map<String, LocalizedContent> input, Manufacturer source) {
-        Map<String, LocalizedContent> normalized = new LinkedHashMap<>();
-        String fallbackName = source != null ? source.getName() : null;
-
-        for (String language : LanguageSupport.SUPPORTED_LANGUAGES) {
-            LocalizedContent src = input != null ? input.get(language) : null;
-            LocalizedContent content = new LocalizedContent();
-            content.setName(firstNonBlank(src != null ? src.getName() : null, fallbackName, ""));
-            normalized.put(language, content);
+        if (request.getImage() != null) {
+            String image = request.getImage().trim();
+            request.setImage(image.isBlank() ? null : image);
         }
 
-        return normalized;
-    }
-
-    private String firstNonBlank(String... values) {
-        for (String value : values) {
-            if (value != null && !value.isBlank()) {
-                return value;
-            }
-        }
-        return "";
+        // Manufacturer translation UI is intentionally disabled in admin.
+        request.setTranslations(null);
     }
 }

@@ -11,6 +11,9 @@
 <main class="container">
     <section class="card section-pad">
         <h1 th:text="#{admin.information.list.title}">Pagine informative</h1>
+        <div class="alert-success" th:if="${param.success}" th:text="#{common.success.saved}">Salvataggio completato.</div>
+        <div class="alert-error" th:if="${param.error != null and param.error[0] == 'forbidden'}" th:text="#{common.error.forbidden}">Permessi insufficienti per salvare.</div>
+        <div class="alert-error" th:if="${param.error != null and param.error[0] != 'forbidden'}" th:text="#{common.error.generic}">Operazione non riuscita.</div>
         <p><a class="btn btn-primary" th:href="@{/admin/information/new}" th:text="#{admin.information.new}">Nuova pagina</a></p>
         <table class="table">
             <thead><tr><th>ID</th><th th:text="#{common.title}">Titolo</th><th>Slug</th><th th:text="#{common.active}">Attiva</th><th th:text="#{common.actions}">Azioni</th></tr></thead>

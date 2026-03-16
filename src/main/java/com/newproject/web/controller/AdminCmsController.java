@@ -23,6 +23,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 @Controller
 @RequestMapping("/admin")
@@ -123,8 +124,16 @@ public class AdminCmsController {
     ) {
         normalizeInformation(form);
         applyInformationAutoTranslationsIfRequested(form, translationSourceLanguage, autoTranslate, overwriteTranslations);
-        gatewayClient.createInformationPage(form);
-        return "redirect:/admin/information";
+        try {
+            gatewayClient.createInformationPage(form);
+            return "redirect:/admin/information?success=1";
+        } catch (WebClientResponseException.Forbidden ex) {
+            logger.warn("Forbidden while creating information page: {}", ex.getMessage());
+            return "redirect:/admin/information?error=forbidden";
+        } catch (Exception ex) {
+            logger.error("Error while creating information page", ex);
+            return "redirect:/admin/information?error=save";
+        }
     }
 
     @GetMapping("/information/{id}/edit")
@@ -161,8 +170,16 @@ public class AdminCmsController {
     ) {
         normalizeInformation(form);
         applyInformationAutoTranslationsIfRequested(form, translationSourceLanguage, autoTranslate, overwriteTranslations);
-        gatewayClient.updateInformationPage(id, form);
-        return "redirect:/admin/information";
+        try {
+            gatewayClient.updateInformationPage(id, form);
+            return "redirect:/admin/information?success=1";
+        } catch (WebClientResponseException.Forbidden ex) {
+            logger.warn("Forbidden while updating information page {}: {}", id, ex.getMessage());
+            return "redirect:/admin/information?error=forbidden";
+        } catch (Exception ex) {
+            logger.error("Error while updating information page {}", id, ex);
+            return "redirect:/admin/information?error=save";
+        }
     }
 
     @PostMapping("/information/{id}/delete")

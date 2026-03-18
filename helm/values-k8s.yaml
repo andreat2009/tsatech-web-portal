@@ -1,0 +1,64 @@
+image:
+  repository: ghcr.io/andreat2009/tsatech-web-portal
+  tag: latest
+  digest: ""
+  pullPolicy: Always
+
+route:
+  enabled: false
+  host: ""
+  tls:
+    termination: passthrough
+    insecureEdgeTerminationPolicy: Redirect
+  annotations: {}
+
+ingress:
+  enabled: true
+  className: nginx
+  host: web-portal-ecommerce.apps.local
+  path: /
+  pathType: Prefix
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  tls:
+    enabled: true
+    secretName: wildcard-apps-tls
+
+env:
+  KEYCLOAK_CLIENT_ID: "web-portal"
+  GATEWAY_BASE_URL: "http://api-gateway.ecommerce.svc.cluster.local:8443"
+  APP_STORE_URL: "https://web-portal-ecommerce.apps.local"
+  KEYCLOAK_ACCOUNT_URL: "http://keycloak.platform.svc.cluster.local/realms/master/account"
+  SERVER_PORT: "8443"
+  SERVER_SSL_ENABLED: "false"
+  KEYCLOAK_ISSUER_URI: "http://keycloak.platform.svc.cluster.local/realms/master"
+
+secret:
+  name: web-portal-secret
+  create: false
+  data: {}
+
+secretEnv:
+  KEYCLOAK_CLIENT_SECRET: KEYCLOAK_CLIENT_SECRET
+
+tls:
+  enabled: false
+  secretName: wildcard-apps-tls
+
+truststore:
+  enabled: false
+  secretName: platform-truststore
+  mountPath: /etc/ssl/openshift
+  password: changeit
+
+readinessProbe:
+  scheme: HTTP
+  path: /actuator/health
+  initialDelaySeconds: 10
+  periodSeconds: 10
+
+livenessProbe:
+  scheme: HTTP
+  path: /actuator/health
+  initialDelaySeconds: 20
+  periodSeconds: 20

@@ -24,7 +24,11 @@ spring:
       client:
         provider:
           keycloak:
-            issuer-uri: ${KEYCLOAK_ISSUER_URI:https://keycloak-platform.apps-crc.testing/realms/master}
+            authorization-uri: ${KEYCLOAK_AUTHORIZATION_URI:https://keycloak-platform.apps-crc.testing/realms/master/protocol/openid-connect/auth}
+            token-uri: ${KEYCLOAK_TOKEN_URI:https://keycloak-platform.apps-crc.testing/realms/master/protocol/openid-connect/token}
+            user-info-uri: ${KEYCLOAK_USERINFO_URI:https://keycloak-platform.apps-crc.testing/realms/master/protocol/openid-connect/userinfo}
+            jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:https://keycloak-platform.apps-crc.testing/realms/master/protocol/openid-connect/certs}
+            user-name-attribute: preferred_username
         registration:
           keycloak:
             client-id: ${KEYCLOAK_CLIENT_ID:web-portal}

@@ -106,8 +106,11 @@ fi
   --set-string ingress.host="${APP_NAME}-${K8S_NAMESPACE}.${DOMAIN}" \
   --set-string env.GATEWAY_BASE_URL="http://api-gateway.${K8S_NAMESPACE}.svc.cluster.local:8443" \
   --set-string env.APP_STORE_URL="https://${APP_NAME}-${K8S_NAMESPACE}.${DOMAIN}" \
-  --set-string env.KEYCLOAK_ISSUER_URI="http://keycloak.${PLATFORM_NAMESPACE}.svc.cluster.local/realms/master" \
-  --set-string env.KEYCLOAK_ACCOUNT_URL="http://keycloak.${PLATFORM_NAMESPACE}.svc.cluster.local/realms/master/account"
+  --set-string env.KEYCLOAK_ACCOUNT_URL="https://keycloak-${PLATFORM_NAMESPACE}.${DOMAIN}/realms/master/account" \
+  --set-string env.KEYCLOAK_AUTHORIZATION_URI="https://keycloak-${PLATFORM_NAMESPACE}.${DOMAIN}/realms/master/protocol/openid-connect/auth" \
+  --set-string env.KEYCLOAK_TOKEN_URI="http://keycloak.${PLATFORM_NAMESPACE}.svc.cluster.local/realms/master/protocol/openid-connect/token" \
+  --set-string env.KEYCLOAK_JWK_SET_URI="http://keycloak.${PLATFORM_NAMESPACE}.svc.cluster.local/realms/master/protocol/openid-connect/certs" \
+  --set-string env.KEYCLOAK_USERINFO_URI="http://keycloak.${PLATFORM_NAMESPACE}.svc.cluster.local/realms/master/protocol/openid-connect/userinfo"
 '''
                 }
             }

@@ -28,10 +28,13 @@ env:
   KEYCLOAK_CLIENT_ID: "web-portal"
   GATEWAY_BASE_URL: "http://api-gateway.ecommerce.svc.cluster.local:8443"
   APP_STORE_URL: "https://web-portal-ecommerce.apps.local"
-  KEYCLOAK_ACCOUNT_URL: "http://keycloak.platform.svc.cluster.local/realms/master/account"
+  KEYCLOAK_ACCOUNT_URL: "https://keycloak-platform.apps.local/realms/master/account"
+  KEYCLOAK_AUTHORIZATION_URI: "https://keycloak-platform.apps.local/realms/master/protocol/openid-connect/auth"
+  KEYCLOAK_TOKEN_URI: "http://keycloak.platform.svc.cluster.local/realms/master/protocol/openid-connect/token"
+  KEYCLOAK_JWK_SET_URI: "http://keycloak.platform.svc.cluster.local/realms/master/protocol/openid-connect/certs"
+  KEYCLOAK_USERINFO_URI: "http://keycloak.platform.svc.cluster.local/realms/master/protocol/openid-connect/userinfo"
   SERVER_PORT: "8443"
   SERVER_SSL_ENABLED: "false"
-  KEYCLOAK_ISSUER_URI: "http://keycloak.platform.svc.cluster.local/realms/master"
 
 secret:
   name: web-portal-secret

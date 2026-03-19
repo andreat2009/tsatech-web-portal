@@ -26,6 +26,7 @@ ingress:
 
 env:
   KEYCLOAK_CLIENT_ID: "web-portal"
+  KEYCLOAK_ISSUER_URI: "http://keycloak.platform.svc.cluster.local/realms/master"
   GATEWAY_BASE_URL: "http://api-gateway.ecommerce.svc.cluster.local:8443"
   APP_STORE_URL: "https://web-portal-ecommerce.apps.local"
   KEYCLOAK_ACCOUNT_URL: "https://keycloak-platform.apps.local/realms/master/account"

@@ -24,11 +24,11 @@ spring:
       client:
         provider:
           keycloak:
-            issuer-uri: ${KEYCLOAK_ISSUER_URI:https://keycloak-platform.apps-crc.testing/realms/master}
-            authorization-uri: ${KEYCLOAK_AUTHORIZATION_URI:https://keycloak-platform.apps-crc.testing/realms/master/protocol/openid-connect/auth}
-            token-uri: ${KEYCLOAK_TOKEN_URI:https://keycloak-platform.apps-crc.testing/realms/master/protocol/openid-connect/token}
-            user-info-uri: ${KEYCLOAK_USERINFO_URI:https://keycloak-platform.apps-crc.testing/realms/master/protocol/openid-connect/userinfo}
-            jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:https://keycloak-platform.apps-crc.testing/realms/master/protocol/openid-connect/certs}
+            issuer-uri: ${KEYCLOAK_ISSUER_URI:https://keycloak-platform.${APP_BASE_DOMAIN:apps.example.invalid}/realms/master}
+            authorization-uri: ${KEYCLOAK_AUTHORIZATION_URI:https://keycloak-platform.${APP_BASE_DOMAIN:apps.example.invalid}/realms/master/protocol/openid-connect/auth}
+            token-uri: ${KEYCLOAK_TOKEN_URI:http://keycloak.${PLATFORM_NAMESPACE:platform}.svc.cluster.local/realms/master/protocol/openid-connect/token}
+            user-info-uri: ${KEYCLOAK_USERINFO_URI:http://keycloak.${PLATFORM_NAMESPACE:platform}.svc.cluster.local/realms/master/protocol/openid-connect/userinfo}
+            jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://keycloak.${PLATFORM_NAMESPACE:platform}.svc.cluster.local/realms/master/protocol/openid-connect/certs}
             user-name-attribute: preferred_username
         registration:
           keycloak:
@@ -39,11 +39,11 @@ spring:
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
 
 app:
-  gateway-base-url: ${GATEWAY_BASE_URL:https://api-gateway-ecommerce.apps-crc.testing}
+  gateway-base-url: ${GATEWAY_BASE_URL:http://api-gateway.${APP_NAMESPACE:ecommerce}.svc.cluster.local:8443}
   currency: ${APP_CURRENCY:EUR}
-  store-url: ${APP_STORE_URL:https://web-portal-ecommerce.apps-crc.testing}
-  keycloak-account-url: ${KEYCLOAK_ACCOUNT_URL:https://keycloak-platform.apps-crc.testing/realms/master/account}
-  keycloak-admin-base-url: ${KEYCLOAK_ADMIN_BASE_URL:}
+  store-url: ${APP_STORE_URL:https://web-portal-${APP_NAMESPACE:ecommerce}.${APP_BASE_DOMAIN:apps.example.invalid}}
+  keycloak-account-url: ${KEYCLOAK_ACCOUNT_URL:https://keycloak-platform.${APP_BASE_DOMAIN:apps.example.invalid}/realms/master/account}
+  keycloak-admin-base-url: ${KEYCLOAK_ADMIN_BASE_URL:http://keycloak.${PLATFORM_NAMESPACE:platform}.svc.cluster.local}
   keycloak-admin-client-id: ${KEYCLOAK_ADMIN_CLIENT_ID:admin-cli}
   keycloak-admin-username: ${KEYCLOAK_ADMIN_USER:admin}
   keycloak-admin-password: ${KEYCLOAK_ADMIN_PASS:adminPass}

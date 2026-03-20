@@ -17,7 +17,6 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
-import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
 import org.springframework.security.oauth2.client.oidc.web.logout.OidcClientInitiatedLogoutSuccessHandler;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
@@ -87,12 +86,15 @@ public class SecurityConfig {
 
     @Bean
     public OAuth2UserService<OidcUserRequest, OidcUser> oidcUserService() {
-        OidcUserService delegate = new OidcUserService();
         return userRequest -> {
-            OidcUser oidcUser = delegate.loadUser(userRequest);
-            Set<GrantedAuthority> mapped = new HashSet<>(oidcUser.getAuthorities());
+            Set<GrantedAuthority> mapped = new HashSet<>();
+            OidcUser oidcUser = new DefaultOidcUser(
+                mapped,
+                userRequest.getIdToken(),
+                "preferred_username"
+            );
 
-            // Primary source: ID token/UserInfo claims.
+            // Use only already-validated token claims to avoid an extra UserInfo HTTP call.
             extractRoles(oidcUser.getClaims(), mapped);
 
             // Fallback source: access token payload (Keycloak often stores roles here).
@@ -100,7 +102,7 @@ public class SecurityConfig {
             extractRoles(accessClaims, mapped);
             ensureUserRole(mapped);
 
-            return new DefaultOidcUser(mapped, oidcUser.getIdToken(), oidcUser.getUserInfo());
+            return new DefaultOidcUser(mapped, userRequest.getIdToken(), "preferred_username");
         };
     }
 

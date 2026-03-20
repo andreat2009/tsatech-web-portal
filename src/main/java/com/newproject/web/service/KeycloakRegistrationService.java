@@ -35,6 +35,7 @@ public class KeycloakRegistrationService {
     public KeycloakRegistrationService(
         @Qualifier("defaultWebClient") WebClient webClient,
         @Value("${spring.security.oauth2.client.provider.keycloak.issuer-uri}") String issuerUri,
+        @Value("${app.keycloak-admin-base-url:}") String adminBaseUrl,
         @Value("${app.keycloak-admin-client-id:admin-cli}") String adminClientId,
         @Value("${app.keycloak-admin-username:admin}") String adminUsername,
         @Value("${app.keycloak-admin-password:adminPass}") String adminPassword,
@@ -52,12 +53,13 @@ public class KeycloakRegistrationService {
             throw new IllegalArgumentException("Invalid Keycloak issuer URI: " + issuerUri);
         }
 
-        String base = normalizedIssuer.substring(0, markerIdx);
         String realm = normalizedIssuer.substring(markerIdx + "/realms/".length());
         int slash = realm.indexOf('/');
         if (slash >= 0) {
             realm = realm.substring(0, slash);
         }
+
+        String base = isBlank(adminBaseUrl) ? normalizedIssuer.substring(0, markerIdx) : normalize(adminBaseUrl);
 
         this.tokenEndpoint = base + "/realms/" + realm + "/protocol/openid-connect/token";
         this.adminRealmEndpoint = base + "/admin/realms/" + realm;

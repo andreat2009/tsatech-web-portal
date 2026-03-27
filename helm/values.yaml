@@ -10,7 +10,7 @@ service:
 
 route:
   enabled: true
-  host: "web-portal-ecommerce.apps-crc.testing"
+  host: "web-portal-ecommerce.apps.example.invalid"
   tls:
     termination: passthrough
     insecureEdgeTerminationPolicy: Redirect
@@ -18,10 +18,10 @@ route:
 
 env:
   KEYCLOAK_CLIENT_ID: "web-portal"
-  GATEWAY_BASE_URL: "https://api-gateway-ecommerce.apps-crc.testing"
+  GATEWAY_BASE_URL: "http://api-gateway.ecommerce.svc.cluster.local:8443"
   SERVER_PORT: "8443"
   SERVER_SSL_ENABLED: "true"
-  KEYCLOAK_ISSUER_URI: "https://keycloak-platform.apps-crc.testing/realms/master"
+  KEYCLOAK_ISSUER_URI: "https://keycloak-platform.apps.example.invalid/realms/master"
 
 secret:
   name: "web-portal-secret"

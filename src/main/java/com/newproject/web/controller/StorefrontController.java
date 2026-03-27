@@ -3,6 +3,7 @@ package com.newproject.web.controller;
 import com.newproject.web.dto.*;
 import com.newproject.web.service.CustomerResolver;
 import com.newproject.web.service.GatewayClient;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -28,6 +29,8 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 @Controller
 public class StorefrontController {
@@ -54,7 +57,7 @@ public class StorefrontController {
         GatewayClient gatewayClient,
         CustomerResolver customerResolver,
         @Value("${app.currency}") String currency,
-        @Value("${app.store-url:https://web-portal-ecommerce.apps-crc.testing}") String storeUrl,
+        @Value("${app.store-url:}") String storeUrl,
         MessageSource messageSource
     ) {
         this.gatewayClient = gatewayClient;
@@ -62,6 +65,34 @@ public class StorefrontController {
         this.currency = currency;
         this.storeUrl = storeUrl;
         this.messageSource = messageSource;
+    }
+
+    private String resolveStoreUrl() {
+        if (storeUrl != null && !storeUrl.isBlank()) {
+            return storeUrl;
+        }
+        var attributes = RequestContextHolder.getRequestAttributes();
+        if (attributes instanceof ServletRequestAttributes servletAttributes) {
+            HttpServletRequest request = servletAttributes.getRequest();
+            String scheme = request.getHeader("X-Forwarded-Proto");
+            if (scheme == null || scheme.isBlank()) {
+                scheme = request.getScheme();
+            }
+            String host = request.getHeader("X-Forwarded-Host");
+            if (host == null || host.isBlank()) {
+                host = request.getHeader("Host");
+            }
+            if (host == null || host.isBlank()) {
+                host = request.getServerName();
+                int port = request.getServerPort();
+                boolean defaultPort = ("http".equalsIgnoreCase(scheme) && port == 80) || ("https".equalsIgnoreCase(scheme) && port == 443);
+                if (port > 0 && !defaultPort) {
+                    host = host + ":" + port;
+                }
+            }
+            return scheme + "://" + host;
+        }
+        return "";
     }
 
     @GetMapping({"/", "/shop", "/catalogo"})
@@ -677,7 +708,7 @@ public class StorefrontController {
         request.setLocale(locale != null ? locale : LocaleContextHolder.getLocale().getLanguage());
         request.setCurrency(order.getCurrency() != null ? order.getCurrency() : currency);
         request.setTotal(order.getTotal());
-        request.setStoreUrl(storeUrl);
+        request.setStoreUrl(resolveStoreUrl());
         request.setItems(items);
 
         boolean sent = gatewayClient.sendOrderConfirmationEmail(request);

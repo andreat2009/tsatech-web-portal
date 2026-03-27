@@ -1,10 +1,17 @@
 server:
   port: ${SERVER_PORT:8080}
+  forward-headers-strategy: framework
+  servlet:
+    session:
+      cookie:
+        http-only: true
+        secure: true
+        same-site: lax
+      tracking-modes: cookie
   ssl:
     enabled: ${SERVER_SSL_ENABLED:false}
     certificate: ${SERVER_SSL_CERT:/etc/tls/tls.crt}
     certificate-private-key: ${SERVER_SSL_KEY:/etc/tls/tls.key}
-  forward-headers-strategy: framework
 
 spring:
   servlet:
@@ -33,7 +40,7 @@ spring:
         registration:
           keycloak:
             client-id: ${KEYCLOAK_CLIENT_ID:web-portal}
-            client-secret: ${KEYCLOAK_CLIENT_SECRET:changeme}
+            client-secret: ${KEYCLOAK_CLIENT_SECRET:}
             scope: openid,profile,email
             authorization-grant-type: authorization_code
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
@@ -46,7 +53,7 @@ app:
   keycloak-admin-base-url: ${KEYCLOAK_ADMIN_BASE_URL:http://keycloak.${PLATFORM_NAMESPACE:platform}.svc.cluster.local}
   keycloak-admin-client-id: ${KEYCLOAK_ADMIN_CLIENT_ID:admin-cli}
   keycloak-admin-username: ${KEYCLOAK_ADMIN_USER:admin}
-  keycloak-admin-password: ${KEYCLOAK_ADMIN_PASS:adminPass}
+  keycloak-admin-password: ${KEYCLOAK_ADMIN_PASS:}
   keycloak-registration-role: ${KEYCLOAK_REGISTRATION_ROLE:USER}
 
 management:

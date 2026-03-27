@@ -1609,3 +1609,23 @@ h1, h2, h3 {
   color: var(--oc-muted);
   font-size: 13px;
 }
+
+.inline-link-form {
+  display: inline;
+  margin: 0;
+}
+
+.inline-link-button {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.inline-link-button:hover,
+.inline-link-button:focus-visible {
+  text-decoration: underline;
+}

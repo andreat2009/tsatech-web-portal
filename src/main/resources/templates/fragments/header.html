@@ -22,7 +22,13 @@
                 <li sec:authorize="!isAuthenticated()"><a th:href="@{/account/register}" th:text="#{header.register}">Register</a></li>
                 <li sec:authorize="!isAuthenticated()"><a th:href="@{/oauth2/authorization/keycloak}" th:text="#{header.login}">Login</a></li>
                 <li sec:authorize="isAuthenticated()" class="user-pill" th:text="${#authentication.name}">user</li>
-                <li sec:authorize="isAuthenticated()"><a th:href="@{/logout}" th:text="#{header.logout}">Logout</a></li>
+                                <li sec:authorize="isAuthenticated()" class="user-pill" th:text="${#authentication.name}">user</li>
+                <li sec:authorize="isAuthenticated()">
+                    <form class="inline-link-form" method="post" th:action="@{/logout}">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                        <button type="submit" class="inline-link-button" th:text="#{header.logout}">Logout</button>
+                    </form>
+                </li>
             </ul>
         </div>
     </div>

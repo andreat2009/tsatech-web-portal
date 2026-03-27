@@ -13,6 +13,10 @@
     return null;
   }
 
+  function getCsrfToken() {
+    return getCookie('XSRF-TOKEN');
+  }
+
   function setCookie(name, value, maxAgeSeconds) {
     document.cookie = `${name}=${encodeURIComponent(value)}; Path=/; Max-Age=${maxAgeSeconds}; SameSite=Lax`;
   }
@@ -41,10 +45,16 @@
       return;
     }
 
+    const csrfToken = getCsrfToken();
+    const headers = { 'Content-Type': 'application/json' };
+    if (csrfToken) {
+      headers['X-XSRF-TOKEN'] = csrfToken;
+    }
+
     const { entityType, entityId } = parseEntity();
     fetch('/analytics/track', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({
         visitorId: ensureVisitorId(),
         eventType: 'page_view',

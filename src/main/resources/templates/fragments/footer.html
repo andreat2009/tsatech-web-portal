@@ -26,7 +26,12 @@
                     <li><a th:href="@{/account/register}" sec:authorize="!isAuthenticated()" th:text="#{header.register}">Register</a></li>
                     <li><a th:href="@{/oauth2/authorization/keycloak}" sec:authorize="!isAuthenticated()" th:text="#{header.login}">Login</a></li>
                     <li><a th:href="@{/account}" sec:authorize="isAuthenticated()" th:text="#{footer.account.area}">Area account</a></li>
-                    <li><a th:href="@{/logout}" sec:authorize="isAuthenticated()" th:text="#{header.logout}">Logout</a></li>
+                                        <li sec:authorize="isAuthenticated()">
+                        <form class="inline-link-form" method="post" th:action="@{/logout}">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                            <button type="submit" class="inline-link-button" th:text="#{header.logout}">Logout</button>
+                        </form>
+                    </li>
                     <li><a th:href="@{/admin}" sec:authorize="hasRole('ADMIN')" th:text="#{footer.admin}">Amministrazione</a></li>
                 </ul>
             </div>

@@ -29,6 +29,12 @@ ingress:
     enabled: true
     secretName: wildcard-apps-tls
 
+networkPolicy:
+  enabled: true
+  allowSameNamespace: true
+  allowIngressController: true
+  ingressControllerNamespace: ingress-nginx
+
 env:
   KEYCLOAK_CLIENT_ID: "web-portal"
   KEYCLOAK_ISSUER_URI: '{{ printf "https://keycloak-%s.%s/realms/master" .Values.global.platformNamespace .Values.global.domain }}'

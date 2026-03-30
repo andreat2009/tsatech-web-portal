@@ -17,13 +17,10 @@ import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
-import org.springframework.security.oauth2.client.web.OAuth2AuthorizedClientRepository;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -33,18 +30,18 @@ public class GatewayClient {
     private static final Logger logger = LoggerFactory.getLogger(GatewayClient.class);
 
     private final WebClient defaultWebClient;
-    private final OAuth2AuthorizedClientRepository authorizedClientRepository;
+    private final WebClient authenticatedWebClient;
     private final String baseUrl;
     private final String gatewayPublicBaseUrl;
 
     public GatewayClient(
         @Qualifier("defaultWebClient") WebClient defaultWebClient,
-        OAuth2AuthorizedClientRepository authorizedClientRepository,
+        @Qualifier("oauth2WebClient") WebClient oauth2WebClient,
         @Value("${app.gateway-base-url}") String baseUrl
     ) {
         String normalizedBaseUrl = normalizeBaseUrl(baseUrl);
         this.defaultWebClient = defaultWebClient.mutate().baseUrl(normalizedBaseUrl).build();
-        this.authorizedClientRepository = authorizedClientRepository;
+        this.authenticatedWebClient = oauth2WebClient.mutate().baseUrl(normalizedBaseUrl).build();
         this.baseUrl = "";
         this.gatewayPublicBaseUrl = normalizedBaseUrl;
     }
@@ -62,21 +59,12 @@ public class GatewayClient {
 
     private WebClient client() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth instanceof OAuth2AuthenticationToken oauthToken) {
-            ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-            if (requestAttributes != null) {
-                OAuth2AuthorizedClient authorizedClient = authorizedClientRepository.loadAuthorizedClient(
-                    oauthToken.getAuthorizedClientRegistrationId(),
-                    auth,
-                    requestAttributes.getRequest()
-                );
-                if (authorizedClient != null && authorizedClient.getAccessToken() != null) {
-                    return defaultWebClient.mutate()
-                        .defaultHeaders(headers -> headers.setBearerAuth(authorizedClient.getAccessToken().getTokenValue()))
-                        .build();
-                }
+        if (auth instanceof OAuth2AuthenticationToken) {
+            if (RequestContextHolder.getRequestAttributes() == null) {
+                logger.warn("Missing request context for authenticated gateway request; falling back to default client");
+                return defaultWebClient;
             }
-            logger.warn("No OAuth2 access token available for authenticated gateway request");
+            return authenticatedWebClient;
         }
         return defaultWebClient;
     }

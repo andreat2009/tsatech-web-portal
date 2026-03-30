@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title th:text="#{account.login.title}">Accedi a TSA Technology</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+</head>
+<body>
+<div th:replace="fragments/header :: header"></div>
+
+<main class="container">
+    <div class="breadcrumbs">
+        <a th:href="@{/}" th:text="#{menu.home}">Home</a>
+        <span>/</span>
+        <span th:text="#{account.login.breadcrumb}">Login</span>
+    </div>
+
+    <section class="login-shell">
+        <div class="login-brand-panel">
+            <img class="login-brand-logo" th:src="@{/images/tsa-tech-logo.png}" alt="TSA Technology" />
+            <p class="login-brand-kicker" th:text="#{account.login.kicker}">Portale TSA Technology</p>
+            <h1 th:text="#{account.login.heading}">Accedi al tuo ecosistema in modo sicuro</h1>
+            <p class="muted login-brand-copy" th:text="#{account.login.description}">Usa l'identita centralizzata TSA per entrare nel portale, nell'area account e negli strumenti amministrativi autorizzati.</p>
+            <ul class="login-benefits">
+                <li th:text="#{account.login.benefit.sso}">Single sign-on per portal, backoffice e servizi protetti.</li>
+                <li th:text="#{account.login.benefit.secure}">Credenziali e sessioni gestite da Keycloak, non dal portale.</li>
+                <li th:text="#{account.login.benefit.sameflow}">Stesso flusso coerente tra locale, server Linux e cloud AWS.</li>
+            </ul>
+        </div>
+
+        <div class="login-panel card-lite">
+            <span class="login-panel-eyebrow" th:text="#{account.login.identity.title}">TSA Identity</span>
+            <h2 th:text="#{account.login.identity.heading}">Continua con il tuo account aziendale</h2>
+            <p class="muted" th:text="#{account.login.identity.text}">L'accesso avviene tramite il provider di identita TSA basato su Keycloak, gia integrato con il portale.</p>
+            <div class="login-actions">
+                <a class="btn btn-primary login-continue" th:href="@{/oauth2/authorization/keycloak}" th:text="#{account.login.continue}">Continua con TSA Identity</a>
+                <a class="btn" th:href="@{/account/register}" th:text="#{account.login.register}">Crea un account</a>
+            </div>
+            <p class="login-security-note" th:text="#{account.login.security.note}">Le credenziali restano gestite dall'identity provider: il portale non memorizza username o password.</p>
+        </div>
+    </section>
+</main>
+
+<div th:replace="fragments/footer :: footer"></div>
+</body>
+</html>

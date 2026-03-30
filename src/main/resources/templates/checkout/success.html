@@ -88,7 +88,7 @@
     <div class="actions-row">
         <a class="btn" th:href="@{/account/ordini}" th:if="${!guestCheckout}" th:text="#{checkout.success.goto.orders}">Go to orders</a>
         <a class="btn btn-primary" th:href="@{/catalogo}" th:text="#{cart.continue}">Continue shopping</a>
-        <a class="btn" th:href="@{/oauth2/authorization/keycloak}" th:if="${guestCheckout}" th:text="#{checkout.success.create.account}">Create account / Login</a>
+        <a class="btn" th:href="@{/account/login}" th:if="${guestCheckout}" th:text="#{checkout.success.create.account}">Create account / Login</a>
     </div>
 </main>
 

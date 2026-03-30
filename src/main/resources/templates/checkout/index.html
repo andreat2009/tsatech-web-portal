@@ -23,7 +23,7 @@
 
     <p class="muted" th:if="${guestCheckout}">
         <span th:text="#{checkout.guest.notice}">Guest checkout is active.</span>
-        <a th:href="@{/oauth2/authorization/keycloak}" th:text="#{header.login}">Login</a>
+        <a th:href="@{/account/login}" th:text="#{header.login}">Login</a>
     </p>
 
     <div class="alert-error" th:if="${checkoutError != null}" th:text="${checkoutError}">Checkout failed.</div>

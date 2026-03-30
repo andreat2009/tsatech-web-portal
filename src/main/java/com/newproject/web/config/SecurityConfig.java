@@ -75,7 +75,10 @@ public class SecurityConfig {
                 .requestMatchers("/account/**").authenticated()
                 .anyRequest().permitAll()
             )
-            .oauth2Login(oauth2 -> oauth2.userInfoEndpoint(userInfo -> userInfo.oidcUserService(oidcUserService())))
+            .oauth2Login(oauth2 -> oauth2
+                .loginPage("/account/login")
+                .userInfoEndpoint(userInfo -> userInfo.oidcUserService(oidcUserService()))
+            )
             .oauth2Client(Customizer.withDefaults())
             .logout(logout -> logout
                 .invalidateHttpSession(true)

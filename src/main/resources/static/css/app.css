@@ -1629,3 +1629,103 @@ h1, h2, h3 {
 .inline-link-button:focus-visible {
   text-decoration: underline;
 }
+
+/* TSA login experience */
+.login-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 430px);
+  gap: 24px;
+  margin: 24px 0 32px;
+}
+
+.login-brand-panel,
+.login-panel {
+  border-radius: 24px;
+  border: 1px solid rgba(34, 154, 200, 0.14);
+  box-shadow: 0 22px 60px rgba(18, 33, 48, 0.08);
+}
+
+.login-brand-panel {
+  padding: 34px;
+  background:
+    radial-gradient(circle at top left, rgba(34, 154, 200, 0.14), transparent 32%),
+    linear-gradient(145deg, #f5fbff 0%, #eff5fb 48%, #f8fbff 100%);
+}
+
+.login-brand-logo {
+  width: min(100%, 360px);
+  display: block;
+  margin-bottom: 18px;
+}
+
+.login-brand-kicker,
+.login-panel-eyebrow {
+  margin: 0 0 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 12px;
+  font-weight: 700;
+  color: #1f90bb;
+}
+
+.login-brand-copy {
+  max-width: 54ch;
+}
+
+.login-benefits {
+  margin: 24px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 12px;
+}
+
+.login-benefits li {
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(34, 154, 200, 0.12);
+}
+
+.login-panel {
+  padding: 30px;
+  background: rgba(255, 255, 255, 0.95);
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.login-panel h2 {
+  margin-top: 0;
+}
+
+.login-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 24px 0 16px;
+}
+
+.login-continue {
+  min-width: 220px;
+  justify-content: center;
+}
+
+.login-security-note {
+  margin: 0;
+  color: var(--oc-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+@media (max-width: 960px) {
+  .login-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .login-brand-panel,
+  .login-panel {
+    padding: 22px;
+  }
+}

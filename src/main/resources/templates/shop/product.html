@@ -70,7 +70,7 @@
                     <button class="btn" type="submit" th:text="#{shop.product.compare}">Compare product</button>
                 </form>
                 <a class="btn" th:href="@{/carrello}" th:text="#{shop.product.goto.cart}">Go to cart</a>
-                <a class="btn" th:href="@{/oauth2/authorization/keycloak}" sec:authorize="!isAuthenticated()" th:text="#{shop.product.login.optional}">Login (optional)</a>
+                <a class="btn" th:href="@{/account/login}" sec:authorize="!isAuthenticated()" th:text="#{shop.product.login.optional}">Login (optional)</a>
             </div>
         </div>
     </div>

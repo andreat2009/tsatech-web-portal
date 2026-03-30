@@ -42,8 +42,12 @@ public class AccountExtrasController {
 
 
     @GetMapping("/login")
-    public String login() {
-        return "redirect:/oauth2/authorization/keycloak";
+    public String login(Model model, Authentication authentication) {
+        if (authentication != null && authentication.isAuthenticated() && !(authentication instanceof AnonymousAuthenticationToken)) {
+            return "redirect:/account";
+        }
+        model.addAttribute("loginReturnTarget", "/catalogo");
+        return "account/login";
     }
 
     @GetMapping("/register")
@@ -142,7 +146,7 @@ public class AccountExtrasController {
     public String accountHome(Model model, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
-            return "redirect:/oauth2/authorization/keycloak";
+            return "redirect:/account/login";
         }
 
         Optional<Customer> customerOpt = gatewayClient.getCustomerSafe(customerId);
@@ -166,7 +170,7 @@ public class AccountExtrasController {
     public String editProfile(Model model, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
-            return "redirect:/oauth2/authorization/keycloak";
+            return "redirect:/account/login";
         }
 
         Customer customer = gatewayClient.getCustomerSafe(customerId).orElse(null);
@@ -190,7 +194,7 @@ public class AccountExtrasController {
     public String saveProfile(@ModelAttribute("profileForm") CustomerRequest form, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
-            return "redirect:/oauth2/authorization/keycloak";
+            return "redirect:/account/login";
         }
 
         Customer current = gatewayClient.getCustomerSafe(customerId).orElse(null);
@@ -220,7 +224,7 @@ public class AccountExtrasController {
     public String updateNewsletter(@RequestParam(defaultValue = "false") boolean newsletter, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
-            return "redirect:/oauth2/authorization/keycloak";
+            return "redirect:/account/login";
         }
 
         gatewayClient.updateNewsletterPreference(customerId, newsletter);
@@ -247,7 +251,7 @@ public class AccountExtrasController {
     public String paymentMethod(Model model, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
-            return "redirect:/oauth2/authorization/keycloak";
+            return "redirect:/account/login";
         }
         model.addAttribute("addresses", gatewayClient.listCustomerAddresses(customerId));
         return "account/payment-method";
@@ -257,7 +261,7 @@ public class AccountExtrasController {
     public String reward(Model model, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
-            return "redirect:/oauth2/authorization/keycloak";
+            return "redirect:/account/login";
         }
 
         model.addAttribute("rewardSummary", gatewayClient.getRewardSummary(customerId));
@@ -269,7 +273,7 @@ public class AccountExtrasController {
     public String transactions(Model model, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
-            return "redirect:/oauth2/authorization/keycloak";
+            return "redirect:/account/login";
         }
 
         model.addAttribute("transactions", gatewayClient.listStoreTransactions(customerId));
@@ -280,7 +284,7 @@ public class AccountExtrasController {
     public String subscriptions(Model model, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
-            return "redirect:/oauth2/authorization/keycloak";
+            return "redirect:/account/login";
         }
 
         CustomerSubscriptionRequest form = new CustomerSubscriptionRequest();
@@ -298,7 +302,7 @@ public class AccountExtrasController {
     public String addSubscription(@ModelAttribute CustomerSubscriptionRequest form, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
-            return "redirect:/oauth2/authorization/keycloak";
+            return "redirect:/account/login";
         }
 
         if (form.getPlanName() == null || form.getPlanName().isBlank()) {
@@ -327,7 +331,7 @@ public class AccountExtrasController {
     ) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
-            return "redirect:/oauth2/authorization/keycloak";
+            return "redirect:/account/login";
         }
 
         CustomerSubscription existing = gatewayClient.listSubscriptions(customerId).stream()
@@ -354,7 +358,7 @@ public class AccountExtrasController {
     public String downloads(Model model, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
-            return "redirect:/oauth2/authorization/keycloak";
+            return "redirect:/account/login";
         }
 
         model.addAttribute("downloads", gatewayClient.listDownloads(customerId));

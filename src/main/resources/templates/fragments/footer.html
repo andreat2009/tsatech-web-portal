@@ -24,7 +24,7 @@
                 <h5 th:text="#{menu.account}">Account</h5>
                 <ul>
                     <li><a th:href="@{/account/register}" sec:authorize="!isAuthenticated()" th:text="#{header.register}">Register</a></li>
-                    <li><a th:href="@{/oauth2/authorization/keycloak}" sec:authorize="!isAuthenticated()" th:text="#{header.login}">Login</a></li>
+                    <li><a th:href="@{/account/login}" sec:authorize="!isAuthenticated()" th:text="#{header.login}">Login</a></li>
                     <li><a th:href="@{/account}" sec:authorize="isAuthenticated()" th:text="#{footer.account.area}">Area account</a></li>
                                         <li sec:authorize="isAuthenticated()">
                         <form class="inline-link-form" method="post" th:action="@{/logout}">

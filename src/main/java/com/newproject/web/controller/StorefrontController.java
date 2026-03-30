@@ -196,7 +196,7 @@ public class StorefrontController {
     })
     public String addReview(@PathVariable Long id, @PathVariable(required = false) String slug, @ModelAttribute ProductReviewRequest reviewForm, Authentication authentication) {
         if (!isAuthenticated(authentication)) {
-            return "redirect:/oauth2/authorization/keycloak";
+            return "redirect:/account/login";
         }
 
         if (reviewForm.getRating() == null || reviewForm.getRating() < 1 || reviewForm.getRating() > 5) {
@@ -765,7 +765,7 @@ public class StorefrontController {
     public String accountOrders(Model model, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
-            return "redirect:/oauth2/authorization/keycloak";
+            return "redirect:/account/login";
         }
         List<Order> orders = gatewayClient.listOrders(customerId);
         orders.sort(Comparator.comparing(Order::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())));
@@ -777,7 +777,7 @@ public class StorefrontController {
     public String accountOrderDetail(@PathVariable Long id, Model model, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
-            return "redirect:/oauth2/authorization/keycloak";
+            return "redirect:/account/login";
         }
 
         Optional<Order> orderOpt = gatewayClient.getOrderSafe(id)
@@ -802,7 +802,7 @@ public class StorefrontController {
     public String accountAddresses(Model model, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
-            return "redirect:/oauth2/authorization/keycloak";
+            return "redirect:/account/login";
         }
 
         List<Address> addresses = gatewayClient.listCustomerAddresses(customerId);
@@ -817,7 +817,7 @@ public class StorefrontController {
     public String createAddress(@ModelAttribute AddressRequest addressForm, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
-            return "redirect:/oauth2/authorization/keycloak";
+            return "redirect:/account/login";
         }
 
         if (addressForm.getLine1() == null || addressForm.getLine1().isBlank()
@@ -839,7 +839,7 @@ public class StorefrontController {
     public String accountReturns(Model model, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
-            return "redirect:/oauth2/authorization/keycloak";
+            return "redirect:/account/login";
         }
 
         model.addAttribute("returns", gatewayClient.listReturns(customerId, null));
@@ -852,7 +852,7 @@ public class StorefrontController {
     public String createReturn(@ModelAttribute OrderReturnRequest returnForm, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
-            return "redirect:/oauth2/authorization/keycloak";
+            return "redirect:/account/login";
         }
 
         if (returnForm.getOrderId() == null || returnForm.getReason() == null || returnForm.getReason().isBlank()) {
@@ -868,7 +868,7 @@ public class StorefrontController {
     public String wishlist(Model model, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
-            return "redirect:/oauth2/authorization/keycloak";
+            return "redirect:/account/login";
         }
 
         List<WishlistEntry> items = buildWishlist(customerId);
@@ -880,7 +880,7 @@ public class StorefrontController {
     public String addWishlist(@RequestParam Long productId, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
-            return "redirect:/oauth2/authorization/keycloak";
+            return "redirect:/account/login";
         }
 
         gatewayClient.addWishlistItem(customerId, productId);
@@ -891,7 +891,7 @@ public class StorefrontController {
     public String removeWishlist(@PathVariable Long productId, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
-            return "redirect:/oauth2/authorization/keycloak";
+            return "redirect:/account/login";
         }
 
         gatewayClient.removeWishlistItem(customerId, productId);

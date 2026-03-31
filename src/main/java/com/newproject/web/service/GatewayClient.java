@@ -3,11 +3,11 @@ package com.newproject.web.service;
 import com.newproject.web.dto.*;
 import com.newproject.web.i18n.LanguageSupport;
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.MultipartBodyBuilder;
@@ -18,13 +18,9 @@ import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
-import org.springframework.security.oauth2.client.web.OAuth2AuthorizedClientRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -34,18 +30,18 @@ public class GatewayClient {
     private static final Logger logger = LoggerFactory.getLogger(GatewayClient.class);
 
     private final WebClient defaultWebClient;
-    private final OAuth2AuthorizedClientRepository authorizedClientRepository;
+    private final WebClient oauth2WebClient;
     private final String baseUrl;
     private final String gatewayPublicBaseUrl;
 
     public GatewayClient(
         @Qualifier("defaultWebClient") WebClient defaultWebClient,
-        OAuth2AuthorizedClientRepository authorizedClientRepository,
+        @Qualifier("oauth2WebClient") WebClient oauth2WebClient,
         @Value("${app.gateway-base-url}") String baseUrl
     ) {
         String normalizedBaseUrl = normalizeBaseUrl(baseUrl);
         this.defaultWebClient = defaultWebClient.mutate().baseUrl(normalizedBaseUrl).build();
-        this.authorizedClientRepository = authorizedClientRepository;
+        this.oauth2WebClient = oauth2WebClient.mutate().baseUrl(normalizedBaseUrl).build();
         this.baseUrl = "";
         this.gatewayPublicBaseUrl = normalizedBaseUrl;
     }
@@ -63,41 +59,10 @@ public class GatewayClient {
 
     private WebClient client() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth instanceof OAuth2AuthenticationToken oauth2AuthenticationToken) {
-            Optional<String> token = currentAccessToken(oauth2AuthenticationToken);
-            if (token.isPresent()) {
-                return defaultWebClient.mutate()
-                    .defaultHeaders(headers -> headers.setBearerAuth(token.get()))
-                    .build();
-            }
-            if (RequestContextHolder.getRequestAttributes() == null) {
-                logger.warn("Missing request context for authenticated gateway request; falling back to default client");
-            } else {
-                logger.warn("Missing OAuth2 authorized client for authenticated gateway request; falling back to default client");
-            }
+        if (auth instanceof OAuth2AuthenticationToken) {
+            return oauth2WebClient;
         }
         return defaultWebClient;
-    }
-
-    private Optional<String> currentAccessToken(OAuth2AuthenticationToken auth) {
-        if (authorizedClientRepository == null) {
-            return Optional.empty();
-        }
-        if (!(RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes attrs)) {
-            return Optional.empty();
-        }
-
-        HttpServletRequest request = attrs.getRequest();
-        if (request == null) {
-            return Optional.empty();
-        }
-
-        OAuth2AuthorizedClient client =
-            authorizedClientRepository.loadAuthorizedClient(auth.getAuthorizedClientRegistrationId(), auth, request);
-        if (client == null || client.getAccessToken() == null || client.getAccessToken().getTokenValue() == null) {
-            return Optional.empty();
-        }
-        return Optional.of(client.getAccessToken().getTokenValue());
     }
 
     private String currentLanguage() {
@@ -1140,6 +1105,7 @@ public class GatewayClient {
                 .bodyValue(request)
                 .retrieve()
                 .bodyToMono(InformationAutoTranslateResponse.class)
+                .timeout(Duration.ofSeconds(20))
                 .block(),
             "/api/cms/information/translate",
             null

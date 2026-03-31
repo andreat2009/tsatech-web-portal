@@ -26,11 +26,12 @@ public class WebClientConfig {
     @Bean
     public ClientRegistrationRepository clientRegistrationRepository(
         @Value("${spring.security.oauth2.client.provider.keycloak.issuer-uri}") String issuerUri,
-        @Value("${spring.security.oauth2.client.provider.keycloak.authorization-uri}") String authorizationUri,
-        @Value("${spring.security.oauth2.client.provider.keycloak.token-uri}") String tokenUri,
-        @Value("${spring.security.oauth2.client.provider.keycloak.user-info-uri}") String userInfoUri,
-        @Value("${spring.security.oauth2.client.provider.keycloak.jwk-set-uri}") String jwkSetUri,
+        @Value("${spring.security.oauth2.client.provider.keycloak.authorization-uri:}") String authorizationUri,
+        @Value("${spring.security.oauth2.client.provider.keycloak.token-uri:}") String tokenUri,
+        @Value("${spring.security.oauth2.client.provider.keycloak.user-info-uri:}") String userInfoUri,
+        @Value("${spring.security.oauth2.client.provider.keycloak.jwk-set-uri:}") String jwkSetUri,
         @Value("${spring.security.oauth2.client.provider.keycloak.user-name-attribute:preferred_username}") String userNameAttribute,
+        @Value("${app.keycloak-backchannel-base-url:}") String keycloakBackchannelBaseUrl,
         @Value("${spring.security.oauth2.client.registration.keycloak.client-id}") String clientId,
         @Value("${spring.security.oauth2.client.registration.keycloak.client-secret}") String clientSecret,
         @Value("${spring.security.oauth2.client.registration.keycloak.redirect-uri}") String redirectUri,
@@ -41,13 +42,21 @@ public class WebClientConfig {
             .filter(s -> !s.isEmpty())
             .collect(Collectors.toList());
 
-        String normalizedIssuer = issuerUri.endsWith("/") ? issuerUri.substring(0, issuerUri.length() - 1) : issuerUri;
+        String normalizedIssuer = normalize(issuerUri);
+        String realm = realmFromIssuer(normalizedIssuer);
+        String publicBase = baseFromIssuer(normalizedIssuer);
+        String endpointBase = firstNonBlank(normalizeBase(keycloakBackchannelBaseUrl), publicBase);
+        String resolvedAuthorizationUri = firstNonBlank(authorizationUri, normalizedIssuer + "/protocol/openid-connect/auth");
+        String resolvedTokenUri = firstNonBlank(tokenUri, oidcEndpoint(endpointBase, realm, "token"));
+        String resolvedUserInfoUri = firstNonBlank(userInfoUri, oidcEndpoint(endpointBase, realm, "userinfo"));
+        String resolvedJwkSetUri = firstNonBlank(jwkSetUri, oidcEndpoint(endpointBase, realm, "certs"));
+
         Map<String, Object> metadata = new LinkedHashMap<>();
         metadata.put("issuer", normalizedIssuer);
-        metadata.put("authorization_endpoint", authorizationUri);
-        metadata.put("token_endpoint", tokenUri);
-        metadata.put("userinfo_endpoint", userInfoUri);
-        metadata.put("jwks_uri", jwkSetUri);
+        metadata.put("authorization_endpoint", resolvedAuthorizationUri);
+        metadata.put("token_endpoint", resolvedTokenUri);
+        metadata.put("userinfo_endpoint", resolvedUserInfoUri);
+        metadata.put("jwks_uri", resolvedJwkSetUri);
         metadata.put("end_session_endpoint", normalizedIssuer + "/protocol/openid-connect/logout");
 
         ClientRegistration registration = ClientRegistration.withRegistrationId("keycloak")
@@ -58,10 +67,10 @@ public class WebClientConfig {
             .redirectUri(redirectUri)
             .scope(scopes)
             .issuerUri(normalizedIssuer)
-            .authorizationUri(authorizationUri)
-            .tokenUri(tokenUri)
-            .userInfoUri(userInfoUri)
-            .jwkSetUri(jwkSetUri)
+            .authorizationUri(resolvedAuthorizationUri)
+            .tokenUri(resolvedTokenUri)
+            .userInfoUri(resolvedUserInfoUri)
+            .jwkSetUri(resolvedJwkSetUri)
             .userNameAttributeName(userNameAttribute)
             .providerConfigurationMetadata(metadata)
             .clientName("Keycloak")
@@ -105,6 +114,52 @@ public class WebClientConfig {
         return WebClient.builder()
             .exchangeStrategies(exchangeStrategies(maxInMemoryBytes))
             .build();
+    }
+
+    private String realmFromIssuer(String issuerUri) {
+        int markerIdx = issuerUri.indexOf("/realms/");
+        if (markerIdx < 0) {
+            throw new IllegalArgumentException("Invalid Keycloak issuer URI: " + issuerUri);
+        }
+        String realm = issuerUri.substring(markerIdx + "/realms/".length());
+        int slash = realm.indexOf('/');
+        return slash >= 0 ? realm.substring(0, slash) : realm;
+    }
+
+    private String baseFromIssuer(String issuerUri) {
+        int markerIdx = issuerUri.indexOf("/realms/");
+        if (markerIdx < 0) {
+            throw new IllegalArgumentException("Invalid Keycloak issuer URI: " + issuerUri);
+        }
+        return issuerUri.substring(0, markerIdx);
+    }
+
+    private String oidcEndpoint(String baseUrl, String realm, String endpoint) {
+        return normalizeBase(baseUrl) + "/realms/" + realm + "/protocol/openid-connect/" + endpoint;
+    }
+
+    private String firstNonBlank(String... values) {
+        for (String value : values) {
+            if (value != null && !value.isBlank()) {
+                return value;
+            }
+        }
+        return "";
+    }
+
+    private String normalize(String value) {
+        return normalizeBase(value);
+    }
+
+    private String normalizeBase(String value) {
+        if (value == null) {
+            return "";
+        }
+        String normalized = value.trim();
+        while (normalized.endsWith("/")) {
+            normalized = normalized.substring(0, normalized.length() - 1);
+        }
+        return normalized;
     }
 
     private ExchangeStrategies exchangeStrategies(int maxInMemoryBytes) {

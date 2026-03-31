@@ -32,10 +32,10 @@ spring:
         provider:
           keycloak:
             issuer-uri: ${KEYCLOAK_ISSUER_URI:https://keycloak-platform.${APP_BASE_DOMAIN:apps.example.invalid}/realms/master}
-            authorization-uri: ${KEYCLOAK_AUTHORIZATION_URI:https://keycloak-platform.${APP_BASE_DOMAIN:apps.example.invalid}/realms/master/protocol/openid-connect/auth}
-            token-uri: ${KEYCLOAK_TOKEN_URI:http://keycloak.${PLATFORM_NAMESPACE:platform}.svc.cluster.local/realms/master/protocol/openid-connect/token}
-            user-info-uri: ${KEYCLOAK_USERINFO_URI:http://keycloak.${PLATFORM_NAMESPACE:platform}.svc.cluster.local/realms/master/protocol/openid-connect/userinfo}
-            jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://keycloak.${PLATFORM_NAMESPACE:platform}.svc.cluster.local/realms/master/protocol/openid-connect/certs}
+            authorization-uri: ${KEYCLOAK_AUTHORIZATION_URI:}
+            token-uri: ${KEYCLOAK_TOKEN_URI:}
+            user-info-uri: ${KEYCLOAK_USERINFO_URI:}
+            jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:}
             user-name-attribute: preferred_username
         registration:
           keycloak:
@@ -49,6 +49,7 @@ app:
   gateway-base-url: ${GATEWAY_BASE_URL:http://api-gateway.${APP_NAMESPACE:ecommerce}.svc.cluster.local:8443}
   currency: ${APP_CURRENCY:EUR}
   store-url: ${APP_STORE_URL:https://web-portal-${APP_NAMESPACE:ecommerce}.${APP_BASE_DOMAIN:apps.example.invalid}}
+  keycloak-backchannel-base-url: ${KEYCLOAK_BACKCHANNEL_BASE_URL:http://keycloak.${PLATFORM_NAMESPACE:platform}.svc.cluster.local}
   keycloak-account-url: ${KEYCLOAK_ACCOUNT_URL:https://keycloak-platform.${APP_BASE_DOMAIN:apps.example.invalid}/realms/master/account}
   keycloak-admin-base-url: ${KEYCLOAK_ADMIN_BASE_URL:http://keycloak.${PLATFORM_NAMESPACE:platform}.svc.cluster.local}
   keycloak-admin-client-id: ${KEYCLOAK_ADMIN_CLIENT_ID:admin-cli}

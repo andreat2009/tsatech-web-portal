@@ -127,10 +127,7 @@ fi
   --set-string env.KEYCLOAK_ACCOUNT_URL="https://keycloak-${PLATFORM_NAMESPACE}.${DOMAIN}/realms/master/account" \
   --set-string env.KEYCLOAK_ISSUER_URI="https://keycloak-${PLATFORM_NAMESPACE}.${DOMAIN}/realms/master" \
   --set-string env.KEYCLOAK_ADMIN_BASE_URL="http://keycloak.${PLATFORM_NAMESPACE}.svc.cluster.local" \
-  --set-string env.KEYCLOAK_AUTHORIZATION_URI="https://keycloak-${PLATFORM_NAMESPACE}.${DOMAIN}/realms/master/protocol/openid-connect/auth" \
-  --set-string env.KEYCLOAK_TOKEN_URI="http://keycloak.${PLATFORM_NAMESPACE}.svc.cluster.local/realms/master/protocol/openid-connect/token" \
-  --set-string env.KEYCLOAK_JWK_SET_URI="http://keycloak.${PLATFORM_NAMESPACE}.svc.cluster.local/realms/master/protocol/openid-connect/certs" \
-  --set-string env.KEYCLOAK_USERINFO_URI="http://keycloak.${PLATFORM_NAMESPACE}.svc.cluster.local/realms/master/protocol/openid-connect/userinfo"
+  --set-string env.KEYCLOAK_BACKCHANNEL_BASE_URL="http://keycloak.${PLATFORM_NAMESPACE}.svc.cluster.local"
 '''
                 }
             }

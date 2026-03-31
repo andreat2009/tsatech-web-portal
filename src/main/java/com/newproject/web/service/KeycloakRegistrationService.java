@@ -38,7 +38,7 @@ public class KeycloakRegistrationService {
         @Value("${app.keycloak-admin-base-url:}") String adminBaseUrl,
         @Value("${app.keycloak-admin-client-id:admin-cli}") String adminClientId,
         @Value("${app.keycloak-admin-username:admin}") String adminUsername,
-        @Value("${app.keycloak-admin-password:adminPass}") String adminPassword,
+        @Value("${app.keycloak-admin-password:}") String adminPassword,
         @Value("${app.keycloak-registration-role:USER}") String registrationRole
     ) {
         this.webClient = webClient;

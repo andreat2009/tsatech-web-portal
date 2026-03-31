@@ -33,17 +33,20 @@ public class GatewayClient {
     private final WebClient oauth2WebClient;
     private final String baseUrl;
     private final String gatewayPublicBaseUrl;
+    private final Duration translationRequestTimeout;
 
     public GatewayClient(
         @Qualifier("defaultWebClient") WebClient defaultWebClient,
         @Qualifier("oauth2WebClient") WebClient oauth2WebClient,
-        @Value("${app.gateway-base-url}") String baseUrl
+        @Value("${app.gateway-base-url}") String baseUrl,
+        @Value("${app.translation-request-timeout-ms:120000}") int translationRequestTimeoutMs
     ) {
         String normalizedBaseUrl = normalizeBaseUrl(baseUrl);
         this.defaultWebClient = defaultWebClient.mutate().baseUrl(normalizedBaseUrl).build();
         this.oauth2WebClient = oauth2WebClient.mutate().baseUrl(normalizedBaseUrl).build();
         this.baseUrl = "";
         this.gatewayPublicBaseUrl = normalizedBaseUrl;
+        this.translationRequestTimeout = Duration.ofMillis(Math.max(1_000, translationRequestTimeoutMs));
     }
 
     private String normalizeBaseUrl(String rawUrl) {
@@ -1099,17 +1102,13 @@ public class GatewayClient {
     }
 
     public InformationAutoTranslateResponse autoTranslateInformationPage(InformationAutoTranslateRequest request) {
-        return safeCall(
-            () -> client().post()
-                .uri(baseUrl + "/api/cms/information/translate")
-                .bodyValue(request)
-                .retrieve()
-                .bodyToMono(InformationAutoTranslateResponse.class)
-                .timeout(Duration.ofSeconds(20))
-                .block(),
-            "/api/cms/information/translate",
-            null
-        );
+        return client().post()
+            .uri(baseUrl + "/api/cms/information/translate")
+            .bodyValue(request)
+            .retrieve()
+            .bodyToMono(InformationAutoTranslateResponse.class)
+            .timeout(translationRequestTimeout)
+            .block();
     }
 
     public InformationPage updateInformationPage(Long id, InformationRequest request) {

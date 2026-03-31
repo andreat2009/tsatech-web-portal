@@ -13,10 +13,14 @@ import com.newproject.web.i18n.LanguageSupport;
 import com.newproject.web.service.GatewayClient;
 import java.io.IOException;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
@@ -106,12 +110,16 @@ public class AdminCmsController {
         form.setActive(true);
         form.setSortOrder(0);
         form.setTranslations(ensureInformationTranslations(null, null));
-        model.addAttribute("pageForm", form);
-        model.addAttribute("formAction", "/admin/information");
-        model.addAttribute("formTitleKey", "admin.information.title.new");
-        model.addAttribute("translationSourceLanguage", LanguageSupport.DEFAULT_LANGUAGE);
-        model.addAttribute("autoTranslateDefault", true);
-        model.addAttribute("overwriteTranslationsDefault", true);
+        populateInformationFormModel(
+            model,
+            form,
+            "/admin/information",
+            "admin.information.title.new",
+            LanguageSupport.DEFAULT_LANGUAGE,
+            true,
+            true,
+            List.of()
+        );
         return "admin/information-form";
     }
 
@@ -120,10 +128,29 @@ public class AdminCmsController {
         @ModelAttribute InformationRequest form,
         @RequestParam(name = "translationSourceLanguage", required = false) String translationSourceLanguage,
         @RequestParam(name = "autoTranslate", defaultValue = "false") boolean autoTranslate,
-        @RequestParam(name = "overwriteTranslations", defaultValue = "false") boolean overwriteTranslations
+        @RequestParam(name = "overwriteTranslations", defaultValue = "false") boolean overwriteTranslations,
+        Model model
     ) {
         normalizeInformation(form);
-        applyInformationAutoTranslationsIfRequested(form, translationSourceLanguage, autoTranslate, overwriteTranslations);
+        InformationTranslationOutcome translationOutcome = applyInformationAutoTranslationsIfRequested(
+            form,
+            translationSourceLanguage,
+            autoTranslate,
+            overwriteTranslations
+        );
+        if (translationOutcome.hasBlockingErrors()) {
+            populateInformationFormModel(
+                model,
+                form,
+                "/admin/information",
+                "admin.information.title.new",
+                translationOutcome.sourceLanguage(),
+                autoTranslate,
+                overwriteTranslations,
+                translationOutcome.errors()
+            );
+            return "admin/information-form";
+        }
         try {
             gatewayClient.createInformationPage(form);
             return "redirect:/admin/information?success=1";
@@ -151,12 +178,16 @@ public class AdminCmsController {
         form.setActive(page.getActive());
         form.setTranslations(ensureInformationTranslations(page.getTranslations(), page));
 
-        model.addAttribute("pageForm", form);
-        model.addAttribute("formAction", "/admin/information/" + id);
-        model.addAttribute("formTitleKey", "admin.information.title.edit");
-        model.addAttribute("translationSourceLanguage", LanguageSupport.DEFAULT_LANGUAGE);
-        model.addAttribute("autoTranslateDefault", true);
-        model.addAttribute("overwriteTranslationsDefault", true);
+        populateInformationFormModel(
+            model,
+            form,
+            "/admin/information/" + id,
+            "admin.information.title.edit",
+            LanguageSupport.DEFAULT_LANGUAGE,
+            true,
+            true,
+            List.of()
+        );
         return "admin/information-form";
     }
 
@@ -166,10 +197,29 @@ public class AdminCmsController {
         @ModelAttribute InformationRequest form,
         @RequestParam(name = "translationSourceLanguage", required = false) String translationSourceLanguage,
         @RequestParam(name = "autoTranslate", defaultValue = "false") boolean autoTranslate,
-        @RequestParam(name = "overwriteTranslations", defaultValue = "false") boolean overwriteTranslations
+        @RequestParam(name = "overwriteTranslations", defaultValue = "false") boolean overwriteTranslations,
+        Model model
     ) {
         normalizeInformation(form);
-        applyInformationAutoTranslationsIfRequested(form, translationSourceLanguage, autoTranslate, overwriteTranslations);
+        InformationTranslationOutcome translationOutcome = applyInformationAutoTranslationsIfRequested(
+            form,
+            translationSourceLanguage,
+            autoTranslate,
+            overwriteTranslations
+        );
+        if (translationOutcome.hasBlockingErrors()) {
+            populateInformationFormModel(
+                model,
+                form,
+                "/admin/information/" + id,
+                "admin.information.title.edit",
+                translationOutcome.sourceLanguage(),
+                autoTranslate,
+                overwriteTranslations,
+                translationOutcome.errors()
+            );
+            return "admin/information-form";
+        }
         try {
             gatewayClient.updateInformationPage(id, form);
             return "redirect:/admin/information?success=1";
@@ -275,20 +325,26 @@ public class AdminCmsController {
         return "redirect:/admin/contact-messages";
     }
 
-    private void applyInformationAutoTranslationsIfRequested(
+    private InformationTranslationOutcome applyInformationAutoTranslationsIfRequested(
         InformationRequest form,
         String translationSourceLanguage,
         boolean autoTranslate,
         boolean overwriteTranslations
     ) {
+        String sourceLanguage = LanguageSupport.normalizeLanguage(translationSourceLanguage);
+        if (sourceLanguage == null) {
+            sourceLanguage = LanguageSupport.DEFAULT_LANGUAGE;
+        }
         if (!autoTranslate) {
-            return;
+            return new InformationTranslationOutcome(sourceLanguage, List.of());
         }
 
+        List<String> errors = new ArrayList<>();
+
         try {
-            String sourceLanguage = LanguageSupport.normalizeLanguage(translationSourceLanguage);
-            if (sourceLanguage == null) {
-                sourceLanguage = LanguageSupport.DEFAULT_LANGUAGE;
+            Set<String> requestedTargets = determineInformationTranslationTargets(form.getTranslations(), sourceLanguage, overwriteTranslations);
+            if (requestedTargets.isEmpty()) {
+                return new InformationTranslationOutcome(sourceLanguage, errors);
             }
 
             InformationAutoTranslateRequest translateRequest = new InformationAutoTranslateRequest();
@@ -297,25 +353,110 @@ public class AdminCmsController {
             translateRequest.setTranslations(form.getTranslations());
 
             InformationAutoTranslateResponse translateResponse = gatewayClient.autoTranslateInformationPage(translateRequest);
-            if (translateResponse == null || translateResponse.getTranslations() == null || translateResponse.getTranslations().isEmpty()) {
-                return;
+            if (translateResponse == null) {
+                errors.add("The translation service did not return a response.");
+                return new InformationTranslationOutcome(sourceLanguage, errors);
             }
 
-            form.setTranslations(ensureInformationTranslations(translateResponse.getTranslations(), null));
-            LocalizedContent italian = form.getTranslations().get(LanguageSupport.DEFAULT_LANGUAGE);
-            form.setTitle(firstNonBlank(
-                italian != null ? italian.getTitle() : null,
-                form.getTitle(),
-                "Pagina"
-            ));
-            form.setContent(firstNonBlank(
-                italian != null ? italian.getContent() : null,
-                form.getContent(),
-                ""
-            ));
+            if (translateResponse.getTranslations() != null && !translateResponse.getTranslations().isEmpty()) {
+                form.setTranslations(ensureInformationTranslations(translateResponse.getTranslations(), null));
+                LocalizedContent italian = form.getTranslations().get(LanguageSupport.DEFAULT_LANGUAGE);
+                form.setTitle(firstNonBlank(
+                    italian != null ? italian.getTitle() : null,
+                    form.getTitle(),
+                    "Pagina"
+                ));
+                form.setContent(firstNonBlank(
+                    italian != null ? italian.getContent() : null,
+                    form.getContent(),
+                    ""
+                ));
+            }
+
+            if (translateResponse.getWarnings() != null) {
+                for (String warning : translateResponse.getWarnings()) {
+                    String normalizedWarning = trimToNull(warning);
+                    if (normalizedWarning != null) {
+                        errors.add(normalizedWarning);
+                    }
+                }
+            }
+
+            Set<String> translatedLanguages = new LinkedHashSet<>();
+            if (translateResponse.getTranslatedLanguages() != null) {
+                for (String language : translateResponse.getTranslatedLanguages()) {
+                    String normalizedLanguage = LanguageSupport.normalizeLanguage(language);
+                    if (normalizedLanguage != null) {
+                        translatedLanguages.add(normalizedLanguage);
+                    }
+                }
+            }
+
+            Set<String> invalidMarkupLanguages = new LinkedHashSet<>();
+            for (String language : translatedLanguages) {
+                LocalizedContent translatedContent = form.getTranslations().get(language);
+                if (translatedContent != null && !hasBalancedHtmlDelimiters(translatedContent.getContent())) {
+                    invalidMarkupLanguages.add(language);
+                }
+            }
+            if (!invalidMarkupLanguages.isEmpty()) {
+                errors.add("Invalid translated HTML for: " + String.join(", ", invalidMarkupLanguages));
+            }
+
+            Set<String> missingLanguages = new LinkedHashSet<>(requestedTargets);
+            missingLanguages.removeAll(translatedLanguages);
+            if (!missingLanguages.isEmpty()) {
+                errors.add("Missing translations for: " + String.join(", ", missingLanguages));
+            }
         } catch (Exception ex) {
-            logger.warn("Information page auto-translation failed: {}", ex.getMessage());
+            logger.warn("Information page auto-translation failed", ex);
+            errors.add("Automatic translation request failed: " + firstNonBlank(trimToNull(ex.getMessage()), ex.getClass().getSimpleName()));
         }
+
+        return new InformationTranslationOutcome(sourceLanguage, errors);
+    }
+
+    private void populateInformationFormModel(
+        Model model,
+        InformationRequest form,
+        String formAction,
+        String formTitleKey,
+        String translationSourceLanguage,
+        boolean autoTranslateDefault,
+        boolean overwriteTranslationsDefault,
+        List<String> translationErrors
+    ) {
+        model.addAttribute("pageForm", form);
+        model.addAttribute("formAction", formAction);
+        model.addAttribute("formTitleKey", formTitleKey);
+        model.addAttribute("translationSourceLanguage", translationSourceLanguage);
+        model.addAttribute("autoTranslateDefault", autoTranslateDefault);
+        model.addAttribute("overwriteTranslationsDefault", overwriteTranslationsDefault);
+        model.addAttribute("translationErrors", translationErrors != null ? translationErrors : List.of());
+    }
+
+    private Set<String> determineInformationTranslationTargets(
+        Map<String, LocalizedContent> translations,
+        String sourceLanguage,
+        boolean overwriteTranslations
+    ) {
+        Map<String, LocalizedContent> normalized = ensureInformationTranslations(translations, null);
+        Set<String> targets = new LinkedHashSet<>();
+
+        for (String language : LanguageSupport.SUPPORTED_LANGUAGES) {
+            if (language.equals(sourceLanguage)) {
+                continue;
+            }
+            LocalizedContent current = normalized.get(language);
+            if (overwriteTranslations
+                || current == null
+                || trimToNull(current.getTitle()) == null
+                || trimToNull(current.getContent()) == null) {
+                targets.add(language);
+            }
+        }
+
+        return targets;
     }
 
     private void normalizeInformation(InformationRequest form) {
@@ -495,5 +636,21 @@ public class AdminCmsController {
             }
         }
         return "";
+    }
+
+    private boolean hasBalancedHtmlDelimiters(String value) {
+        String normalized = trimToNull(value);
+        if (normalized == null) {
+            return true;
+        }
+        long openCount = normalized.chars().filter(ch -> ch == '<').count();
+        long closeCount = normalized.chars().filter(ch -> ch == '>').count();
+        return openCount == closeCount;
+    }
+
+    private record InformationTranslationOutcome(String sourceLanguage, List<String> errors) {
+        private boolean hasBlockingErrors() {
+            return errors != null && !errors.isEmpty();
+        }
     }
 }

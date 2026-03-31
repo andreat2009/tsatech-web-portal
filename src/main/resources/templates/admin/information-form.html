@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<html lang="it" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -11,6 +11,12 @@
 <main class="container">
     <section class="form section-pad centered-form information-editor-form">
         <h1 th:text="${#messages.msg(formTitleKey)}">Form</h1>
+        <div class="alert-error" th:if="${translationErrors != null and !#lists.isEmpty(translationErrors)}">
+            <strong th:text="#{admin.information.translation.failed.heading}">Automatic translation could not complete.</strong>
+            <ul class="alert-list">
+                <li th:each="translationError : ${translationErrors}" th:text="${translationError}">Translation error</li>
+            </ul>
+        </div>
         <form method="post" th:action="${formAction}" th:object="${pageForm}" class="information-editor-form">
             <div class="field"><label>Slug</label><input type="text" th:field="*{slug}" /></div>
             <div class="field">

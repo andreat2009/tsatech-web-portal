@@ -108,9 +108,18 @@
                 </div>
             </section>
 
-            <button class="btn btn-primary" type="submit" th:text="#{common.save}">Salva</button>
+            <button class="btn btn-primary submit-button" type="submit">
+                <span class="submit-button__label" th:text="#{common.save}">Salva</span>
+                <span class="submit-button__spinner" aria-hidden="true"></span>
+            </button>
             <a class="btn" th:href="@{/admin/information}" th:text="#{common.cancel}">Annulla</a>
         </form>
+        <div class="form-submit-overlay" hidden>
+            <div class="form-submit-overlay__dialog">
+                <span class="form-submit-overlay__spinner" aria-hidden="true"></span>
+                <span th:text="#{admin.information.save.pending}">Salvataggio e traduzione in corso...</span>
+            </div>
+        </div>
     </section>
 </main>
 <div th:replace="~{fragments/footer :: footer}"></div>

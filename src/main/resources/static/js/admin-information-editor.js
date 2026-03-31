@@ -93,8 +93,27 @@
     document.querySelectorAll('.wysiwyg-toolbar').forEach(initToolbar);
 
     document.querySelectorAll('form.information-editor-form').forEach(function (form) {
-      form.addEventListener('submit', function () {
+      form.addEventListener('submit', function (event) {
+        if (form.dataset.submitting === 'true') {
+          event.preventDefault();
+          return;
+        }
+
         form.querySelectorAll('.wysiwyg-editor').forEach(syncEditor);
+
+        form.dataset.submitting = 'true';
+        form.classList.add('is-submitting');
+
+        var submitButton = form.querySelector('.submit-button');
+        if (submitButton) {
+          submitButton.disabled = true;
+          submitButton.setAttribute('aria-busy', 'true');
+        }
+
+        var overlay = form.parentElement.querySelector('.form-submit-overlay');
+        if (overlay) {
+          overlay.hidden = false;
+        }
       });
     });
   });

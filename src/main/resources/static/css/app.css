@@ -142,6 +142,68 @@ a:hover {
   background: var(--oc-blue-dark);
 }
 
+
+.submit-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.submit-button__spinner,
+.form-submit-overlay__spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: tsa-spin 0.85s linear infinite;
+  display: none;
+}
+
+.information-editor-form.is-submitting .submit-button__spinner {
+  display: inline-block;
+}
+
+.form-submit-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(18, 29, 39, 0.38);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+  backdrop-filter: blur(2px);
+}
+
+.form-submit-overlay[hidden] {
+  display: none;
+}
+
+.form-submit-overlay__dialog {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 22px;
+  border-radius: 12px;
+  background: #0f2430;
+  color: #fff;
+  box-shadow: 0 18px 40px rgba(15, 36, 48, 0.25);
+}
+
+.form-submit-overlay__spinner {
+  display: inline-block;
+}
+
+@keyframes tsa-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .btn-search {
   border-radius: 0 3px 3px 0;
   border: 1px solid var(--oc-blue-dark);

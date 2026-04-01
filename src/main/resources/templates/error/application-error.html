@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
+<head>
+    <meta charset="UTF-8" />
+    <title th:text="#{error.page.title}">Application error</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+</head>
+<body>
+<div th:replace="fragments/header :: header"></div>
+
+<main class="container">
+    <section class="card error-page-card">
+        <div class="page-header">
+            <h1 th:text="#{error.page.heading}">Something went wrong</h1>
+        </div>
+        <p class="alert-error" th:text="${errorMessage}">The operation could not be completed.</p>
+        <p class="muted" th:text="#{error.page.description}">Review the details below and try again.</p>
+
+        <dl class="error-page-meta">
+            <div>
+                <dt th:text="#{error.page.status}">Status</dt>
+                <dd><span th:text="${status}">500</span> <span th:text="${error}">Internal Server Error</span></dd>
+            </div>
+            <div>
+                <dt th:text="#{error.page.reference}">Reference</dt>
+                <dd th:text="${reference}">reference</dd>
+            </div>
+            <div>
+                <dt>Path</dt>
+                <dd th:text="${path}">/admin</dd>
+            </div>
+        </dl>
+
+        <div class="actions-row">
+            <a class="btn btn-primary" th:href="${backUrl}" th:text="#{error.page.back}">Go back</a>
+            <a class="btn" th:href="@{/}" th:text="#{error.page.home}">Go home</a>
+        </div>
+    </section>
+</main>
+
+<div th:replace="fragments/footer :: footer"></div>
+</body>
+</html>

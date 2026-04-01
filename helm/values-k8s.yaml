@@ -25,6 +25,7 @@ ingress:
   pathType: Prefix
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "30m"
   tls:
     enabled: true
     secretName: wildcard-apps-tls

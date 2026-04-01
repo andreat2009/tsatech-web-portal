@@ -1791,3 +1791,36 @@ h1, h2, h3 {
     padding: 22px;
   }
 }
+
+
+.error-page-card {
+  max-width: 760px;
+  margin: 32px auto;
+}
+
+.error-page-meta {
+  margin: 20px 0 0;
+  display: grid;
+  gap: 12px;
+}
+
+.error-page-meta div {
+  border: 1px solid var(--oc-border);
+  border-radius: 10px;
+  background: #fff;
+  padding: 12px 14px;
+}
+
+.error-page-meta dt {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--oc-muted);
+  margin-bottom: 6px;
+}
+
+.error-page-meta dd {
+  margin: 0;
+  font-weight: 600;
+  word-break: break-word;
+}

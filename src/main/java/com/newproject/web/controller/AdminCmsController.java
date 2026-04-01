@@ -552,7 +552,7 @@ public class AdminCmsController {
             return null;
         }
 
-        if (logoFile.getSize() > 1024 * 1024) {
+        if (logoFile.getSize() > 5 * 1024 * 1024) {
             return "logo_size";
         }
 

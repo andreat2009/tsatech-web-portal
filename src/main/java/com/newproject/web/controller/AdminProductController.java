@@ -75,7 +75,7 @@ public class AdminProductController {
         @RequestParam(name = "autoTranslate", defaultValue = "false") boolean autoTranslate,
         @RequestParam(name = "overwriteTranslations", defaultValue = "false") boolean overwriteTranslations
     ) {
-        normalizeProductRequest(request);
+        normalizeProductRequest(request, translationSourceLanguage);
         applyAutoTranslationsIfRequested(request, translationSourceLanguage, autoTranslate, overwriteTranslations);
         Product created = gatewayClient.createProduct(request);
 
@@ -127,7 +127,7 @@ public class AdminProductController {
         @RequestParam(name = "autoTranslate", defaultValue = "false") boolean autoTranslate,
         @RequestParam(name = "overwriteTranslations", defaultValue = "false") boolean overwriteTranslations
     ) {
-        normalizeProductRequest(request);
+        normalizeProductRequest(request, translationSourceLanguage);
         applyAutoTranslationsIfRequested(request, translationSourceLanguage, autoTranslate, overwriteTranslations);
         gatewayClient.updateProduct(id, request);
 
@@ -202,17 +202,7 @@ public class AdminProductController {
             }
 
             request.setTranslations(ensureProductTranslations(translateResponse.getTranslations(), null));
-            LocalizedContent italian = request.getTranslations().get(LanguageSupport.DEFAULT_LANGUAGE);
-            request.setName(firstNonBlank(
-                italian != null ? italian.getName() : null,
-                request.getName(),
-                request.getSku()
-            ));
-            request.setDescription(firstNonBlank(
-                italian != null ? italian.getDescription() : null,
-                request.getDescription(),
-                ""
-            ));
+            syncRootFieldsFromTranslations(request, sourceLanguage);
         } catch (Exception ex) {
             logger.warn("Product auto-translation failed: {}", ex.getMessage());
         }
@@ -220,20 +210,26 @@ public class AdminProductController {
 
     private Map<String, LocalizedContent> ensureProductTranslations(Map<String, LocalizedContent> input, Product sourceProduct) {
         Map<String, LocalizedContent> normalized = new LinkedHashMap<>();
-        String fallbackName = sourceProduct != null ? sourceProduct.getName() : null;
-        String fallbackDescription = sourceProduct != null ? sourceProduct.getDescription() : null;
+        String defaultName = sourceProduct != null ? sourceProduct.getName() : null;
+        String defaultDescription = sourceProduct != null ? sourceProduct.getDescription() : null;
 
         for (String language : LanguageSupport.SUPPORTED_LANGUAGES) {
             LocalizedContent src = input != null ? input.get(language) : null;
             LocalizedContent content = new LocalizedContent();
-            content.setName(firstNonBlank(src != null ? src.getName() : null, fallbackName, ""));
-            content.setDescription(firstNonBlank(src != null ? src.getDescription() : null, fallbackDescription, ""));
+            content.setName(firstNonBlank(
+                src != null ? src.getName() : null,
+                language.equals(LanguageSupport.DEFAULT_LANGUAGE) ? defaultName : null
+            ));
+            content.setDescription(firstNonBlank(
+                src != null ? src.getDescription() : null,
+                language.equals(LanguageSupport.DEFAULT_LANGUAGE) ? defaultDescription : null
+            ));
             normalized.put(language, content);
         }
         return normalized;
     }
 
-    private void normalizeProductRequest(ProductRequest request) {
+    private void normalizeProductRequest(ProductRequest request, String translationSourceLanguage) {
         if (request.getSku() == null || request.getSku().isBlank()) {
             request.setSku("SKU-" + Instant.now().getEpochSecond());
         }
@@ -252,18 +248,49 @@ public class AdminProductController {
         request.setSeoKeywords(trimToNull(request.getSeoKeywords()));
 
         request.setTranslations(ensureProductTranslations(request.getTranslations(), null));
+        syncRootFieldsFromTranslations(request, translationSourceLanguage);
+    }
 
-        LocalizedContent italian = request.getTranslations().get(LanguageSupport.DEFAULT_LANGUAGE);
+    private void syncRootFieldsFromTranslations(ProductRequest request, String preferredLanguage) {
+        String rootLanguage = resolveRootLanguage(request.getTranslations(), preferredLanguage);
+        LocalizedContent rootContent = request.getTranslations().get(rootLanguage);
         request.setName(firstNonBlank(
-            italian != null ? italian.getName() : null,
+            rootContent != null ? rootContent.getName() : null,
             request.getName(),
             request.getSku()
         ));
         request.setDescription(firstNonBlank(
-            italian != null ? italian.getDescription() : null,
-            request.getDescription(),
-            ""
+            rootContent != null ? rootContent.getDescription() : null,
+            request.getDescription()
         ));
+    }
+
+    private String resolveRootLanguage(Map<String, LocalizedContent> translations, String preferredLanguage) {
+        if (hasTranslatedContent(translations, LanguageSupport.DEFAULT_LANGUAGE)) {
+            return LanguageSupport.DEFAULT_LANGUAGE;
+        }
+
+        String normalizedPreferred = LanguageSupport.normalizeLanguage(preferredLanguage);
+        if (normalizedPreferred != null && hasTranslatedContent(translations, normalizedPreferred)) {
+            return normalizedPreferred;
+        }
+
+        for (String language : LanguageSupport.SUPPORTED_LANGUAGES) {
+            if (hasTranslatedContent(translations, language)) {
+                return language;
+            }
+        }
+
+        return normalizedPreferred != null ? normalizedPreferred : LanguageSupport.DEFAULT_LANGUAGE;
+    }
+
+    private boolean hasTranslatedContent(Map<String, LocalizedContent> translations, String language) {
+        if (translations == null) {
+            return false;
+        }
+        LocalizedContent content = translations.get(language);
+        return content != null
+            && (trimToNull(content.getName()) != null || trimToNull(content.getDescription()) != null);
     }
 
     private String trimToNull(String value) {

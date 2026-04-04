@@ -1155,6 +1155,7 @@ public class StorefrontController {
         model.addAttribute("addresses", addresses);
         model.addAttribute("shippingMethods", shippingMethods());
         model.addAttribute("paymentMethods", paymentMethods);
+        model.addAttribute("selectedPaymentMethodDescription", selectedPaymentMethodDescription(checkoutForm.getPaymentMethod(), paymentMethods));
         model.addAttribute("checkoutCustomFields", checkoutCustomFields);
         model.addAttribute("checkoutForm", checkoutForm);
         model.addAttribute("guestCheckout", guestCheckout);
@@ -1191,6 +1192,11 @@ public class StorefrontController {
             }
         }
         return paymentMethods.get(0);
+    }
+
+    private String selectedPaymentMethodDescription(String requestedCode, List<PaymentMethod> paymentMethods) {
+        PaymentMethod method = resolvePaymentMethod(requestedCode, paymentMethods);
+        return method != null && method.getDescription() != null ? method.getDescription() : "";
     }
 
     private void populateCustomFields(

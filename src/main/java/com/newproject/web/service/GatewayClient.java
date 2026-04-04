@@ -7,6 +7,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.springframework.http.HttpHeaders;
 import java.util.function.Supplier;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
@@ -18,8 +19,12 @@ import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizedClientRepository;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -31,6 +36,7 @@ public class GatewayClient {
 
     private final WebClient defaultWebClient;
     private final WebClient oauth2WebClient;
+    private final OAuth2AuthorizedClientRepository authorizedClientRepository;
     private final String baseUrl;
     private final String gatewayPublicBaseUrl;
     private final Duration translationRequestTimeout;
@@ -38,12 +44,14 @@ public class GatewayClient {
     public GatewayClient(
         @Qualifier("defaultWebClient") WebClient defaultWebClient,
         @Qualifier("oauth2WebClient") WebClient oauth2WebClient,
+        OAuth2AuthorizedClientRepository authorizedClientRepository,
         @Value("${app.gateway-base-url}") String baseUrl,
         @Value("${app.translation-request-timeout-ms:120000}") int translationRequestTimeoutMs
     ) {
         String normalizedBaseUrl = normalizeBaseUrl(baseUrl);
         this.defaultWebClient = defaultWebClient.mutate().baseUrl(normalizedBaseUrl).build();
         this.oauth2WebClient = oauth2WebClient.mutate().baseUrl(normalizedBaseUrl).build();
+        this.authorizedClientRepository = authorizedClientRepository;
         this.baseUrl = "";
         this.gatewayPublicBaseUrl = normalizedBaseUrl;
         this.translationRequestTimeout = Duration.ofMillis(Math.max(1_000, translationRequestTimeoutMs));
@@ -62,10 +70,35 @@ public class GatewayClient {
 
     private WebClient client() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth instanceof OAuth2AuthenticationToken) {
+        if (auth instanceof OAuth2AuthenticationToken oauth) {
+            String accessToken = resolveAccessToken(oauth);
+            if (accessToken != null && !accessToken.isBlank()) {
+                return defaultWebClient.mutate()
+                    .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                    .build();
+            }
             return oauth2WebClient;
         }
         return defaultWebClient;
+    }
+
+    private String resolveAccessToken(OAuth2AuthenticationToken authenticationToken) {
+        if (authorizedClientRepository == null) {
+            return null;
+        }
+        var requestAttributes = RequestContextHolder.getRequestAttributes();
+        if (!(requestAttributes instanceof ServletRequestAttributes servletRequestAttributes)) {
+            return null;
+        }
+        OAuth2AuthorizedClient authorizedClient = authorizedClientRepository.loadAuthorizedClient(
+            authenticationToken.getAuthorizedClientRegistrationId(),
+            authenticationToken,
+            servletRequestAttributes.getRequest()
+        );
+        if (authorizedClient == null || authorizedClient.getAccessToken() == null) {
+            return null;
+        }
+        return authorizedClient.getAccessToken().getTokenValue();
     }
 
     private String currentLanguage() {

@@ -195,8 +195,8 @@
                                     th:text="${paymentMethod.displayName}">Payment</option>
                         </select>
                         <small class="muted"
-                               th:if="${checkoutForm.paymentMethod != null and !paymentMethods.isEmpty()}"
-                               th:text="${paymentMethods.?[code == checkoutForm.paymentMethod].isEmpty() ? '' : paymentMethods.?[code == checkoutForm.paymentMethod][0].description}">Description</small>
+                               th:if="${selectedPaymentMethodDescription != null and !selectedPaymentMethodDescription.isBlank()}"
+                               th:text="${selectedPaymentMethodDescription}">Description</small>
                     </div>
                 </div>
 

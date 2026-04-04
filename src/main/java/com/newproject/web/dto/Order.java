@@ -2,6 +2,7 @@ package com.newproject.web.dto;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.List;
 
 public class Order {
     private Long id;
@@ -16,6 +17,7 @@ public class Order {
     private String customerLocale;
     private String orderComment;
     private Boolean guestCheckout;
+    private List<OrderCustomField> customFields;
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
 
@@ -43,6 +45,8 @@ public class Order {
     public void setOrderComment(String orderComment) { this.orderComment = orderComment; }
     public Boolean getGuestCheckout() { return guestCheckout; }
     public void setGuestCheckout(Boolean guestCheckout) { this.guestCheckout = guestCheckout; }
+    public List<OrderCustomField> getCustomFields() { return customFields; }
+    public void setCustomFields(List<OrderCustomField> customFields) { this.customFields = customFields; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
     public OffsetDateTime getUpdatedAt() { return updatedAt; }

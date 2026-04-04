@@ -35,6 +35,12 @@
             <div class="stat-value" th:text="${customerCount}">0</div>
             <a class="btn" th:href="@{/admin/customers}" th:text="#{admin.dashboard.list.customers}">Elenco clienti</a>
         </div>
+        <div class="card dashboard-tile tile-customers">
+            <img class="dashboard-tile-icon" th:src="@{/img/dashboard/settings.svg}" alt="Custom fields" />
+            <div class="stat-label">Custom fields</div>
+            <div class="stat-value" th:text="${customFieldCount}">0</div>
+            <a class="btn" th:href="@{/admin/custom-fields}">Manage custom fields</a>
+        </div>
         <div class="card dashboard-tile tile-carts">
             <img class="dashboard-tile-icon" th:src="@{/img/dashboard/carts.svg}" alt="Carts" />
             <div class="stat-label" th:text="#{admin.dashboard.carts}">Carrelli</div>
@@ -76,6 +82,12 @@
             <div class="stat-label" th:text="#{admin.dashboard.payments}">Pagamenti</div>
             <div class="stat-value" th:text="${paymentCount}">0</div>
             <a class="btn" th:href="@{/admin/payments}" th:text="#{admin.dashboard.manage.payments}">Gestisci pagamenti</a>
+        </div>
+        <div class="card dashboard-tile tile-payments">
+            <img class="dashboard-tile-icon" th:src="@{/img/dashboard/settings.svg}" alt="Payment methods" />
+            <div class="stat-label">Payment Methods</div>
+            <div class="stat-value" th:text="${paymentMethodCount}">0</div>
+            <a class="btn" th:href="@{/admin/payment-methods}">Manage payment methods</a>
         </div>
         <div class="card dashboard-tile tile-shipments">
             <img class="dashboard-tile-icon" th:src="@{/img/dashboard/shipments.svg}" alt="Shipments" />

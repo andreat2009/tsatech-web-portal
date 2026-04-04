@@ -8,6 +8,7 @@ import com.newproject.web.dto.Cart;
 import com.newproject.web.dto.Category;
 import com.newproject.web.dto.ContactMessage;
 import com.newproject.web.dto.Coupon;
+import com.newproject.web.dto.CustomFieldDefinition;
 import com.newproject.web.dto.Customer;
 import com.newproject.web.dto.InformationPage;
 import com.newproject.web.dto.InventoryItem;
@@ -15,6 +16,7 @@ import com.newproject.web.dto.Manufacturer;
 import com.newproject.web.dto.Order;
 import com.newproject.web.dto.OrderReturn;
 import com.newproject.web.dto.Payment;
+import com.newproject.web.dto.PaymentMethod;
 import com.newproject.web.dto.Product;
 import com.newproject.web.dto.ProductPrice;
 import com.newproject.web.dto.Shipment;
@@ -51,12 +53,14 @@ public class AdminController {
         List<Category> categories = gatewayClient.listCategories(null);
         List<Manufacturer> manufacturers = gatewayClient.listManufacturers();
         List<Customer> customers = gatewayClient.listCustomers();
+        List<CustomFieldDefinition> customFields = gatewayClient.listCustomFields(null, null);
         List<Cart> carts = gatewayClient.listCarts(null);
         List<Order> orders = gatewayClient.listOrders(null);
         List<InventoryItem> inventoryItems = gatewayClient.listInventory();
         List<ProductPrice> prices = gatewayClient.listPrices();
         List<Coupon> coupons = gatewayClient.listCoupons();
         List<Payment> payments = gatewayClient.listPayments(null);
+        List<PaymentMethod> paymentMethods = gatewayClient.listAdminPaymentMethods();
         List<Shipment> shipments = gatewayClient.listShipments(null);
         List<OrderReturn> returns = gatewayClient.listReturns(null, null);
         List<InformationPage> informationPages = gatewayClient.listInformationPages(null);
@@ -70,12 +74,14 @@ public class AdminController {
         model.addAttribute("categoryCount", categories.size());
         model.addAttribute("manufacturerCount", manufacturers.size());
         model.addAttribute("customerCount", customers.size());
+        model.addAttribute("customFieldCount", customFields.size());
         model.addAttribute("cartCount", carts.size());
         model.addAttribute("orderCount", orders.size());
         model.addAttribute("inventoryCount", inventoryItems.size());
         model.addAttribute("priceCount", prices.size());
         model.addAttribute("couponCount", coupons.size());
         model.addAttribute("paymentCount", payments.size());
+        model.addAttribute("paymentMethodCount", paymentMethods.size());
         model.addAttribute("shipmentCount", shipments.size());
         model.addAttribute("returnCount", returns.size());
         model.addAttribute("informationCount", informationPages.size());
@@ -125,9 +131,17 @@ public class AdminController {
     }
 
     @GetMapping("/payments")
-    public String payments(Model model) {
+    public String payments(
+        @RequestParam(name = "reconciled", required = false) String reconciled,
+        @RequestParam(name = "refunded", required = false) String refunded,
+        @RequestParam(name = "error", required = false) String error,
+        Model model
+    ) {
         List<Payment> payments = gatewayClient.listPayments(null);
         model.addAttribute("payments", payments);
+        model.addAttribute("reconciled", reconciled != null);
+        model.addAttribute("refunded", refunded != null);
+        model.addAttribute("error", error);
         return "admin/payments";
     }
 
@@ -141,6 +155,7 @@ public class AdminController {
     @GetMapping("/customers")
     public String customers(Model model) {
         List<Customer> customers = gatewayClient.listCustomers();
+        List<CustomFieldDefinition> customFields = gatewayClient.listCustomFields(null, null);
         model.addAttribute("customers", customers);
         return "admin/customers";
     }

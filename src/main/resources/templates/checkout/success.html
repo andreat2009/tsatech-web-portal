@@ -19,6 +19,26 @@
         </div>
     </section>
 
+    <section th:if="${order.customFields != null and !order.customFields.isEmpty()}">
+        <h2 th:text="#{checkout.success.custom.fields}">Custom fields</h2>
+        <table class="table compact">
+            <thead>
+            <tr>
+                <th>Code</th>
+                <th th:text="#{common.description}">Label</th>
+                <th th:text="#{common.value}">Value</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="customField : ${order.customFields}">
+                <td th:text="${customField.fieldCode}">code</td>
+                <td th:text="${customField.fieldLabel}">Label</td>
+                <td th:text="${customField.fieldValue}">Value</td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+
     <section th:if="${orderItems != null and !orderItems.isEmpty()}">
         <h2 th:text="#{checkout.success.lines}">Order lines</h2>
         <table class="table">
@@ -48,6 +68,7 @@
                 <thead>
                 <tr>
                     <th>ID</th>
+                    <th th:text="#{checkout.payment.method}">Method</th>
                     <th th:text="#{common.provider}">Provider</th>
                     <th th:text="#{common.status}">Status</th>
                 </tr>
@@ -55,8 +76,12 @@
                 <tbody>
                 <tr th:each="payment : ${payments}">
                     <td th:text="${payment.id}">1</td>
-                    <td th:text="${payment.provider}">cod</td>
+                    <td th:text="${payment.methodLabel != null ? payment.methodLabel : payment.methodCode}">paypal</td>
+                    <td th:text="${payment.provider}">PAYPAL</td>
                     <td th:text="${payment.status}">CREATED</td>
+                </tr>
+                <tr th:if="${payments == null or payments.isEmpty()}">
+                    <td colspan="4">-</td>
                 </tr>
                 </tbody>
             </table>
@@ -79,6 +104,9 @@
                     <td th:text="${shipment.carrier}">FLAT_RATE</td>
                     <td th:text="${shipment.trackingNumber}">TRK</td>
                     <td th:text="${shipment.status}">CREATED</td>
+                </tr>
+                <tr th:if="${shipments == null or shipments.isEmpty()}">
+                    <td colspan="4">-</td>
                 </tr>
                 </tbody>
             </table>

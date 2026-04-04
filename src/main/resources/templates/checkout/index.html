@@ -129,6 +129,56 @@
                     </div>
                 </div>
 
+                <section class="field-grid two" th:if="${!checkoutCustomFields.isEmpty()}">
+                    <div class="field full-width">
+                        <h2 th:text="#{checkout.custom.fields}">Additional information</h2>
+                    </div>
+                    <div class="field" th:each="customField : ${checkoutCustomFields}"
+                         th:classappend="${customField.fieldType == 'TEXTAREA'} ? ' full-width' : ''">
+                        <label th:for="${'custom-field-' + customField.code}">
+                            <span th:text="${customField.label}">Field</span>
+                            <span th:if="${customField.required}">*</span>
+                        </label>
+
+                        <textarea th:if="${customField.fieldType == 'TEXTAREA'}"
+                                  th:id="${'custom-field-' + customField.code}"
+                                  th:name="${'customFields[' + customField.code + ']'}"
+                                  rows="4"
+                                  th:placeholder="${customField.placeholder}"
+                                  th:text="${checkoutForm.customFields[customField.code]}"></textarea>
+
+                        <select th:if="${customField.fieldType == 'SELECT'}"
+                                th:id="${'custom-field-' + customField.code}"
+                                th:name="${'customFields[' + customField.code + ']'}">
+                            <option value=""></option>
+                            <option th:each="option : ${customField.options}"
+                                    th:value="${option.optionValue}"
+                                    th:text="${option.label}"
+                                    th:selected="${checkoutForm.customFields[customField.code] == option.optionValue}">Option</option>
+                        </select>
+
+                        <div th:if="${customField.fieldType == 'BOOLEAN'}" class="inline-control">
+                            <input type="hidden" th:name="${'customFields[' + customField.code + ']'}" value="false" />
+                            <input type="checkbox"
+                                   th:id="${'custom-field-' + customField.code}"
+                                   th:name="${'customFields[' + customField.code + ']'}"
+                                   value="true"
+                                   th:checked="${checkoutForm.customFields[customField.code] == 'true'}" />
+                            <label th:for="${'custom-field-' + customField.code}" th:text="${customField.label}">Flag</label>
+                        </div>
+
+                        <input th:if="${customField.fieldType != 'TEXTAREA' and customField.fieldType != 'SELECT' and customField.fieldType != 'BOOLEAN'}"
+                               th:id="${'custom-field-' + customField.code}"
+                               th:name="${'customFields[' + customField.code + ']'}"
+                               th:type="${customField.fieldType == 'NUMBER' ? 'number' : (customField.fieldType == 'DATE' ? 'date' : 'text')}"
+                               th:placeholder="${customField.placeholder}"
+                               th:value="${checkoutForm.customFields[customField.code]}" />
+
+                        <small class="muted" th:if="${customField.helpText != null and !customField.helpText.isBlank()}"
+                               th:text="${customField.helpText}">Help</small>
+                    </div>
+                </section>
+
                 <div class="field-grid two">
                     <div class="field">
                         <label th:text="#{checkout.shipping.method}">Shipping method</label>
@@ -141,9 +191,12 @@
                     <div class="field">
                         <label th:text="#{checkout.payment.method}">Payment method</label>
                         <select th:field="*{paymentMethod}" required>
-                            <option th:each="entry : ${paymentMethods.entrySet()}" th:value="${entry.key}"
-                                    th:text="${entry.value}">Payment</option>
+                            <option th:each="paymentMethod : ${paymentMethods}" th:value="${paymentMethod.code}"
+                                    th:text="${paymentMethod.displayName}">Payment</option>
                         </select>
+                        <small class="muted"
+                               th:if="${checkoutForm.paymentMethod != null and !paymentMethods.isEmpty()}"
+                               th:text="${paymentMethods.?[code == checkoutForm.paymentMethod].isEmpty() ? '' : paymentMethods.?[code == checkoutForm.paymentMethod][0].description}">Description</small>
                     </div>
                 </div>
 

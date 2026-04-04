@@ -668,6 +668,81 @@ public class GatewayClient {
         );
     }
 
+    public List<CustomFieldDefinition> listCustomFields(String scope, Boolean active) {
+        return safeList(
+            () -> defaultWebClient.get()
+                .uri(uriBuilder -> uriBuilder
+                    .path(baseUrl + "/api/customers/custom-fields")
+                    .queryParamIfPresent("scope", Optional.ofNullable(scope))
+                    .queryParamIfPresent("active", Optional.ofNullable(active))
+                    .build())
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<List<CustomFieldDefinition>>() {})
+                .blockOptional()
+                .orElse(List.of()),
+            "/api/customers/custom-fields"
+        );
+    }
+
+    public List<CustomerCustomFieldValue> listCustomerCustomFieldValues(Long customerId, String scope) {
+        return safeList(
+            () -> client().get()
+                .uri(uriBuilder -> uriBuilder
+                    .path(baseUrl + "/api/customers/{customerId}/custom-fields/values")
+                    .queryParamIfPresent("scope", Optional.ofNullable(scope))
+                    .build(customerId))
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<List<CustomerCustomFieldValue>>() {})
+                .blockOptional()
+                .orElse(List.of()),
+            "/api/customers/{customerId}/custom-fields/values"
+        );
+    }
+
+    public List<CustomerCustomFieldValue> saveCustomerCustomFieldValues(Long customerId, List<CustomerCustomFieldValueRequest> requests) {
+        return client().put()
+            .uri(baseUrl + "/api/customers/{customerId}/custom-fields/values", customerId)
+            .bodyValue(requests)
+            .retrieve()
+            .bodyToMono(new ParameterizedTypeReference<List<CustomerCustomFieldValue>>() {})
+            .blockOptional()
+            .orElse(List.of());
+    }
+
+    public CustomFieldDefinition getCustomField(Long id) {
+        return client().get()
+            .uri(baseUrl + "/api/customers/custom-fields/{id}", id)
+            .retrieve()
+            .bodyToMono(CustomFieldDefinition.class)
+            .block();
+    }
+
+    public CustomFieldDefinition createCustomField(CustomFieldDefinition request) {
+        return client().post()
+            .uri(baseUrl + "/api/customers/custom-fields")
+            .bodyValue(request)
+            .retrieve()
+            .bodyToMono(CustomFieldDefinition.class)
+            .block();
+    }
+
+    public CustomFieldDefinition updateCustomField(Long id, CustomFieldDefinition request) {
+        return client().put()
+            .uri(baseUrl + "/api/customers/custom-fields/{id}", id)
+            .bodyValue(request)
+            .retrieve()
+            .bodyToMono(CustomFieldDefinition.class)
+            .block();
+    }
+
+    public void deleteCustomField(Long id) {
+        client().delete()
+            .uri(baseUrl + "/api/customers/custom-fields/{id}", id)
+            .retrieve()
+            .toBodilessEntity()
+            .block();
+    }
+
     public List<Address> listCustomerAddresses(Long customerId) {
         return safeList(
             () -> client().get()
@@ -734,9 +809,104 @@ public class GatewayClient {
         );
     }
 
+    public List<PaymentMethod> listPaymentMethods() {
+        return safeList(
+            () -> defaultWebClient.get()
+                .uri(baseUrl + "/api/payments/methods")
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<List<PaymentMethod>>() {})
+                .blockOptional()
+                .orElse(List.of()),
+            "/api/payments/methods"
+        );
+    }
+
+    public List<PaymentMethod> listAdminPaymentMethods() {
+        return safeList(
+            () -> client().get()
+                .uri(baseUrl + "/api/payments/admin/methods")
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<List<PaymentMethod>>() {})
+                .blockOptional()
+                .orElse(List.of()),
+            "/api/payments/admin/methods"
+        );
+    }
+
+    public PaymentMethod getAdminPaymentMethod(Long id) {
+        return client().get()
+            .uri(baseUrl + "/api/payments/admin/methods/{id}", id)
+            .retrieve()
+            .bodyToMono(PaymentMethod.class)
+            .block();
+    }
+
+    public PaymentMethod createAdminPaymentMethod(AdminPaymentMethodForm form) {
+        return client().post()
+            .uri(baseUrl + "/api/payments/admin/methods")
+            .bodyValue(form)
+            .retrieve()
+            .bodyToMono(PaymentMethod.class)
+            .block();
+    }
+
+    public PaymentMethod updateAdminPaymentMethod(Long id, AdminPaymentMethodForm form) {
+        return client().put()
+            .uri(baseUrl + "/api/payments/admin/methods/{id}", id)
+            .bodyValue(form)
+            .retrieve()
+            .bodyToMono(PaymentMethod.class)
+            .block();
+    }
+
+    public void deleteAdminPaymentMethod(Long id) {
+        client().delete()
+            .uri(baseUrl + "/api/payments/admin/methods/{id}", id)
+            .retrieve()
+            .toBodilessEntity()
+            .block();
+    }
+
     public Payment createPayment(PaymentRequest request) {
         return client().post()
             .uri(baseUrl + "/api/payments")
+            .bodyValue(request)
+            .retrieve()
+            .bodyToMono(Payment.class)
+            .block();
+    }
+
+    public Payment capturePayPalPayment(Long paymentId, String token) {
+        return defaultWebClient.post()
+            .uri(uriBuilder -> uriBuilder
+                .path(baseUrl + "/api/payments/{paymentId}/capture/paypal")
+                .queryParamIfPresent("token", Optional.ofNullable(token))
+                .build(paymentId))
+            .retrieve()
+            .bodyToMono(Payment.class)
+            .block();
+    }
+
+    public Payment completeFabrickPayment(Long paymentId, FabrickCompletionRequest request) {
+        return defaultWebClient.post()
+            .uri(baseUrl + "/api/payments/{paymentId}/complete/fabrick", paymentId)
+            .bodyValue(request)
+            .retrieve()
+            .bodyToMono(Payment.class)
+            .block();
+    }
+
+    public Payment reconcilePayment(Long paymentId) {
+        return client().post()
+            .uri(baseUrl + "/api/payments/{paymentId}/reconcile", paymentId)
+            .retrieve()
+            .bodyToMono(Payment.class)
+            .block();
+    }
+
+    public Payment refundPayment(Long paymentId, PaymentRefundRequest request) {
+        return client().post()
+            .uri(baseUrl + "/api/payments/{paymentId}/refund", paymentId)
             .bodyValue(request)
             .retrieve()
             .bodyToMono(Payment.class)

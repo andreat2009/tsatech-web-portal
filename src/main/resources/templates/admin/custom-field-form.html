@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title th:text="${formTitle}">Custom Field</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+</head>
+<body>
+<div th:replace="fragments/header :: header"></div>
+
+<main class="container admin">
+    <div class="page-header">
+        <h1 th:text="${formTitle}">Custom Field</h1>
+        <a class="btn" th:href="@{/admin/custom-fields}" th:text="#{common.back.to.list}">Back to list</a>
+    </div>
+
+    <form class="form" th:action="${formAction}" method="post" th:object="${customField}">
+        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+        <div class="field-grid two">
+            <div class="field">
+                <label>Code</label>
+                <input th:field="*{code}" required />
+            </div>
+            <div class="field">
+                <label>Label</label>
+                <input th:field="*{label}" required />
+            </div>
+        </div>
+
+        <div class="field-grid two">
+            <div class="field">
+                <label>Type</label>
+                <select th:field="*{fieldType}">
+                    <option th:each="type : ${fieldTypeOptions}" th:value="${type}" th:text="${type}">TEXT</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Scope</label>
+                <select th:field="*{fieldScope}">
+                    <option th:each="scope : ${fieldScopeOptions}" th:value="${scope}" th:text="${scope}">CHECKOUT</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="field-grid two">
+            <div class="field">
+                <label>Placeholder</label>
+                <input th:field="*{placeholder}" />
+            </div>
+            <div class="field">
+                <label>Sort order</label>
+                <input type="number" th:field="*{sortOrder}" />
+            </div>
+        </div>
+
+        <div class="field">
+            <label>Help text</label>
+            <textarea th:field="*{helpText}" rows="3"></textarea>
+        </div>
+
+        <div class="field-grid three">
+            <div class="field">
+                <label>Required</label>
+                <select th:field="*{required}">
+                    <option th:value="true">true</option>
+                    <option th:value="false">false</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Active</label>
+                <select th:field="*{active}">
+                    <option th:value="true">true</option>
+                    <option th:value="false">false</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Persist for customer</label>
+                <select th:field="*{persistForCustomer}">
+                    <option th:value="true">true</option>
+                    <option th:value="false">false</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="field">
+            <label>Options</label>
+            <textarea th:field="*{optionsText}" rows="6" placeholder="value|Label
+second-value|Second label"></textarea>
+            <small class="muted">Use one line per option in the format <code>value|Label</code>. Options are used for SELECT fields.</small>
+        </div>
+
+        <div class="actions space-top">
+            <button class="btn btn-primary" type="submit" th:text="#{common.save}">Save</button>
+            <a class="btn" th:href="@{/admin/custom-fields}" th:text="#{common.cancel}">Cancel</a>
+        </div>
+    </form>
+</main>
+
+<div th:replace="fragments/footer :: footer"></div>
+</body>
+</html>

@@ -23,6 +23,26 @@
         <div><strong th:text="#{common.total} + ':'">Total:</strong> <span th:text="${order.total != null ? #numbers.formatDecimal(order.total, 1, 'POINT', 2, 'POINT') : '0.00'}">0.00</span></div>
     </section>
 
+    <section th:if="${order.customFields != null and !order.customFields.isEmpty()}">
+        <h2 th:text="#{account.order.detail.custom.fields}">Custom fields</h2>
+        <table class="table compact">
+            <thead>
+            <tr>
+                <th>Code</th>
+                <th th:text="#{common.description}">Label</th>
+                <th th:text="#{common.value}">Value</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="customField : ${order.customFields}">
+                <td th:text="${customField.fieldCode}">code</td>
+                <td th:text="${customField.fieldLabel}">Label</td>
+                <td th:text="${customField.fieldValue}">Value</td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+
     <section>
         <h2 th:text="#{account.order.detail.lines}">Order lines</h2>
         <table class="table">
@@ -52,6 +72,7 @@
                 <thead>
                 <tr>
                     <th>ID</th>
+                    <th th:text="#{checkout.payment.method}">Method</th>
                     <th th:text="#{common.provider}">Provider</th>
                     <th th:text="#{common.status}">Status</th>
                 </tr>
@@ -59,7 +80,8 @@
                 <tbody>
                 <tr th:each="payment : ${payments}">
                     <td th:text="${payment.id}">1</td>
-                    <td th:text="${payment.provider}">cod</td>
+                    <td th:text="${payment.methodLabel != null ? payment.methodLabel : payment.methodCode}">paypal</td>
+                    <td th:text="${payment.provider}">PAYPAL</td>
                     <td th:text="${payment.status}">CREATED</td>
                 </tr>
                 </tbody>

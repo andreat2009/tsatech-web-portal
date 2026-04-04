@@ -1,11 +1,15 @@
 package com.newproject.web.dto;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 public class CheckoutForm {
     private Long addressId;
     private String shippingMethod;
     private String paymentMethod;
     private String couponCode;
     private String comment;
+    private Map<String, String> customFields = new LinkedHashMap<>();
 
     private String guestEmail;
     private String guestFirstName;
@@ -67,6 +71,14 @@ public class CheckoutForm {
 
     public void setComment(String comment) {
         this.comment = comment;
+    }
+
+    public Map<String, String> getCustomFields() {
+        return customFields;
+    }
+
+    public void setCustomFields(Map<String, String> customFields) {
+        this.customFields = customFields != null ? customFields : new LinkedHashMap<>();
     }
 
     public String getGuestEmail() {

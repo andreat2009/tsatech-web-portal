@@ -1,8 +1,14 @@
 package com.newproject.web.error;
 
+import com.newproject.web.dto.InformationPage;
+import com.newproject.web.dto.PublicStoreSettings;
+import com.newproject.web.i18n.LanguageSupport;
+import com.newproject.web.service.GatewayClient;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.OffsetDateTime;
+import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
@@ -33,9 +39,11 @@ public class PortalExceptionHandler {
     private static final Logger logger = LoggerFactory.getLogger(PortalExceptionHandler.class);
 
     private final MessageSource messageSource;
+    private final GatewayClient gatewayClient;
 
-    public PortalExceptionHandler(MessageSource messageSource) {
+    public PortalExceptionHandler(MessageSource messageSource, GatewayClient gatewayClient) {
         this.messageSource = messageSource;
+        this.gatewayClient = gatewayClient;
     }
 
     @ExceptionHandler(Exception.class)
@@ -71,7 +79,43 @@ public class PortalExceptionHandler {
         mav.addObject("path", path);
         mav.addObject("reference", reference);
         mav.addObject("backUrl", sanitizeBackUrl(request.getHeader("Referer")));
+        addSharedAttributes(mav, locale, request);
         return mav;
+    }
+
+    private void addSharedAttributes(ModelAndView mav, Locale locale, HttpServletRequest request) {
+        String current = LanguageSupport.fromLocale(locale);
+        List<Map<String, String>> options = LanguageSupport.SUPPORTED_LANGUAGES.stream()
+            .map(code -> Map.of(
+                "code", code,
+                "label", LanguageSupport.label(code),
+                "flag", LanguageSupport.flag(code)
+            ))
+            .toList();
+        String currentRequestUri = request != null && request.getRequestURI() != null
+            ? request.getRequestURI()
+            : "/";
+        PublicStoreSettings settings = gatewayClient.getPublicStoreSettings();
+        if (settings == null) {
+            settings = new PublicStoreSettings();
+            settings.setSiteName("TSATech Store");
+            settings.setLogoMaxHeightPx(96);
+            settings.setSiteNameFontSizePx(28);
+            settings.setSupportPhone("+39 800 000 000");
+        }
+
+        List<InformationPage> footerInformationPages;
+        try {
+            footerInformationPages = gatewayClient.listInformationPages(true);
+        } catch (Exception ex) {
+            footerInformationPages = Collections.emptyList();
+        }
+
+        mav.addObject("languageOptions", options);
+        mav.addObject("currentLanguage", current);
+        mav.addObject("currentRequestUri", currentRequestUri);
+        mav.addObject("storeSettings", settings);
+        mav.addObject("footerInformationPages", footerInformationPages);
     }
 
     private boolean expectsJson(HttpServletRequest request) {

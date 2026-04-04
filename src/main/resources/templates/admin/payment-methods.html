@@ -10,7 +10,7 @@
 
 <main class="container admin">
     <div class="page-header">
-        <h1>Payment Methods</h1>
+        <h1>Payment Methods & Credentials</h1>
         <a class="btn btn-primary" th:href="@{/admin/payment-methods/new}">New payment method</a>
     </div>
 
@@ -22,6 +22,7 @@
                 <th>Display name</th>
                 <th>Provider</th>
                 <th>Flow</th>
+                <th>Configured</th>
                 <th>Active</th>
                 <th>Sort</th>
                 <th></th>
@@ -29,13 +30,14 @@
             </thead>
             <tbody>
             <tr th:if="${paymentMethods == null or paymentMethods.isEmpty()}">
-                <td colspan="7" class="muted">No payment methods configured.</td>
+                <td colspan="8" class="muted">No payment methods configured.</td>
             </tr>
             <tr th:each="method : ${paymentMethods}">
                 <td th:text="${method.code}">paypal</td>
                 <td th:text="${method.displayName}">PayPal</td>
                 <td th:text="${method.provider}">PAYPAL</td>
                 <td th:text="${method.paymentFlow}">REDIRECT</td>
+                <td th:text="${method.provider == 'OFFLINE' ? 'n/a' : (method.providerConfigurationAvailable != null and method.providerConfigurationAvailable ? 'ready' : 'missing creds')}">ready</td>
                 <td th:text="${method.active}">true</td>
                 <td th:text="${method.sortOrder}">10</td>
                 <td class="actions inline-actions">

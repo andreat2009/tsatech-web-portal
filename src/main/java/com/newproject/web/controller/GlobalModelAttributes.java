@@ -37,6 +37,13 @@ public class GlobalModelAttributes {
             : "/";
 
         PublicStoreSettings settings = gatewayClient.getPublicStoreSettings();
+        if (settings == null) {
+            settings = new PublicStoreSettings();
+            settings.setSiteName("TSATech Store");
+            settings.setLogoMaxHeightPx(96);
+            settings.setSiteNameFontSizePx(28);
+            settings.setSupportPhone("+39 800 000 000");
+        }
 
         List<InformationPage> footerInformationPages;
         try {

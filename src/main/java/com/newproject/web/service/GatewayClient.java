@@ -1536,7 +1536,7 @@ public class GatewayClient {
     }
 
     public PublicStoreSettings getPublicStoreSettings() {
-        return safeCall(
+        PublicStoreSettings settings = safeCall(
             () -> defaultWebClient.get()
                 .uri(baseUrl + "/api/cms/settings/public")
                 .retrieve()
@@ -1545,6 +1545,7 @@ public class GatewayClient {
             "/api/cms/settings/public",
             defaultPublicStoreSettings()
         );
+        return settings != null ? settings : defaultPublicStoreSettings();
     }
 
     public StoreSettings getStoreSettings() {

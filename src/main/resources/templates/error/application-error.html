@@ -6,7 +6,7 @@
     <link rel="stylesheet" th:href="@{/css/app.css}" />
 </head>
 <body>
-<div th:replace="fragments/header :: header"></div>
+<div th:replace="~{fragments/header :: header}"></div>
 
 <main class="container">
     <section class="card error-page-card">
@@ -38,6 +38,6 @@
     </section>
 </main>
 
-<div th:replace="fragments/footer :: footer"></div>
+<div th:replace="~{fragments/footer :: footer}"></div>
 </body>
 </html>

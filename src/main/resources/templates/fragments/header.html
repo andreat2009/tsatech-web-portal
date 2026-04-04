@@ -36,8 +36,8 @@
         <div class="container header-row">
             <div id="logo" th:style="${'--brand-logo-height:' + ((storeSettings != null and storeSettings.logoMaxHeightPx != null) ? storeSettings.logoMaxHeightPx : 96) + 'px; --brand-name-size:' + ((storeSettings != null and storeSettings.siteNameFontSizePx != null) ? storeSettings.siteNameFontSizePx : 28) + 'px;'}">
                 <a th:href="@{/}" class="brand-link">
-                    <img class="brand-logo" th:if="${storeSettings.logoUrl != null and !#strings.isEmpty(storeSettings.logoUrl)}" th:src="${storeSettings.logoUrl}" th:alt="${storeSettings.siteName}" />
-                    <span th:text="${storeSettings.siteName != null ? storeSettings.siteName : #messages.msg('header.brand')}">TSATech Store</span>
+                    <img class="brand-logo" th:if="${storeSettings != null and storeSettings.logoUrl != null and !#strings.isEmpty(storeSettings.logoUrl)}" th:src="${storeSettings.logoUrl}" th:alt="${storeSettings != null and storeSettings.siteName != null ? storeSettings.siteName : #messages.msg('header.brand')}" />
+                    <span th:text="${storeSettings != null and storeSettings.siteName != null ? storeSettings.siteName : #messages.msg('header.brand')}">TSATech Store</span>
                 </a>
             </div>
             <form class="header-search" method="get" th:action="@{/catalogo}">

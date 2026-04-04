@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class AdminPaymentMethodController {
     private static final List<String> PROVIDER_OPTIONS = List.of("OFFLINE", "PAYPAL", "FABRICK");
     private static final List<String> PAYMENT_FLOW_OPTIONS = List.of("OFFLINE", "REDIRECT", "LIGHTBOX");
+    private static final List<String> ENVIRONMENT_OPTIONS = List.of("sandbox", "production");
 
     private final GatewayClient gatewayClient;
 
@@ -37,6 +38,7 @@ public class AdminPaymentMethodController {
         form.setPaymentFlow("OFFLINE");
         form.setActive(true);
         form.setSortOrder(10);
+        form.setProviderConfigurationAvailable(true);
         fillFormModel(model, form, "/admin/payment-methods", "New Payment Method");
         return "admin/payment-method-form";
     }
@@ -50,7 +52,7 @@ public class AdminPaymentMethodController {
     @GetMapping("/{id}/edit")
     public String editForm(@PathVariable Long id, Model model) {
         PaymentMethod method = gatewayClient.getAdminPaymentMethod(id);
-        fillFormModel(model, toForm(method), "/admin/payment-methods/" + id, "Edit Payment Method");
+        fillFormModel(model, toForm(method), "/admin/payment-methods/" + id, "Edit Payment Method & Credentials");
         return "admin/payment-method-form";
     }
 
@@ -70,6 +72,7 @@ public class AdminPaymentMethodController {
         model.addAttribute("paymentMethod", form);
         model.addAttribute("providerOptions", PROVIDER_OPTIONS);
         model.addAttribute("paymentFlowOptions", PAYMENT_FLOW_OPTIONS);
+        model.addAttribute("environmentOptions", ENVIRONMENT_OPTIONS);
         model.addAttribute("formAction", action);
         model.addAttribute("formTitle", title);
     }
@@ -83,6 +86,21 @@ public class AdminPaymentMethodController {
         form.setDescription(method.getDescription());
         form.setActive(method.getActive() == null || method.getActive());
         form.setSortOrder(method.getSortOrder());
+        form.setProviderEnvironment(method.getProviderEnvironment());
+        form.setProviderBaseUrl(method.getProviderBaseUrl());
+        form.setProviderBrandName(method.getProviderBrandName());
+        form.setProviderWebhookId(method.getProviderWebhookId());
+        form.setProviderClientId(method.getProviderClientId());
+        form.setProviderClientSecretConfigured(Boolean.TRUE.equals(method.getProviderClientSecretConfigured()));
+        form.setProviderClientSecretSource(method.getProviderClientSecretSource());
+        form.setProviderShopLogin(method.getProviderShopLogin());
+        form.setProviderApiKeyConfigured(Boolean.TRUE.equals(method.getProviderApiKeyConfigured()));
+        form.setProviderApiKeySource(method.getProviderApiKeySource());
+        form.setProviderLightboxScriptUrl(method.getProviderLightboxScriptUrl());
+        form.setProviderNotificationUrl(method.getProviderNotificationUrl());
+        form.setProviderConfigurationAvailable(method.getProviderConfigurationAvailable() == null || method.getProviderConfigurationAvailable());
+        form.setClearProviderClientSecret(false);
+        form.setClearProviderApiKey(false);
         return form;
     }
 }

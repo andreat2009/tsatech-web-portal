@@ -4,6 +4,14 @@
     <meta charset="UTF-8" />
     <title th:text="${formTitle}">Payment Method</title>
     <link rel="stylesheet" th:href="@{/css/app.css}" />
+    <style>
+        .hint { font-size: 0.9rem; color: #6b7280; margin-top: 0.35rem; }
+        .provider-panel { border: 1px solid #e5e7eb; border-radius: 16px; padding: 1rem; margin-top: 1rem; background: #fafafa; }
+        .provider-panel h2 { margin-top: 0; }
+        .status-pill { display:inline-block; padding:0.2rem 0.6rem; border-radius:999px; font-size:0.85rem; }
+        .status-pill.ok { background:#dcfce7; color:#166534; }
+        .status-pill.warn { background:#fef3c7; color:#92400e; }
+    </style>
 </head>
 <body>
 <div th:replace="fragments/header :: header"></div>
@@ -31,7 +39,7 @@
         <div class="field-grid two">
             <div class="field">
                 <label>Provider</label>
-                <select th:field="*{provider}">
+                <select th:field="*{provider}" data-provider-select>
                     <option th:each="provider : ${providerOptions}" th:value="${provider}" th:text="${provider}">OFFLINE</option>
                 </select>
             </div>
@@ -62,13 +70,109 @@
             <textarea th:field="*{description}" rows="4"></textarea>
         </div>
 
+        <section class="provider-panel" data-provider-panel="PAYPAL FABRICK">
+            <h2>Provider runtime configuration</h2>
+            <p class="hint">Questa sezione vale sia in locale sia in produzione. Le credenziali sensibili vengono cifrate lato backend: lascia i campi secret vuoti per mantenere il valore gia salvato.</p>
+            <div class="field-grid two">
+                <div class="field">
+                    <label>Environment</label>
+                    <select th:field="*{providerEnvironment}">
+                        <option value="">Default</option>
+                        <option th:each="env : ${environmentOptions}" th:value="${env}" th:text="${env}">sandbox</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Base URL provider</label>
+                    <input th:field="*{providerBaseUrl}" placeholder="https://api-m.paypal.com" />
+                </div>
+            </div>
+            <div class="hint">
+                Current provider status:
+                <span class="status-pill" th:classappend="${paymentMethod.providerConfigurationAvailable != null and paymentMethod.providerConfigurationAvailable} ? ' ok' : ' warn'"
+                      th:text="${paymentMethod.providerConfigurationAvailable != null and paymentMethod.providerConfigurationAvailable} ? 'configured' : 'missing credentials'">configured</span>
+            </div>
+        </section>
+
+        <section class="provider-panel" data-provider-panel="PAYPAL">
+            <h2>PayPal credentials</h2>
+            <div class="field-grid two">
+                <div class="field">
+                    <label>Client ID</label>
+                    <input th:field="*{providerClientId}" autocomplete="off" />
+                </div>
+                <div class="field">
+                    <label>Brand name</label>
+                    <input th:field="*{providerBrandName}" placeholder="TSA Store" />
+                </div>
+            </div>
+            <div class="field-grid two">
+                <div class="field">
+                    <label>Client secret</label>
+                    <input type="password" th:field="*{providerClientSecret}" autocomplete="new-password" placeholder="Leave blank to keep current secret" />
+                    <div class="hint" th:text="${paymentMethod.providerClientSecretConfigured != null and paymentMethod.providerClientSecretConfigured} ? 'Secret present (' + paymentMethod.providerClientSecretSource + ')' : 'No secret saved yet.'">Secret status</div>
+                </div>
+                <div class="field">
+                    <label>Webhook ID</label>
+                    <input th:field="*{providerWebhookId}" autocomplete="off" />
+                </div>
+            </div>
+            <div class="field">
+                <label><input type="checkbox" th:field="*{clearProviderClientSecret}" /> Clear saved client secret</label>
+            </div>
+        </section>
+
+        <section class="provider-panel" data-provider-panel="FABRICK">
+            <h2>Fabrick / Banca Sella credentials</h2>
+            <div class="field-grid two">
+                <div class="field">
+                    <label>Shop login</label>
+                    <input th:field="*{providerShopLogin}" autocomplete="off" />
+                </div>
+                <div class="field">
+                    <label>API key</label>
+                    <input type="password" th:field="*{providerApiKey}" autocomplete="new-password" placeholder="Leave blank to keep current API key" />
+                    <div class="hint" th:text="${paymentMethod.providerApiKeyConfigured != null and paymentMethod.providerApiKeyConfigured} ? 'API key present (' + paymentMethod.providerApiKeySource + ')' : 'No API key saved yet.'">API key status</div>
+                </div>
+            </div>
+            <div class="field-grid two">
+                <div class="field">
+                    <label>Lightbox script URL</label>
+                    <input th:field="*{providerLightboxScriptUrl}" placeholder="https://sandbox.gestpay.net/pagam/javascript/axerve.js" />
+                </div>
+                <div class="field">
+                    <label>Server notification URL</label>
+                    <input th:field="*{providerNotificationUrl}" placeholder="https://api-gateway-.../api/payments/webhooks/fabrick" />
+                </div>
+            </div>
+            <div class="field">
+                <label><input type="checkbox" th:field="*{clearProviderApiKey}" /> Clear saved API key</label>
+            </div>
+        </section>
+
         <div class="actions space-top">
-            <button class="btn btn-primary" type="submit" th:text="#{common.save}">Save</button>
-            <a class="btn" th:href="@{/admin/payment-methods}" th:text="#{common.cancel}">Cancel</a>
+            <button class="btn btn-primary" type="submit" th:text="#\{common.save\}">Save</button>
+            <a class="btn" th:href="@{/admin/payment-methods}" th:text="#\{common.cancel\}">Cancel</a>
         </div>
     </form>
 </main>
 
 <div th:replace="fragments/footer :: footer"></div>
+<script>
+(function() {
+  const select = document.querySelector('[data-provider-select]');
+  const panels = Array.from(document.querySelectorAll('[data-provider-panel]'));
+  const togglePanels = () => {
+    const current = (select?.value || 'OFFLINE').toUpperCase();
+    panels.forEach((panel) => {
+      const providers = (panel.getAttribute('data-provider-panel') || '').split(/\s+/).filter(Boolean);
+      panel.style.display = providers.includes(current) ? '' : 'none';
+    });
+  };
+  if (select) {
+    select.addEventListener('change', togglePanels);
+    togglePanels();
+  }
+})();
+</script>
 </body>
 </html>

@@ -1,13 +1,17 @@
 package com.newproject.web.controller;
 
+import com.newproject.web.dto.InventoryItem;
 import com.newproject.web.dto.Manufacturer;
 import com.newproject.web.dto.Product;
+import com.newproject.web.dto.ProductPrice;
 import com.newproject.web.service.GatewayClient;
 import jakarta.servlet.http.HttpSession;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -34,6 +38,8 @@ public class CatalogExperienceController {
                 .collect(Collectors.toList());
         }
 
+        applyCatalogState(products);
+
         model.addAttribute("manufacturers", manufacturers);
         model.addAttribute("selectedManufacturerId", manufacturerId);
         model.addAttribute("products", products);
@@ -47,6 +53,8 @@ public class CatalogExperienceController {
             .limit(30)
             .collect(Collectors.toList());
 
+        applyCatalogState(products);
+
         model.addAttribute("products", products);
         return "shop/special";
     }
@@ -58,8 +66,34 @@ public class CatalogExperienceController {
         for (Long id : ids) {
             gatewayClient.getProductSafe(id).ifPresent(products::add);
         }
+        applyCatalogState(products);
         model.addAttribute("products", products);
         return "shop/compare";
+    }
+
+    private void applyCatalogState(List<Product> products) {
+        if (products == null || products.isEmpty()) {
+            return;
+        }
+
+        Map<Long, ProductPrice> pricesByProductId = gatewayClient.listPrices().stream()
+            .filter(price -> price.getProductId() != null)
+            .collect(Collectors.toMap(ProductPrice::getProductId, Function.identity(), (first, ignored) -> first));
+        Map<Long, InventoryItem> inventoryByProductId = gatewayClient.listInventory().stream()
+            .filter(item -> item.getProductId() != null)
+            .collect(Collectors.toMap(InventoryItem::getProductId, Function.identity(), (first, ignored) -> first));
+
+        for (Product product : products) {
+            ProductPrice price = pricesByProductId.get(product.getId());
+            if (price != null && Boolean.TRUE.equals(price.getActive()) && price.getAmount() != null) {
+                product.setPrice(price.getAmount());
+            }
+
+            InventoryItem inventory = inventoryByProductId.get(product.getId());
+            if (inventory != null && inventory.getOnHand() != null) {
+                product.setQuantity(Math.max(0, inventory.getOnHand()));
+            }
+        }
     }
 
     @PostMapping({"/compare/add", "/confronta/aggiungi"})

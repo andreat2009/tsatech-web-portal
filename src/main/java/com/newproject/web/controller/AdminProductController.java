@@ -1,5 +1,6 @@
 package com.newproject.web.controller;
 
+import com.newproject.web.dto.InventoryRequest;
 import com.newproject.web.dto.LocalizedContent;
 import com.newproject.web.dto.Product;
 import com.newproject.web.dto.ProductAutoTranslateRequest;
@@ -80,6 +81,7 @@ public class AdminProductController {
         Product created = gatewayClient.createProduct(request);
 
         if (created != null && created.getId() != null) {
+            syncInventoryAfterCatalogChange(created.getId(), request.getQuantity());
             uploadImages(created.getId(), coverImageFile, galleryImageFiles);
             return "redirect:/admin/catalogo/prodotti/" + created.getId() + "/modifica";
         }
@@ -130,6 +132,7 @@ public class AdminProductController {
         normalizeProductRequest(request, translationSourceLanguage);
         applyAutoTranslationsIfRequested(request, translationSourceLanguage, autoTranslate, overwriteTranslations);
         gatewayClient.updateProduct(id, request);
+        syncInventoryAfterCatalogChange(id, request.getQuantity());
 
         Set<Long> removedIds = Set.of();
         if (deleteImageIds != null && !deleteImageIds.isEmpty()) {
@@ -151,7 +154,32 @@ public class AdminProductController {
     @PostMapping("/{id}/delete")
     public String delete(@PathVariable Long id) {
         gatewayClient.deleteProduct(id);
+        deleteInventoryQuietly(id);
         return "redirect:/admin/catalogo/prodotti";
+    }
+
+    private void syncInventoryAfterCatalogChange(Long productId, Integer quantity) {
+        if (productId == null) {
+            return;
+        }
+
+        InventoryRequest inventoryRequest = new InventoryRequest();
+        inventoryRequest.setProductId(productId);
+        inventoryRequest.setOnHand(quantity != null && quantity > 0 ? quantity : 0);
+        inventoryRequest.setReserved(0);
+        gatewayClient.upsertInventory(productId, inventoryRequest);
+    }
+
+    private void deleteInventoryQuietly(Long productId) {
+        if (productId == null) {
+            return;
+        }
+
+        try {
+            gatewayClient.deleteInventory(productId);
+        } catch (Exception ex) {
+            logger.warn("Unable to delete inventory for product {}: {}", productId, ex.getMessage());
+        }
     }
 
     @ExceptionHandler(MultipartException.class)

@@ -26,6 +26,7 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -108,30 +109,12 @@ public class StorefrontController {
         Long customerId = null;
         if (isAuthenticated(authentication)) {
             customerId = customerResolver.resolveCustomerId(authentication);
-            if (customerId != null) {
+            if (customerId != null && shouldAutoMergeGuestCart(authentication)) {
                 mergeGuestCartIntoCustomerIfPresent(customerId, session);
             }
-
-            Map<Long, ProductPrice> pricesByProductId = gatewayClient.listPrices().stream()
-                .filter(price -> price.getProductId() != null)
-                .collect(Collectors.toMap(ProductPrice::getProductId, Function.identity(), (first, ignored) -> first));
-
-            Map<Long, InventoryItem> inventoryByProductId = gatewayClient.listInventory().stream()
-                .filter(item -> item.getProductId() != null)
-                .collect(Collectors.toMap(InventoryItem::getProductId, Function.identity(), (first, ignored) -> first));
-
-            for (Product product : products) {
-                ProductPrice price = pricesByProductId.get(product.getId());
-                if (price != null && Boolean.TRUE.equals(price.getActive()) && price.getAmount() != null) {
-                    product.setPrice(price.getAmount());
-                }
-
-                InventoryItem inventory = inventoryByProductId.get(product.getId());
-                if (inventory != null && inventory.getOnHand() != null && inventory.getReserved() != null) {
-                    product.setQuantity(Math.max(0, inventory.getOnHand() - inventory.getReserved()));
-                }
-            }
         }
+
+        applyCatalogState(products);
 
         Set<Long> wishlistProductIds = customerId == null
             ? Set.of()
@@ -162,6 +145,7 @@ public class StorefrontController {
         if (slug == null || !product.getSeoSlug().equals(slug)) {
             return "redirect:" + product.getSeoPath();
         }
+        applyCatalogState(product);
         List<ProductReview> reviews = gatewayClient.listProductReviews(id).stream()
             .filter(review -> Boolean.TRUE.equals(review.getApproved()))
             .collect(Collectors.toList());
@@ -244,7 +228,9 @@ public class StorefrontController {
             return "redirect:/carrello";
         }
 
-        mergeGuestCartIntoCustomerIfPresent(customerId, session);
+        if (shouldAutoMergeGuestCart(authentication)) {
+            mergeGuestCartIntoCustomerIfPresent(customerId, session);
+        }
 
         Cart cart = resolveOrCreateCart(customerId);
         CartItemRequest request = new CartItemRequest();
@@ -266,7 +252,9 @@ public class StorefrontController {
             return "cart/view";
         }
 
-        mergeGuestCartIntoCustomerIfPresent(customerId, session);
+        if (shouldAutoMergeGuestCart(authentication)) {
+            mergeGuestCartIntoCustomerIfPresent(customerId, session);
+        }
 
         Optional<Cart> cartOpt = resolveCart(customerId);
         if (cartOpt.isEmpty()) {
@@ -298,7 +286,9 @@ public class StorefrontController {
             return "redirect:/carrello";
         }
 
-        mergeGuestCartIntoCustomerIfPresent(customerId, session);
+        if (shouldAutoMergeGuestCart(authentication)) {
+            mergeGuestCartIntoCustomerIfPresent(customerId, session);
+        }
 
         if (quantity == null || quantity <= 0) {
             gatewayClient.deleteCartItem(id);
@@ -317,7 +307,9 @@ public class StorefrontController {
             return "redirect:/carrello";
         }
 
-        mergeGuestCartIntoCustomerIfPresent(customerId, session);
+        if (shouldAutoMergeGuestCart(authentication)) {
+            mergeGuestCartIntoCustomerIfPresent(customerId, session);
+        }
         gatewayClient.deleteCartItem(id);
         return "redirect:/carrello";
     }
@@ -335,7 +327,9 @@ public class StorefrontController {
         Long customerId = customerResolver.resolveCustomerId(authentication);
 
         if (customerId != null) {
-            mergeGuestCartIntoCustomerIfPresent(customerId, session);
+            if (shouldAutoMergeGuestCart(authentication)) {
+                mergeGuestCartIntoCustomerIfPresent(customerId, session);
+            }
 
             Optional<Cart> cartOpt = resolveCart(customerId);
             if (cartOpt.isEmpty()) {
@@ -393,7 +387,9 @@ public class StorefrontController {
     public String checkoutConfirm(@ModelAttribute CheckoutForm checkoutForm, Authentication authentication, HttpSession session) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId != null) {
-            mergeGuestCartIntoCustomerIfPresent(customerId, session);
+            if (shouldAutoMergeGuestCart(authentication)) {
+                mergeGuestCartIntoCustomerIfPresent(customerId, session);
+            }
             return checkoutConfirmAuthenticated(customerId, checkoutForm, session);
         }
         return checkoutConfirmGuest(checkoutForm, session);
@@ -927,10 +923,73 @@ public class StorefrontController {
             .collect(Collectors.toList());
     }
 
+    private void applyCatalogState(List<Product> products) {
+        if (products == null || products.isEmpty()) {
+            return;
+        }
+
+        Map<Long, ProductPrice> pricesByProductId = gatewayClient.listPrices().stream()
+            .filter(price -> price.getProductId() != null)
+            .collect(Collectors.toMap(ProductPrice::getProductId, Function.identity(), (first, ignored) -> first));
+        Map<Long, InventoryItem> inventoryByProductId = gatewayClient.listInventory().stream()
+            .filter(item -> item.getProductId() != null)
+            .collect(Collectors.toMap(InventoryItem::getProductId, Function.identity(), (first, ignored) -> first));
+
+        for (Product product : products) {
+            applyCatalogState(product, pricesByProductId, inventoryByProductId);
+        }
+    }
+
+    private void applyCatalogState(Product product) {
+        if (product == null) {
+            return;
+        }
+
+        Map<Long, ProductPrice> pricesByProductId = gatewayClient.listPrices().stream()
+            .filter(price -> price.getProductId() != null)
+            .collect(Collectors.toMap(ProductPrice::getProductId, Function.identity(), (first, ignored) -> first));
+        Map<Long, InventoryItem> inventoryByProductId = gatewayClient.listInventory().stream()
+            .filter(item -> item.getProductId() != null)
+            .collect(Collectors.toMap(InventoryItem::getProductId, Function.identity(), (first, ignored) -> first));
+        applyCatalogState(product, pricesByProductId, inventoryByProductId);
+    }
+
+    private void applyCatalogState(Product product, Map<Long, ProductPrice> pricesByProductId, Map<Long, InventoryItem> inventoryByProductId) {
+        if (product == null) {
+            return;
+        }
+
+        ProductPrice price = pricesByProductId.get(product.getId());
+        if (price != null && Boolean.TRUE.equals(price.getActive()) && price.getAmount() != null) {
+            product.setPrice(price.getAmount());
+        }
+
+        InventoryItem inventory = inventoryByProductId.get(product.getId());
+        if (inventory != null && inventory.getOnHand() != null) {
+            product.setQuantity(Math.max(0, inventory.getOnHand()));
+        }
+    }
+
+    private boolean shouldAutoMergeGuestCart(Authentication authentication) {
+        return isAuthenticated(authentication) && !hasRole(authentication, "ROLE_ADMIN");
+    }
+
+    private boolean hasRole(Authentication authentication, String authority) {
+        if (authentication == null || authentication.getAuthorities() == null || authority == null) {
+            return false;
+        }
+        return authentication.getAuthorities().stream()
+            .map(GrantedAuthority::getAuthority)
+            .anyMatch(authority::equalsIgnoreCase);
+    }
+
     private Optional<Cart> resolveCart(Long customerId) {
         List<Cart> carts = gatewayClient.listCarts(customerId);
         return carts.stream()
             .filter(cart -> cart.getStatus() == null || cart.getStatus().equalsIgnoreCase("OPEN"))
+            .sorted(Comparator
+                .comparing(Cart::getUpdatedAt, Comparator.nullsLast(Comparator.reverseOrder()))
+                .thenComparing(Cart::getId, Comparator.nullsLast(Comparator.reverseOrder())))
             .findFirst();
     }
 
@@ -978,13 +1037,21 @@ public class StorefrontController {
     private CartSummary buildCartSummary(Cart cart) {
         List<CartItem> cartItems = gatewayClient.listCartItems(cart.getId());
         List<CartItemView> items = new ArrayList<>();
+        List<Long> staleItemIds = new ArrayList<>();
 
         for (CartItem item : cartItems) {
             Product product = gatewayClient.getProductSafe(item.getProductId()).orElse(null);
+            if (product == null) {
+                if (item.getId() != null) {
+                    staleItemIds.add(item.getId());
+                }
+                continue;
+            }
+
             CartItemView view = new CartItemView();
             view.setId(item.getId());
             view.setProductId(item.getProductId());
-            view.setProductName(product != null && product.getName() != null ? product.getName() : "Product #" + item.getProductId());
+            view.setProductName(product.getName() != null ? product.getName() : "Product #" + item.getProductId());
             int quantity = item.getQuantity() != null ? item.getQuantity() : 1;
             BigDecimal unitPrice = item.getUnitPrice() != null ? item.getUnitPrice() : BigDecimal.ZERO;
             view.setQuantity(quantity);
@@ -992,6 +1059,14 @@ public class StorefrontController {
             BigDecimal lineTotal = unitPrice.multiply(BigDecimal.valueOf(quantity));
             view.setLineTotal(lineTotal);
             items.add(view);
+        }
+
+        for (Long staleItemId : staleItemIds) {
+            try {
+                gatewayClient.deleteCartItem(staleItemId);
+            } catch (Exception ex) {
+                logger.warn("Unable to delete stale cart item {}: {}", staleItemId, ex.getMessage());
+            }
         }
 
         BigDecimal subtotal = items.stream()
@@ -1005,7 +1080,18 @@ public class StorefrontController {
     }
 
     private CartSummary buildGuestCartSummary(HttpSession session) {
-        return buildGuestCartSummary(getGuestCartItems(session));
+        Map<Long, Integer> guestCart = new LinkedHashMap<>(getGuestCartItems(session));
+        boolean changed = false;
+        for (Long productId : new ArrayList<>(guestCart.keySet())) {
+            if (gatewayClient.getProductSafe(productId).isEmpty()) {
+                guestCart.remove(productId);
+                changed = true;
+            }
+        }
+        if (changed) {
+            session.setAttribute(GUEST_CART_SESSION_KEY, guestCart);
+        }
+        return buildGuestCartSummary(guestCart);
     }
 
     private CartSummary buildGuestCartSummary(Map<Long, Integer> guestCart) {

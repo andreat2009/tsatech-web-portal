@@ -982,6 +982,52 @@ public class GatewayClient {
         );
     }
 
+    public Optional<InventoryItem> getInventorySafe(Long productId) {
+        return safeCall(
+            () -> Optional.ofNullable(
+                client().get()
+                    .uri(baseUrl + "/api/inventory/{productId}", productId)
+                    .retrieve()
+                    .bodyToMono(InventoryItem.class)
+                    .block()
+            ),
+            "/api/inventory/{productId}",
+            Optional.empty()
+        );
+    }
+
+    public InventoryItem createInventory(InventoryRequest request) {
+        return client().post()
+            .uri(baseUrl + "/api/inventory")
+            .bodyValue(request)
+            .retrieve()
+            .bodyToMono(InventoryItem.class)
+            .block();
+    }
+
+    public InventoryItem updateInventory(Long productId, InventoryRequest request) {
+        return client().put()
+            .uri(baseUrl + "/api/inventory/{productId}", productId)
+            .bodyValue(request)
+            .retrieve()
+            .bodyToMono(InventoryItem.class)
+            .block();
+    }
+
+    public InventoryItem upsertInventory(Long productId, InventoryRequest request) {
+        return getInventorySafe(productId)
+            .map(existing -> updateInventory(productId, request))
+            .orElseGet(() -> createInventory(request));
+    }
+
+    public void deleteInventory(Long productId) {
+        client().delete()
+            .uri(baseUrl + "/api/inventory/{productId}", productId)
+            .retrieve()
+            .toBodilessEntity()
+            .block();
+    }
+
     public List<ProductPrice> listPrices() {
         return safeList(
             () -> client().get()

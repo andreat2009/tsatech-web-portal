@@ -68,6 +68,17 @@ class AdminPaymentMethodControllerTest {
             .andExpect(content().string(org.hamcrest.Matchers.containsString("Payment Methods & Credentials")));
     }
 
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void createFormRendersSaveAction() throws Exception {
+        mockMvc.perform(get("/admin/payment-methods/new").with(csrf()))
+            .andExpect(status().isOk())
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("id=\"payment-method-form\"")))
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("type=\"submit\"")))
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("Salva")));
+    }
+
     @Test
     @WithMockUser(roles = "ADMIN")
     void createRedirectsToSuccess() throws Exception {

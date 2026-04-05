@@ -68,6 +68,17 @@ class AdminCustomFieldControllerTest {
             .andExpect(content().string(org.hamcrest.Matchers.containsString("Custom Fields")));
     }
 
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void createFormRendersSaveAction() throws Exception {
+        mockMvc.perform(get("/admin/custom-fields/new").with(csrf()))
+            .andExpect(status().isOk())
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("id=\"custom-field-form\"")))
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("type=\"submit\"")))
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("Salva")));
+    }
+
     @Test
     @WithMockUser(roles = "ADMIN")
     void createRedirectsToSuccess() throws Exception {

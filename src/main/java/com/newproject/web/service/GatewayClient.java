@@ -703,7 +703,7 @@ public class GatewayClient {
 
     public List<CustomFieldDefinition> listCustomFields(String scope, Boolean active) {
         return safeList(
-            () -> defaultWebClient.get()
+            () -> client().get()
                 .uri(uriBuilder -> uriBuilder
                     .path(baseUrl + "/api/customers/custom-fields")
                     .queryParamIfPresent("scope", Optional.ofNullable(scope))

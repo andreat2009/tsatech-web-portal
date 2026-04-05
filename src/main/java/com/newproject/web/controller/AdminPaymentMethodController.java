@@ -6,6 +6,7 @@ import com.newproject.web.service.GatewayClient;
 import java.util.List;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,8 +27,18 @@ public class AdminPaymentMethodController {
     }
 
     @GetMapping
-    public String list(Model model) {
+    public String list(
+        @RequestParam(name = "saved", required = false) String saved,
+        @RequestParam(name = "updated", required = false) String updated,
+        @RequestParam(name = "deleted", required = false) String deleted,
+        @RequestParam(name = "error", required = false) String error,
+        Model model
+    ) {
         model.addAttribute("paymentMethods", gatewayClient.listAdminPaymentMethods());
+        model.addAttribute("saved", saved != null);
+        model.addAttribute("updated", updated != null);
+        model.addAttribute("deleted", deleted != null);
+        model.addAttribute("error", error);
         return "admin/payment-methods";
     }
 
@@ -45,8 +56,12 @@ public class AdminPaymentMethodController {
 
     @PostMapping
     public String create(@ModelAttribute("paymentMethod") AdminPaymentMethodForm form) {
-        gatewayClient.createAdminPaymentMethod(form);
-        return "redirect:/admin/payment-methods";
+        try {
+            gatewayClient.createAdminPaymentMethod(form);
+            return "redirect:/admin/payment-methods?saved=1";
+        } catch (Exception ex) {
+            return "redirect:/admin/payment-methods?error=create";
+        }
     }
 
     @GetMapping("/{id}/edit")
@@ -58,14 +73,22 @@ public class AdminPaymentMethodController {
 
     @PostMapping("/{id}")
     public String update(@PathVariable Long id, @ModelAttribute("paymentMethod") AdminPaymentMethodForm form) {
-        gatewayClient.updateAdminPaymentMethod(id, form);
-        return "redirect:/admin/payment-methods";
+        try {
+            gatewayClient.updateAdminPaymentMethod(id, form);
+            return "redirect:/admin/payment-methods?updated=1";
+        } catch (Exception ex) {
+            return "redirect:/admin/payment-methods?error=update";
+        }
     }
 
     @PostMapping("/{id}/delete")
     public String delete(@PathVariable Long id) {
-        gatewayClient.deleteAdminPaymentMethod(id);
-        return "redirect:/admin/payment-methods";
+        try {
+            gatewayClient.deleteAdminPaymentMethod(id);
+            return "redirect:/admin/payment-methods?deleted=1";
+        } catch (Exception ex) {
+            return "redirect:/admin/payment-methods?error=delete";
+        }
     }
 
     private void fillFormModel(Model model, AdminPaymentMethodForm form, String action, String title) {

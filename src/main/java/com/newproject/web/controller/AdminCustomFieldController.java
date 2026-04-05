@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -27,8 +28,18 @@ public class AdminCustomFieldController {
     }
 
     @GetMapping
-    public String list(Model model) {
+    public String list(
+        @RequestParam(name = "saved", required = false) String saved,
+        @RequestParam(name = "updated", required = false) String updated,
+        @RequestParam(name = "deleted", required = false) String deleted,
+        @RequestParam(name = "error", required = false) String error,
+        Model model
+    ) {
         model.addAttribute("customFields", gatewayClient.listCustomFields(null, null));
+        model.addAttribute("saved", saved != null);
+        model.addAttribute("updated", updated != null);
+        model.addAttribute("deleted", deleted != null);
+        model.addAttribute("error", error);
         return "admin/custom-fields";
     }
 
@@ -47,8 +58,12 @@ public class AdminCustomFieldController {
 
     @PostMapping
     public String create(@ModelAttribute("customField") AdminCustomFieldForm form) {
-        gatewayClient.createCustomField(toDefinition(form));
-        return "redirect:/admin/custom-fields";
+        try {
+            gatewayClient.createCustomField(toDefinition(form));
+            return "redirect:/admin/custom-fields?saved=1";
+        } catch (Exception ex) {
+            return "redirect:/admin/custom-fields?error=create";
+        }
     }
 
     @GetMapping("/{id}/edit")
@@ -60,14 +75,22 @@ public class AdminCustomFieldController {
 
     @PostMapping("/{id}")
     public String update(@PathVariable Long id, @ModelAttribute("customField") AdminCustomFieldForm form) {
-        gatewayClient.updateCustomField(id, toDefinition(form));
-        return "redirect:/admin/custom-fields";
+        try {
+            gatewayClient.updateCustomField(id, toDefinition(form));
+            return "redirect:/admin/custom-fields?updated=1";
+        } catch (Exception ex) {
+            return "redirect:/admin/custom-fields?error=update";
+        }
     }
 
     @PostMapping("/{id}/delete")
     public String delete(@PathVariable Long id) {
-        gatewayClient.deleteCustomField(id);
-        return "redirect:/admin/custom-fields";
+        try {
+            gatewayClient.deleteCustomField(id);
+            return "redirect:/admin/custom-fields?deleted=1";
+        } catch (Exception ex) {
+            return "redirect:/admin/custom-fields?error=delete";
+        }
     }
 
     private void fillFormModel(Model model, AdminCustomFieldForm form, String action, String title) {

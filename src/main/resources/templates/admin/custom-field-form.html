@@ -6,7 +6,7 @@
     <link rel="stylesheet" th:href="@{/css/app.css}" />
 </head>
 <body>
-<div th:replace="fragments/header :: header"></div>
+<div th:replace="~{fragments/header :: header}"></div>
 
 <main class="container admin">
     <div class="page-header">
@@ -97,6 +97,6 @@ second-value|Second label"></textarea>
     </form>
 </main>
 
-<div th:replace="fragments/footer :: footer"></div>
+<div th:replace="~{fragments/footer :: footer}"></div>
 </body>
 </html>

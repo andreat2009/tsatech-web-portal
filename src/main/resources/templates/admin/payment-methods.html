@@ -6,12 +6,19 @@
     <link rel="stylesheet" th:href="@{/css/app.css}" />
 </head>
 <body>
-<div th:replace="fragments/header :: header"></div>
+<div th:replace="~{fragments/header :: header}"></div>
 
 <main class="container admin">
     <div class="page-header">
         <h1>Payment Methods & Credentials</h1>
         <a class="btn btn-primary" th:href="@{/admin/payment-methods/new}">New payment method</a>
+    </div>
+
+    <div class="alerts" th:if="${saved or updated or deleted or error != null}">
+        <p class="alert-success" th:if="${saved}">Payment method saved.</p>
+        <p class="alert-success" th:if="${updated}">Payment method updated.</p>
+        <p class="alert-success" th:if="${deleted}">Payment method deleted.</p>
+        <p class="alert-error" th:if="${error != null}">Payment method operation failed. Verify provider settings and try again.</p>
     </div>
 
     <div class="card table-wrap">
@@ -53,6 +60,6 @@
     </div>
 </main>
 
-<div th:replace="fragments/footer :: footer"></div>
+<div th:replace="~{fragments/footer :: footer}"></div>
 </body>
 </html>

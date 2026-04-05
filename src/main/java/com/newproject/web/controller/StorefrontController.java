@@ -412,7 +412,9 @@ public class StorefrontController {
             return finalizeCheckout(session, resolvedContext, payment, true);
         } catch (Exception ex) {
             logger.warn("PayPal completion failed for payment {}: {}", paymentId, ex.getMessage());
-            if (pendingContext != null && paymentId == pendingContext.paymentId()) {
+            PendingCheckoutContext failureContext = resolvePendingCheckoutContext(session, pendingContext, paymentId, orderId);
+            if (failureContext != null) {
+                failOrderQuietly(failureContext.orderId(), "PAYMENT_FAILED");
                 clearPendingCheckoutContext(session);
             }
             return "redirect:/checkout-rapido?error=payment_failed";
@@ -456,6 +458,7 @@ public class StorefrontController {
             return finalizeCheckout(session, pendingContext, payment, true);
         } catch (Exception ex) {
             logger.warn("Fabrick completion failed for order {}: {}", pendingContext.orderId(), ex.getMessage());
+            failOrderQuietly(pendingContext.orderId(), "PAYMENT_FAILED");
             clearPendingCheckoutContext(session);
             return "redirect:/checkout-rapido?error=payment_failed";
         }
@@ -506,6 +509,7 @@ public class StorefrontController {
         PriceQuoteResponse quote = quoteCheckout(subtotal, shippingCost, checkoutForm.getCouponCode());
         BigDecimal total = quote.getTotal() != null ? quote.getTotal() : subtotal.add(shippingCost);
 
+        Order order = null;
         try {
             Customer customer = gatewayClient.getCustomerSafe(customerId).orElse(null);
             OrderRequest orderRequest = new OrderRequest();
@@ -522,7 +526,7 @@ public class StorefrontController {
             orderRequest.setGuestCheckout(false);
             orderRequest.setCustomFields(toOrderCustomFieldRequests(checkoutForm, checkoutCustomFields));
 
-            Order order = gatewayClient.createOrder(orderRequest);
+            order = gatewayClient.createOrder(orderRequest);
             List<OrderConfirmationItem> confirmationItems = new ArrayList<>();
             List<Long> cartItemIds = new ArrayList<>();
             for (CartItem item : cartItems) {
@@ -562,6 +566,9 @@ public class StorefrontController {
             }
             return finalizeCheckout(session, pendingContext, payment, true);
         } catch (Exception ex) {
+            if (order != null && order.getId() != null) {
+                failOrderQuietly(order.getId(), "PAYMENT_FAILED");
+            }
             logger.warn("Checkout flow failed for customer {}: {}", customerId, ex.getMessage());
             return "redirect:/checkout-rapido?error=processing";
         }
@@ -594,6 +601,7 @@ public class StorefrontController {
         PriceQuoteResponse quote = quoteCheckout(summary.subtotal(), shippingCost, checkoutForm.getCouponCode());
         BigDecimal total = quote.getTotal() != null ? quote.getTotal() : summary.subtotal().add(shippingCost);
 
+        Order order = null;
         try {
             Customer guestCustomer = ensureGuestCustomer(checkoutForm, session);
             createGuestAddress(guestCustomer.getId(), checkoutForm);
@@ -612,7 +620,7 @@ public class StorefrontController {
             orderRequest.setGuestCheckout(true);
             orderRequest.setCustomFields(toOrderCustomFieldRequests(checkoutForm, checkoutCustomFields));
 
-            Order order = gatewayClient.createOrder(orderRequest);
+            order = gatewayClient.createOrder(orderRequest);
             List<OrderConfirmationItem> confirmationItems = new ArrayList<>();
             for (CartItemView item : summary.items()) {
                 Product product = gatewayClient.getProductSafe(item.getProductId()).orElse(null);
@@ -646,6 +654,9 @@ public class StorefrontController {
             }
             return finalizeCheckout(session, pendingContext, payment, true);
         } catch (Exception ex) {
+            if (order != null && order.getId() != null) {
+                failOrderQuietly(order.getId(), "PAYMENT_FAILED");
+            }
             logger.warn("Guest checkout flow failed: {}", ex.getMessage());
             return "redirect:/checkout-rapido?error=processing";
         }
@@ -1501,6 +1512,17 @@ public class StorefrontController {
         } catch (Exception ex) {
             logger.warn("Unable to update order {} to status {}: {}", context.orderId(), status, ex.getMessage());
             return null;
+        }
+    }
+
+    private void failOrderQuietly(Long orderId, String status) {
+        if (orderId == null || status == null || status.isBlank()) {
+            return;
+        }
+        try {
+            gatewayClient.updateOrderStatus(orderId, status);
+        } catch (Exception ex) {
+            logger.warn("Unable to mark order {} as {}: {}", orderId, status, ex.getMessage());
         }
     }
 

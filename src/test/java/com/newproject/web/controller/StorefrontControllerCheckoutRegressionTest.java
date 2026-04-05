@@ -2,8 +2,11 @@ package com.newproject.web.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -11,6 +14,7 @@ import com.newproject.web.dto.PriceQuoteResponse;
 import com.newproject.web.dto.Product;
 import com.newproject.web.dto.PublicStoreSettings;
 import com.newproject.web.error.PortalExceptionHandler;
+import com.newproject.web.dto.Order;
 import com.newproject.web.dto.PaymentMethod;
 import com.newproject.web.service.CustomerResolver;
 import com.newproject.web.service.GatewayClient;
@@ -96,5 +100,53 @@ class StorefrontControllerCheckoutRegressionTest {
             .andExpect(status().isOk())
             .andExpect(content().string(org.hamcrest.Matchers.containsString("Cash on delivery")))
             .andExpect(content().string(org.hamcrest.Matchers.containsString("Pay when the order is delivered.")));
+    }
+
+
+    @Test
+    void guestCheckoutFailureMarksOrderAsPaymentFailed() throws Exception {
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("GUEST_CART_ITEMS", Map.of(1004L, 1));
+
+        Order createdOrder = new Order();
+        createdOrder.setId(77L);
+        createdOrder.setCustomerId(2L);
+        createdOrder.setCurrency("EUR");
+        createdOrder.setTotal(new BigDecimal("167.00"));
+        createdOrder.setStatus("PENDING_PAYMENT");
+        when(gatewayClient.createCustomer(any())).then(invocation -> {
+            com.newproject.web.dto.Customer customer = new com.newproject.web.dto.Customer();
+            customer.setId(2L);
+            customer.setEmail("guest@example.test");
+            customer.setFirstName("Guest");
+            customer.setLastName("User");
+            return customer;
+        });
+        when(gatewayClient.createCustomerAddress(eq(2L), any())).then(invocation -> {
+            com.newproject.web.dto.Address address = new com.newproject.web.dto.Address();
+            address.setId(501L);
+            return address;
+        });
+        when(gatewayClient.createOrder(any())).thenReturn(createdOrder);
+        doNothing().when(gatewayClient).addOrderItem(eq(77L), any());
+        when(gatewayClient.createPayment(any())).thenThrow(new RuntimeException("payment provider unavailable"));
+        when(gatewayClient.getOrderSafe(77L)).thenReturn(Optional.of(createdOrder));
+        when(gatewayClient.updateOrderStatus(77L, "PAYMENT_FAILED")).thenReturn(createdOrder);
+
+        mockMvc.perform(post("/checkout/confirm")
+                .session(session)
+                .param("guestEmail", "guest@example.test")
+                .param("guestFirstName", "Guest")
+                .param("guestLastName", "User")
+                .param("guestPhone", "123456789")
+                .param("guestAddressLine1", "Via Roma 1")
+                .param("guestCity", "Roma")
+                .param("guestCountry", "IT")
+                .param("guestPostalCode", "00100")
+                .param("shippingMethod", "flat")
+                .param("paymentMethod", "cash_on_delivery"))
+            .andExpect(status().is3xxRedirection());
+
+        verify(gatewayClient).updateOrderStatus(77L, "PAYMENT_FAILED");
     }
 }

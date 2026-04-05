@@ -2,6 +2,8 @@ package com.newproject.web.service;
 
 import com.newproject.web.dto.*;
 import com.newproject.web.i18n.LanguageSupport;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.List;
@@ -19,7 +21,10 @@ import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizedClientRepository;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.stereotype.Service;
@@ -37,6 +42,8 @@ public class GatewayClient {
     private final WebClient defaultWebClient;
     private final WebClient oauth2WebClient;
     private final OAuth2AuthorizedClientRepository authorizedClientRepository;
+    private final OAuth2AuthorizedClientManager authorizedClientManager;
+    private final OAuth2AuthorizedClientService authorizedClientService;
     private final String baseUrl;
     private final String gatewayPublicBaseUrl;
     private final Duration translationRequestTimeout;
@@ -45,6 +52,8 @@ public class GatewayClient {
         @Qualifier("defaultWebClient") WebClient defaultWebClient,
         @Qualifier("oauth2WebClient") WebClient oauth2WebClient,
         OAuth2AuthorizedClientRepository authorizedClientRepository,
+        OAuth2AuthorizedClientManager authorizedClientManager,
+        OAuth2AuthorizedClientService authorizedClientService,
         @Value("${app.gateway-base-url}") String baseUrl,
         @Value("${app.translation-request-timeout-ms:120000}") int translationRequestTimeoutMs
     ) {
@@ -52,6 +61,8 @@ public class GatewayClient {
         this.defaultWebClient = defaultWebClient.mutate().baseUrl(normalizedBaseUrl).build();
         this.oauth2WebClient = oauth2WebClient.mutate().baseUrl(normalizedBaseUrl).build();
         this.authorizedClientRepository = authorizedClientRepository;
+        this.authorizedClientManager = authorizedClientManager;
+        this.authorizedClientService = authorizedClientService;
         this.baseUrl = "";
         this.gatewayPublicBaseUrl = normalizedBaseUrl;
         this.translationRequestTimeout = Duration.ofMillis(Math.max(1_000, translationRequestTimeoutMs));
@@ -83,22 +94,65 @@ public class GatewayClient {
     }
 
     private String resolveAccessToken(OAuth2AuthenticationToken authenticationToken) {
-        if (authorizedClientRepository == null) {
-            return null;
-        }
-        var requestAttributes = RequestContextHolder.getRequestAttributes();
-        if (!(requestAttributes instanceof ServletRequestAttributes servletRequestAttributes)) {
-            return null;
-        }
-        OAuth2AuthorizedClient authorizedClient = authorizedClientRepository.loadAuthorizedClient(
-            authenticationToken.getAuthorizedClientRegistrationId(),
-            authenticationToken,
-            servletRequestAttributes.getRequest()
-        );
+        OAuth2AuthorizedClient authorizedClient = resolveAuthorizedClient(authenticationToken);
         if (authorizedClient == null || authorizedClient.getAccessToken() == null) {
             return null;
         }
         return authorizedClient.getAccessToken().getTokenValue();
+    }
+
+    private OAuth2AuthorizedClient resolveAuthorizedClient(OAuth2AuthenticationToken authenticationToken) {
+        if (authenticationToken == null) {
+            return null;
+        }
+
+        var requestAttributes = RequestContextHolder.getRequestAttributes();
+        if (authorizedClientManager != null && requestAttributes instanceof ServletRequestAttributes servletRequestAttributes) {
+            HttpServletRequest request = servletRequestAttributes.getRequest();
+            HttpServletResponse response = servletRequestAttributes.getResponse();
+            OAuth2AuthorizeRequest authorizeRequest = OAuth2AuthorizeRequest
+                .withClientRegistrationId(authenticationToken.getAuthorizedClientRegistrationId())
+                .principal(authenticationToken)
+                .attribute(HttpServletRequest.class.getName(), request)
+                .attribute(HttpServletResponse.class.getName(), response)
+                .build();
+            try {
+                OAuth2AuthorizedClient refreshed = authorizedClientManager.authorize(authorizeRequest);
+                if (refreshed != null && refreshed.getAccessToken() != null) {
+                    return refreshed;
+                }
+            } catch (Exception ex) {
+                logger.debug("Unable to authorize OAuth2 client via manager: {}", ex.getMessage());
+            }
+        }
+
+        if (authorizedClientRepository != null && requestAttributes instanceof ServletRequestAttributes servletRequestAttributes) {
+            try {
+                OAuth2AuthorizedClient authorizedClient = authorizedClientRepository.loadAuthorizedClient(
+                    authenticationToken.getAuthorizedClientRegistrationId(),
+                    authenticationToken,
+                    servletRequestAttributes.getRequest()
+                );
+                if (authorizedClient != null && authorizedClient.getAccessToken() != null) {
+                    return authorizedClient;
+                }
+            } catch (Exception ex) {
+                logger.debug("Unable to load OAuth2 client from repository: {}", ex.getMessage());
+            }
+        }
+
+        if (authorizedClientService == null) {
+            return null;
+        }
+        try {
+            return authorizedClientService.loadAuthorizedClient(
+                authenticationToken.getAuthorizedClientRegistrationId(),
+                authenticationToken.getName()
+            );
+        } catch (Exception ex) {
+            logger.debug("Unable to load OAuth2 client from service: {}", ex.getMessage());
+            return null;
+        }
     }
 
     private String currentLanguage() {

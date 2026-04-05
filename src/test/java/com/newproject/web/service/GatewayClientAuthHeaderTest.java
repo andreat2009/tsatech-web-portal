@@ -21,7 +21,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizedClientRepository;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
@@ -68,6 +71,8 @@ class GatewayClientAuthHeaderTest {
     @Test
     void createCartUsesBearerTokenFromAuthorizedClientRepository() {
         OAuth2AuthorizedClientRepository repository = mock(OAuth2AuthorizedClientRepository.class);
+        OAuth2AuthorizedClientManager authorizedClientManager = mock(OAuth2AuthorizedClientManager.class);
+        OAuth2AuthorizedClientService authorizedClientService = mock(OAuth2AuthorizedClientService.class);
         ClientRegistration registration = ClientRegistration.withRegistrationId("keycloak")
             .tokenUri("https://example.test/token")
             .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
@@ -86,8 +91,9 @@ class GatewayClientAuthHeaderTest {
             List.of(new SimpleGrantedAuthority("ROLE_USER")),
             "keycloak"
         );
-        when(repository.loadAuthorizedClient(org.mockito.ArgumentMatchers.eq("keycloak"), org.mockito.ArgumentMatchers.eq(authentication), org.mockito.ArgumentMatchers.any()))
-            .thenReturn(new OAuth2AuthorizedClient(registration, authentication.getName(), accessToken));
+        OAuth2AuthorizedClient authorizedClient = new OAuth2AuthorizedClient(registration, authentication.getName(), accessToken);
+        when(authorizedClientManager.authorize(org.mockito.ArgumentMatchers.any(OAuth2AuthorizeRequest.class)))
+            .thenReturn(authorizedClient);
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(new MockHttpServletRequest()));
@@ -96,6 +102,8 @@ class GatewayClientAuthHeaderTest {
             WebClient.builder().build(),
             WebClient.builder().build(),
             repository,
+            authorizedClientManager,
+            authorizedClientService,
             "http://localhost:" + server.getAddress().getPort(),
             1000
         );

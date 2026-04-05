@@ -20,7 +20,7 @@
 
     <div th:if="${orders.isEmpty()}" class="empty" th:text="#{account.orders.empty}">No orders available.</div>
 
-    <table class="table" th:if="${!orders.isEmpty()}">
+    <table class="table" data-paginate="off" th:if="${!orders.isEmpty()}">
         <thead>
             <tr>
                 <th>ID</th>
@@ -42,6 +42,26 @@
             </tr>
         </tbody>
     </table>
+
+    <div class="app-pagination-host" th:if="${totalPages > 1}">
+        <nav class="app-pagination" aria-label="Orders pagination">
+            <a class="app-pagination-btn" th:if="${hasPrevious}" th:href="@{/account/ordini(page=${currentPage - 1})}">‹</a>
+            <span class="app-pagination-btn" th:if="${!hasPrevious}">‹</span>
+
+            <th:block th:each="pageNumber : ${#numbers.sequence(1, totalPages)}">
+                <a class="app-pagination-btn"
+                   th:if="${pageNumber != currentPage}"
+                   th:href="@{/account/ordini(page=${pageNumber})}"
+                   th:text="${pageNumber}">1</a>
+                <span class="app-pagination-btn is-active"
+                      th:if="${pageNumber == currentPage}"
+                      th:text="${pageNumber}">1</span>
+            </th:block>
+
+            <a class="app-pagination-btn" th:if="${hasNext}" th:href="@{/account/ordini(page=${currentPage + 1})}">›</a>
+            <span class="app-pagination-btn" th:if="${!hasNext}">›</span>
+        </nav>
+    </div>
 </main>
 
 <div th:replace="fragments/footer :: footer"></div>

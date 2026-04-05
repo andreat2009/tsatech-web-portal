@@ -15,6 +15,7 @@ import com.newproject.web.dto.InventoryItem;
 import com.newproject.web.dto.Manufacturer;
 import com.newproject.web.dto.Order;
 import com.newproject.web.dto.OrderReturn;
+import com.newproject.web.dto.PagedResponse;
 import com.newproject.web.dto.Payment;
 import com.newproject.web.dto.PaymentMethod;
 import com.newproject.web.dto.Product;
@@ -33,12 +34,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 @Controller
 @RequestMapping({"/admin", "/amministrazione"})
 public class AdminController {
+    private static final int ORDERS_PAGE_SIZE = 20;
     private static final List<String> ORDER_STATUS_OPTIONS = List.of(
         "Confirmed",
         "Being prepared",
         "Shipped",
         "Delivered",
-        "Returned"
+        "Returned",
+        "Closed"
     );
 
     private final GatewayClient gatewayClient;
@@ -96,30 +99,74 @@ public class AdminController {
 
     @GetMapping("/orders")
     public String orders(
+        @RequestParam(name = "page", defaultValue = "1") int page,
         @RequestParam(name = "statusUpdated", required = false) String statusUpdated,
         @RequestParam(name = "statusError", required = false) String statusError,
+        @RequestParam(name = "closed", required = false) String closed,
+        @RequestParam(name = "closeError", required = false) String closeError,
+        @RequestParam(name = "deleted", required = false) String deleted,
+        @RequestParam(name = "deleteError", required = false) String deleteError,
         Model model
     ) {
-        List<Order> orders = gatewayClient.listOrders(null);
-        model.addAttribute("orders", orders);
+        int currentPage = Math.max(1, page);
+        PagedResponse<Order> ordersPage = gatewayClient.listOrdersPage(null, currentPage - 1, ORDERS_PAGE_SIZE);
+        model.addAttribute("orders", ordersPage.getContent());
         model.addAttribute("orderStatusOptions", ORDER_STATUS_OPTIONS);
+        model.addAttribute("currentPage", currentPage);
+        model.addAttribute("totalPages", ordersPage.getTotalPages());
+        model.addAttribute("hasPrevious", currentPage > 1);
+        model.addAttribute("hasNext", currentPage < ordersPage.getTotalPages());
         model.addAttribute("statusUpdated", statusUpdated != null);
         model.addAttribute("statusError", statusError);
+        model.addAttribute("closed", closed != null);
+        model.addAttribute("closeError", closeError != null);
+        model.addAttribute("deleted", deleted != null);
+        model.addAttribute("deleteError", deleteError != null);
         return "admin/orders";
     }
 
     @PostMapping("/orders/{id}/status")
-    public String updateOrderStatus(@PathVariable Long id, @RequestParam String status) {
+    public String updateOrderStatus(
+        @PathVariable Long id,
+        @RequestParam String status,
+        @RequestParam(name = "page", defaultValue = "1") int page
+    ) {
         String normalizedStatus = normalizeOrderStatus(status);
         if (normalizedStatus == null) {
-            return "redirect:/admin/orders?statusError=invalid";
+            return redirectOrders(page, "statusError=invalid");
         }
 
         try {
             gatewayClient.updateOrderStatus(id, normalizedStatus);
-            return "redirect:/admin/orders?statusUpdated=1";
+            return redirectOrders(page, "statusUpdated=1");
         } catch (Exception ex) {
-            return "redirect:/admin/orders?statusError=update";
+            return redirectOrders(page, "statusError=update");
+        }
+    }
+
+    @PostMapping("/orders/{id}/close")
+    public String closeOrder(
+        @PathVariable Long id,
+        @RequestParam(name = "page", defaultValue = "1") int page
+    ) {
+        try {
+            gatewayClient.updateOrderStatus(id, "Closed");
+            return redirectOrders(page, "closed=1");
+        } catch (Exception ex) {
+            return redirectOrders(page, "closeError=1");
+        }
+    }
+
+    @PostMapping("/orders/{id}/delete")
+    public String deleteOrder(
+        @PathVariable Long id,
+        @RequestParam(name = "page", defaultValue = "1") int page
+    ) {
+        try {
+            gatewayClient.deleteOrder(id);
+            return redirectOrders(page, "deleted=1");
+        } catch (Exception ex) {
+            return redirectOrders(page, "deleteError=1");
         }
     }
 
@@ -193,7 +240,17 @@ public class AdminController {
             case "shipped" -> "Shipped";
             case "delivered" -> "Delivered";
             case "returned" -> "Returned";
+            case "closed" -> "Closed";
             default -> null;
         };
+    }
+
+    private String redirectOrders(int page, String extraQuery) {
+        int safePage = Math.max(1, page);
+        String query = "page=" + safePage;
+        if (extraQuery != null && !extraQuery.isBlank()) {
+            query = query + "&" + extraQuery;
+        }
+        return "redirect:/admin/orders?" + query;
     }
 }

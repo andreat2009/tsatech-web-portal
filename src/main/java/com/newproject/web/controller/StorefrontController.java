@@ -790,14 +790,22 @@ public class StorefrontController {
     }
 
     @GetMapping({"/account/orders", "/account/ordini"})
-    public String accountOrders(Model model, Authentication authentication) {
+    public String accountOrders(
+        @RequestParam(name = "page", defaultValue = "1") int page,
+        Model model,
+        Authentication authentication
+    ) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
             return "redirect:/account/login";
         }
-        List<Order> orders = gatewayClient.listOrders(customerId);
-        orders.sort(Comparator.comparing(Order::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())));
-        model.addAttribute("orders", orders);
+        int currentPage = Math.max(1, page);
+        PagedResponse<Order> ordersPage = gatewayClient.listOrdersPage(customerId, currentPage - 1, 10);
+        model.addAttribute("orders", ordersPage.getContent());
+        model.addAttribute("currentPage", currentPage);
+        model.addAttribute("totalPages", ordersPage.getTotalPages());
+        model.addAttribute("hasPrevious", currentPage > 1);
+        model.addAttribute("hasNext", currentPage < ordersPage.getTotalPages());
         return "account/orders";
     }
 

@@ -549,6 +549,26 @@ public class GatewayClient {
         );
     }
 
+    public PagedResponse<Order> listOrdersPage(Long customerId, int page, int size) {
+        int safePage = Math.max(0, page);
+        int safeSize = Math.max(1, size);
+        return safeCall(
+            () -> client().get()
+                .uri(uriBuilder -> uriBuilder
+                    .path(baseUrl + "/api/orders/paged")
+                    .queryParamIfPresent("customerId", Optional.ofNullable(customerId))
+                    .queryParam("page", safePage)
+                    .queryParam("size", safeSize)
+                    .build())
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<PagedResponse<Order>>() {})
+                .blockOptional()
+                .orElse(PagedResponse.empty(safePage, safeSize)),
+            "/api/orders/paged",
+            PagedResponse.empty(safePage, safeSize)
+        );
+    }
+
     public Optional<Order> getOrderSafe(Long orderId) {
         return safeCall(
             () -> Optional.ofNullable(
@@ -648,6 +668,14 @@ public class GatewayClient {
         request.setGuestCheckout(existing.getGuestCheckout());
 
         return updateOrder(orderId, request);
+    }
+
+    public void deleteOrder(Long orderId) {
+        client().delete()
+            .uri(baseUrl + "/api/orders/{orderId}", orderId)
+            .retrieve()
+            .toBodilessEntity()
+            .block();
     }
 
     public void addOrderItem(Long orderId, OrderItemRequest request) {

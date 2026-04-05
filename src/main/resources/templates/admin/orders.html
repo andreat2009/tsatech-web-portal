@@ -12,46 +12,86 @@
     <h1 th:text="#{admin.orders.title}">Ordini</h1>
 
     <p class="alert-success" th:if="${statusUpdated}" th:text="#{admin.orders.status.updated}">Stato ordine aggiornato.</p>
+    <p class="alert-success" th:if="${closed}" th:text="#{admin.orders.closed}">Ordine chiuso.</p>
+    <p class="alert-success" th:if="${deleted}" th:text="#{admin.orders.deleted}">Ordine eliminato.</p>
     <p class="alert-error" th:if="${statusError != null and statusError == 'invalid'}" th:text="#{admin.orders.status.invalid}">Stato non valido.</p>
     <p class="alert-error" th:if="${statusError != null and statusError == 'update'}" th:text="#{admin.orders.status.error}">Impossibile aggiornare lo stato ordine.</p>
+    <p class="alert-error" th:if="${closeError}" th:text="#{admin.orders.close.error}">Impossibile chiudere l'ordine.</p>
+    <p class="alert-error" th:if="${deleteError}" th:text="#{admin.orders.delete.error}">Impossibile eliminare l'ordine.</p>
 
-    <table class="table">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th th:text="#{admin.carts.customer}">Cliente</th>
-                <th th:text="#{admin.orders.customer.email}">Email</th>
-                <th th:text="#{admin.orders.type}">Tipo</th>
-                <th th:text="#{common.date}">Data</th>
-                <th th:text="#{common.total}">Totale</th>
-                <th th:text="#{common.status}">Status</th>
-                <th th:text="#{common.actions}">Azioni</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr th:each="order : ${orders}">
-                <td th:text="${order.id}">1</td>
-                <td th:text="${(order.customerFirstName != null ? order.customerFirstName : '') + ' ' + (order.customerLastName != null ? order.customerLastName : '')}">Cliente</td>
-                <td th:text="${order.customerEmail != null ? order.customerEmail : '-'}">mail@example.com</td>
-                <td th:text="${order.guestCheckout != null and order.guestCheckout ? #messages.msg('admin.orders.guest') : #messages.msg('admin.orders.registered')}">Registered</td>
-                <td th:text="${order.createdAt}">-</td>
-                <td th:text="${order.total != null ? #numbers.formatDecimal(order.total, 1, 'POINT', 2, 'POINT') : '0.00'}">0.00</td>
-                <td th:text="${order.status}">Confirmed</td>
-                <td>
-                    <form method="post" th:action="@{/admin/orders/{id}/status(id=${order.id})}" class="inline-form-action">
-                        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                        <select name="status">
-                            <option th:each="statusOption : ${orderStatusOptions}"
-                                    th:value="${statusOption}"
-                                    th:text="${statusOption}"
-                                    th:selected="${order.status == statusOption}">Confirmed</option>
-                        </select>
-                        <button class="btn btn-primary" type="submit" th:text="#{admin.orders.update.status}">Aggiorna stato</button>
-                    </form>
-                </td>
-            </tr>
-        </tbody>
-    </table>
+    <div class="card table-wrap">
+        <table class="table" data-paginate="off">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th th:text="#{admin.carts.customer}">Cliente</th>
+                    <th th:text="#{admin.orders.customer.email}">Email</th>
+                    <th th:text="#{admin.orders.type}">Tipo</th>
+                    <th th:text="#{common.date}">Data</th>
+                    <th th:text="#{common.total}">Totale</th>
+                    <th th:text="#{common.status}">Status</th>
+                    <th th:text="#{common.actions}">Azioni</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:if="${orders.isEmpty()}">
+                    <td colspan="8" class="muted" th:text="#{account.orders.empty}">No orders available.</td>
+                </tr>
+                <tr th:each="order : ${orders}">
+                    <td th:text="${order.id}">1</td>
+                    <td th:text="${(order.customerFirstName != null ? order.customerFirstName : '') + ' ' + (order.customerLastName != null ? order.customerLastName : '')}">Cliente</td>
+                    <td th:text="${order.customerEmail != null ? order.customerEmail : '-'}">mail@example.com</td>
+                    <td th:text="${order.guestCheckout != null and order.guestCheckout ? #messages.msg('admin.orders.guest') : #messages.msg('admin.orders.registered')}">Registered</td>
+                    <td th:text="${order.createdAt}">-</td>
+                    <td th:text="${order.total != null ? #numbers.formatDecimal(order.total, 1, 'POINT', 2, 'POINT') : '0.00'}">0.00</td>
+                    <td th:text="${order.status}">Confirmed</td>
+                    <td class="actions inline-actions">
+                        <form method="post" th:action="@{/admin/orders/{id}/status(id=${order.id})}" class="inline-form-action">
+                            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                            <input type="hidden" name="page" th:value="${currentPage}" />
+                            <select name="status">
+                                <option th:each="statusOption : ${orderStatusOptions}"
+                                        th:value="${statusOption}"
+                                        th:text="${statusOption}"
+                                        th:selected="${order.status == statusOption}">Confirmed</option>
+                            </select>
+                            <button class="btn btn-primary" type="submit" th:text="#{admin.orders.update.status}">Aggiorna stato</button>
+                        </form>
+                        <form method="post" th:action="@{/admin/orders/{id}/close(id=${order.id})}" class="inline-form-action">
+                            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                            <input type="hidden" name="page" th:value="${currentPage}" />
+                            <button class="btn" type="submit" th:text="#{admin.contact.close}">Chiudi</button>
+                        </form>
+                        <form method="post" th:action="@{/admin/orders/{id}/delete(id=${order.id})}" class="inline-form-action">
+                            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                            <input type="hidden" name="page" th:value="${currentPage}" />
+                            <button class="btn" type="submit" th:text="#{common.delete}">Elimina</button>
+                        </form>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="app-pagination-host" th:if="${totalPages > 1}">
+            <nav class="app-pagination" aria-label="Orders pagination">
+                <a class="app-pagination-btn" th:if="${hasPrevious}" th:href="@{/admin/orders(page=${currentPage - 1})}">‹</a>
+                <span class="app-pagination-btn" th:if="${!hasPrevious}">‹</span>
+
+                <th:block th:each="pageNumber : ${#numbers.sequence(1, totalPages)}">
+                    <a class="app-pagination-btn"
+                       th:if="${pageNumber != currentPage}"
+                       th:href="@{/admin/orders(page=${pageNumber})}"
+                       th:text="${pageNumber}">1</a>
+                    <span class="app-pagination-btn is-active"
+                          th:if="${pageNumber == currentPage}"
+                          th:text="${pageNumber}">1</span>
+                </th:block>
+
+                <a class="app-pagination-btn" th:if="${hasNext}" th:href="@{/admin/orders(page=${currentPage + 1})}">›</a>
+                <span class="app-pagination-btn" th:if="${!hasNext}">›</span>
+            </nav>
+        </div>
+    </div>
 </main>
 
 <div th:replace="fragments/footer :: footer"></div>

@@ -6,6 +6,8 @@ public class CartItem {
     private Long id;
     private Long cartId;
     private Long productId;
+    private String variantKey;
+    private String variantDisplayName;
     private Integer quantity;
     private BigDecimal unitPrice;
 
@@ -15,6 +17,10 @@ public class CartItem {
     public void setCartId(Long cartId) { this.cartId = cartId; }
     public Long getProductId() { return productId; }
     public void setProductId(Long productId) { this.productId = productId; }
+    public String getVariantKey() { return variantKey; }
+    public void setVariantKey(String variantKey) { this.variantKey = variantKey; }
+    public String getVariantDisplayName() { return variantDisplayName; }
+    public void setVariantDisplayName(String variantDisplayName) { this.variantDisplayName = variantDisplayName; }
     public Integer getQuantity() { return quantity; }
     public void setQuantity(Integer quantity) { this.quantity = quantity; }
     public BigDecimal getUnitPrice() { return unitPrice; }

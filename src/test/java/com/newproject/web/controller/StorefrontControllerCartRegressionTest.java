@@ -129,8 +129,8 @@ class StorefrontControllerCartRegressionTest {
 
         assertThat(view).isEqualTo("cart/view");
         @SuppressWarnings("unchecked")
-        Map<Long, Integer> guestCart = (Map<Long, Integer>) session.getAttribute("GUEST_CART_ITEMS");
-        assertThat(guestCart).containsExactlyEntriesOf(Map.of(1008L, 2));
+        Map<String, Integer> guestCart = (Map<String, Integer>) session.getAttribute("GUEST_CART_ITEMS");
+        assertThat(guestCart).containsExactlyEntriesOf(Map.of("1008", 2));
         assertThat(model.getAttribute("items")).asList().hasSize(1);
     }
 }

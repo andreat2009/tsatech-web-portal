@@ -6,6 +6,7 @@ import java.time.OffsetDateTime;
 public class ProductPrice {
     private Long id;
     private Long productId;
+    private String variantKey;
     private BigDecimal amount;
     private String currency;
     private Boolean active;
@@ -25,6 +26,14 @@ public class ProductPrice {
 
     public void setProductId(Long productId) {
         this.productId = productId;
+    }
+
+    public String getVariantKey() {
+        return variantKey;
+    }
+
+    public void setVariantKey(String variantKey) {
+        this.variantKey = variantKey;
     }
 
     public BigDecimal getAmount() {

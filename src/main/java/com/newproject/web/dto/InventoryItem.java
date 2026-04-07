@@ -5,6 +5,7 @@ import java.time.OffsetDateTime;
 public class InventoryItem {
     private Long id;
     private Long productId;
+    private String variantKey;
     private Integer onHand;
     private Integer reserved;
     private OffsetDateTime updatedAt;
@@ -23,6 +24,14 @@ public class InventoryItem {
 
     public void setProductId(Long productId) {
         this.productId = productId;
+    }
+
+    public String getVariantKey() {
+        return variantKey;
+    }
+
+    public void setVariantKey(String variantKey) {
+        this.variantKey = variantKey;
     }
 
     public Integer getOnHand() {

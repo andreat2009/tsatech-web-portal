@@ -1153,6 +1153,20 @@ public class GatewayClient {
         );
     }
 
+    public Optional<InventoryItem> getVariantInventorySafe(Long productId, String variantKey) {
+        return safeCall(
+            () -> Optional.ofNullable(
+                client().get()
+                    .uri(baseUrl + "/api/inventory/{productId}/variants/{variantKey}", productId, variantKey)
+                    .retrieve()
+                    .bodyToMono(InventoryItem.class)
+                    .block()
+            ),
+            "/api/inventory/{productId}/variants/{variantKey}",
+            Optional.empty()
+        );
+    }
+
     public InventoryItem createInventory(InventoryRequest request) {
         return client().post()
             .uri(baseUrl + "/api/inventory")
@@ -1171,15 +1185,38 @@ public class GatewayClient {
             .block();
     }
 
+    public InventoryItem updateVariantInventory(Long productId, String variantKey, InventoryRequest request) {
+        return client().put()
+            .uri(baseUrl + "/api/inventory/{productId}/variants/{variantKey}", productId, variantKey)
+            .bodyValue(request)
+            .retrieve()
+            .bodyToMono(InventoryItem.class)
+            .block();
+    }
+
     public InventoryItem upsertInventory(Long productId, InventoryRequest request) {
         return getInventorySafe(productId)
             .map(existing -> updateInventory(productId, request))
             .orElseGet(() -> createInventory(request));
     }
 
+    public InventoryItem upsertVariantInventory(Long productId, String variantKey, InventoryRequest request) {
+        return getVariantInventorySafe(productId, variantKey)
+            .map(existing -> updateVariantInventory(productId, variantKey, request))
+            .orElseGet(() -> createInventory(request));
+    }
+
     public void deleteInventory(Long productId) {
         client().delete()
             .uri(baseUrl + "/api/inventory/{productId}", productId)
+            .retrieve()
+            .toBodilessEntity()
+            .block();
+    }
+
+    public void deleteVariantInventory(Long productId, String variantKey) {
+        client().delete()
+            .uri(baseUrl + "/api/inventory/{productId}/variants/{variantKey}", productId, variantKey)
             .retrieve()
             .toBodilessEntity()
             .block();
@@ -1195,6 +1232,89 @@ public class GatewayClient {
                 .orElse(List.of()),
             "/api/pricing"
         );
+    }
+
+    public Optional<ProductPrice> getPriceSafe(Long productId) {
+        return safeCall(
+            () -> Optional.ofNullable(
+                client().get()
+                    .uri(baseUrl + "/api/pricing/{productId}", productId)
+                    .retrieve()
+                    .bodyToMono(ProductPrice.class)
+                    .block()
+            ),
+            "/api/pricing/{productId}",
+            Optional.empty()
+        );
+    }
+
+    public Optional<ProductPrice> getVariantPriceSafe(Long productId, String variantKey) {
+        return safeCall(
+            () -> Optional.ofNullable(
+                client().get()
+                    .uri(baseUrl + "/api/pricing/{productId}/variants/{variantKey}", productId, variantKey)
+                    .retrieve()
+                    .bodyToMono(ProductPrice.class)
+                    .block()
+            ),
+            "/api/pricing/{productId}/variants/{variantKey}",
+            Optional.empty()
+        );
+    }
+
+    public ProductPrice createPrice(ProductPrice request) {
+        return client().post()
+            .uri(baseUrl + "/api/pricing")
+            .bodyValue(request)
+            .retrieve()
+            .bodyToMono(ProductPrice.class)
+            .block();
+    }
+
+    public ProductPrice updatePrice(Long productId, ProductPrice request) {
+        return client().put()
+            .uri(baseUrl + "/api/pricing/{productId}", productId)
+            .bodyValue(request)
+            .retrieve()
+            .bodyToMono(ProductPrice.class)
+            .block();
+    }
+
+    public ProductPrice updateVariantPrice(Long productId, String variantKey, ProductPrice request) {
+        return client().put()
+            .uri(baseUrl + "/api/pricing/{productId}/variants/{variantKey}", productId, variantKey)
+            .bodyValue(request)
+            .retrieve()
+            .bodyToMono(ProductPrice.class)
+            .block();
+    }
+
+    public ProductPrice upsertPrice(Long productId, ProductPrice request) {
+        return getPriceSafe(productId)
+            .map(existing -> updatePrice(productId, request))
+            .orElseGet(() -> createPrice(request));
+    }
+
+    public ProductPrice upsertVariantPrice(Long productId, String variantKey, ProductPrice request) {
+        return getVariantPriceSafe(productId, variantKey)
+            .map(existing -> updateVariantPrice(productId, variantKey, request))
+            .orElseGet(() -> createPrice(request));
+    }
+
+    public void deletePrice(Long productId) {
+        client().delete()
+            .uri(baseUrl + "/api/pricing/{productId}", productId)
+            .retrieve()
+            .toBodilessEntity()
+            .block();
+    }
+
+    public void deleteVariantPrice(Long productId, String variantKey) {
+        client().delete()
+            .uri(baseUrl + "/api/pricing/{productId}/variants/{variantKey}", productId, variantKey)
+            .retrieve()
+            .toBodilessEntity()
+            .block();
     }
 
 

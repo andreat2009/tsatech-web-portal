@@ -5,14 +5,19 @@ import com.newproject.web.dto.LocalizedContent;
 import com.newproject.web.dto.Product;
 import com.newproject.web.dto.ProductAutoTranslateRequest;
 import com.newproject.web.dto.ProductAutoTranslateResponse;
+import com.newproject.web.dto.ProductPrice;
 import com.newproject.web.dto.ProductRequest;
+import com.newproject.web.dto.ProductVariant;
+import com.newproject.web.dto.ProductVariantRequest;
 import com.newproject.web.i18n.LanguageSupport;
 import com.newproject.web.service.GatewayClient;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -56,6 +61,7 @@ public class AdminProductController {
         product.setActive(true);
         product.setCategoryIds(new HashSet<>());
         product.setTranslations(ensureProductTranslations(null, null));
+        product.setVariants(new ArrayList<>(List.of(blankVariant())));
         model.addAttribute("product", product);
         model.addAttribute("productView", null);
         model.addAttribute("categories", gatewayClient.listCategories(true));
@@ -81,7 +87,7 @@ public class AdminProductController {
         Product created = gatewayClient.createProduct(request);
 
         if (created != null && created.getId() != null) {
-            syncInventoryAfterCatalogChange(created.getId(), request.getQuantity());
+            syncCommercialState(created.getId(), request, List.of());
             uploadImages(created.getId(), coverImageFile, galleryImageFiles);
             return "redirect:/admin/catalogo/prodotti/" + created.getId() + "/modifica";
         }
@@ -105,6 +111,10 @@ public class AdminProductController {
         request.setManufacturerId(product.getManufacturerId());
         request.setCategoryIds(product.getCategoryIds());
         request.setTranslations(ensureProductTranslations(product.getTranslations(), product));
+        request.setVariants(toVariantRequests(product.getVariants()));
+        if (request.getVariants().isEmpty()) {
+            request.setVariants(new ArrayList<>(List.of(blankVariant())));
+        }
 
         model.addAttribute("product", request);
         model.addAttribute("productView", product);
@@ -129,10 +139,11 @@ public class AdminProductController {
         @RequestParam(name = "autoTranslate", defaultValue = "false") boolean autoTranslate,
         @RequestParam(name = "overwriteTranslations", defaultValue = "false") boolean overwriteTranslations
     ) {
+        Product previous = gatewayClient.getProductSafe(id).orElse(null);
         normalizeProductRequest(request, translationSourceLanguage);
         applyAutoTranslationsIfRequested(request, translationSourceLanguage, autoTranslate, overwriteTranslations);
         gatewayClient.updateProduct(id, request);
-        syncInventoryAfterCatalogChange(id, request.getQuantity());
+        syncCommercialState(id, request, previous != null ? previous.getVariants() : List.of());
 
         Set<Long> removedIds = Set.of();
         if (deleteImageIds != null && !deleteImageIds.isEmpty()) {
@@ -153,9 +164,29 @@ public class AdminProductController {
 
     @PostMapping("/{id}/delete")
     public String delete(@PathVariable Long id) {
+        Product existing = gatewayClient.getProductSafe(id).orElse(null);
         gatewayClient.deleteProduct(id);
-        deleteInventoryQuietly(id);
+        deleteCommercialStateQuietly(id, existing != null ? existing.getVariants() : List.of());
         return "redirect:/admin/catalogo/prodotti";
+    }
+
+    private void syncCommercialState(Long productId, ProductRequest request, List<ProductVariant> previousVariants) {
+        syncInventoryAfterCatalogChange(productId, request.getQuantity());
+        syncPriceAfterCatalogChange(productId, request.getPrice());
+        syncVariantCommercialState(productId, request.getVariants(), previousVariants);
+    }
+
+    private void deleteCommercialStateQuietly(Long productId, List<ProductVariant> variants) {
+        deleteInventoryQuietly(productId);
+        deletePriceQuietly(productId);
+        for (ProductVariant variant : variants != null ? variants : List.<ProductVariant>of()) {
+            String variantKey = trimToNull(variant != null ? variant.getVariantKey() : null);
+            if (variantKey == null) {
+                continue;
+            }
+            deleteVariantInventoryQuietly(productId, variantKey);
+            deleteVariantPriceQuietly(productId, variantKey);
+        }
     }
 
     private void syncInventoryAfterCatalogChange(Long productId, Integer quantity) {
@@ -170,6 +201,59 @@ public class AdminProductController {
         gatewayClient.upsertInventory(productId, inventoryRequest);
     }
 
+    private void syncPriceAfterCatalogChange(Long productId, BigDecimal price) {
+        if (productId == null) {
+            return;
+        }
+
+        ProductPrice productPrice = new ProductPrice();
+        productPrice.setProductId(productId);
+        productPrice.setVariantKey("");
+        productPrice.setAmount(price != null ? price : BigDecimal.ZERO);
+        productPrice.setCurrency("EUR");
+        productPrice.setActive(true);
+        gatewayClient.upsertPrice(productId, productPrice);
+    }
+
+    private void syncVariantCommercialState(Long productId, List<ProductVariantRequest> variants, List<ProductVariant> previousVariants) {
+        Set<String> staleVariantKeys = new LinkedHashSet<>((previousVariants != null ? previousVariants : List.<ProductVariant>of()).stream()
+            .map(ProductVariant::getVariantKey)
+            .filter(key -> key != null && !key.isBlank())
+            .collect(Collectors.toCollection(LinkedHashSet::new)));
+
+        for (ProductVariantRequest variant : variants != null ? variants : List.<ProductVariantRequest>of()) {
+            if (variant == null || isBlank(variant.getVariantKey())) {
+                continue;
+            }
+            String variantKey = variant.getVariantKey().trim();
+            staleVariantKeys.remove(variantKey);
+
+            InventoryRequest inventoryRequest = new InventoryRequest();
+            inventoryRequest.setProductId(productId);
+            inventoryRequest.setVariantKey(variantKey);
+            inventoryRequest.setOnHand(variant.getQuantity() != null && variant.getQuantity() > 0 ? variant.getQuantity() : 0);
+            inventoryRequest.setReserved(0);
+            gatewayClient.upsertVariantInventory(productId, variantKey, inventoryRequest);
+
+            if (variant.getPriceOverride() != null) {
+                ProductPrice price = new ProductPrice();
+                price.setProductId(productId);
+                price.setVariantKey(variantKey);
+                price.setAmount(variant.getPriceOverride());
+                price.setCurrency("EUR");
+                price.setActive(Boolean.TRUE.equals(variant.getActive()));
+                gatewayClient.upsertVariantPrice(productId, variantKey, price);
+            } else {
+                deleteVariantPriceQuietly(productId, variantKey);
+            }
+        }
+
+        for (String staleVariantKey : staleVariantKeys) {
+            deleteVariantInventoryQuietly(productId, staleVariantKey);
+            deleteVariantPriceQuietly(productId, staleVariantKey);
+        }
+    }
+
     private void deleteInventoryQuietly(Long productId) {
         if (productId == null) {
             return;
@@ -179,6 +263,30 @@ public class AdminProductController {
             gatewayClient.deleteInventory(productId);
         } catch (Exception ex) {
             logger.warn("Unable to delete inventory for product {}: {}", productId, ex.getMessage());
+        }
+    }
+
+    private void deleteVariantInventoryQuietly(Long productId, String variantKey) {
+        try {
+            gatewayClient.deleteVariantInventory(productId, variantKey);
+        } catch (Exception ex) {
+            logger.warn("Unable to delete variant inventory for product {} variant {}: {}", productId, variantKey, ex.getMessage());
+        }
+    }
+
+    private void deletePriceQuietly(Long productId) {
+        try {
+            gatewayClient.deletePrice(productId);
+        } catch (Exception ex) {
+            logger.warn("Unable to delete price for product {}: {}", productId, ex.getMessage());
+        }
+    }
+
+    private void deleteVariantPriceQuietly(Long productId, String variantKey) {
+        try {
+            gatewayClient.deleteVariantPrice(productId, variantKey);
+        } catch (Exception ex) {
+            logger.warn("Unable to delete variant price for product {} variant {}: {}", productId, variantKey, ex.getMessage());
         }
     }
 
@@ -274,9 +382,72 @@ public class AdminProductController {
             request.setCategoryIds(new HashSet<>());
         }
         request.setSeoKeywords(trimToNull(request.getSeoKeywords()));
+        request.setVariants(normalizeVariants(request.getVariants(), request.getSku()));
 
         request.setTranslations(ensureProductTranslations(request.getTranslations(), null));
         syncRootFieldsFromTranslations(request, translationSourceLanguage);
+    }
+
+    private List<ProductVariantRequest> normalizeVariants(List<ProductVariantRequest> variants, String baseSku) {
+        List<ProductVariantRequest> normalized = new ArrayList<>();
+        int index = 0;
+        for (ProductVariantRequest variant : variants != null ? variants : List.<ProductVariantRequest>of()) {
+            if (variant == null) {
+                continue;
+            }
+            String variantKey = trimToNull(variant.getVariantKey());
+            String displayName = trimToNull(variant.getDisplayName());
+            String optionSummary = trimToNull(variant.getOptionSummary());
+            String sku = trimToNull(variant.getSku());
+            if (variantKey == null && displayName == null && optionSummary == null && sku == null && variant.getPriceOverride() == null && variant.getQuantity() == null) {
+                continue;
+            }
+            if (variantKey == null) {
+                variantKey = slugify(firstNonBlank(displayName, optionSummary, sku, baseSku + "-variant-" + index));
+            }
+            ProductVariantRequest cleaned = new ProductVariantRequest();
+            cleaned.setVariantKey(variantKey);
+            cleaned.setSku(firstNonBlank(sku, baseSku != null ? baseSku + "-" + variantKey.toUpperCase() : null));
+            cleaned.setDisplayName(firstNonBlank(displayName, optionSummary, variantKey));
+            cleaned.setOptionSummary(firstNonBlank(optionSummary, displayName));
+            cleaned.setImageUrl(trimToNull(variant.getImageUrl()));
+            cleaned.setPriceOverride(variant.getPriceOverride());
+            cleaned.setQuantity(variant.getQuantity() != null && variant.getQuantity() > 0 ? variant.getQuantity() : 0);
+            cleaned.setActive(variant.getActive() == null || variant.getActive());
+            cleaned.setSortOrder(variant.getSortOrder() != null ? variant.getSortOrder() : index);
+            normalized.add(cleaned);
+            index++;
+        }
+        return normalized;
+    }
+
+    private List<ProductVariantRequest> toVariantRequests(List<ProductVariant> variants) {
+        List<ProductVariantRequest> requests = new ArrayList<>();
+        for (ProductVariant variant : variants != null ? variants : List.<ProductVariant>of()) {
+            if (variant == null) {
+                continue;
+            }
+            ProductVariantRequest request = new ProductVariantRequest();
+            request.setVariantKey(variant.getVariantKey());
+            request.setSku(variant.getSku());
+            request.setDisplayName(variant.getDisplayName());
+            request.setOptionSummary(variant.getOptionSummary());
+            request.setImageUrl(variant.getImageUrl());
+            request.setPriceOverride(variant.getPriceOverride());
+            request.setQuantity(variant.getQuantity());
+            request.setActive(variant.getActive());
+            request.setSortOrder(variant.getSortOrder());
+            requests.add(request);
+        }
+        return requests;
+    }
+
+    private ProductVariantRequest blankVariant() {
+        ProductVariantRequest request = new ProductVariantRequest();
+        request.setActive(true);
+        request.setQuantity(0);
+        request.setSortOrder(0);
+        return request;
     }
 
     private void syncRootFieldsFromTranslations(ProductRequest request, String preferredLanguage) {
@@ -321,6 +492,17 @@ public class AdminProductController {
             && (trimToNull(content.getName()) != null || trimToNull(content.getDescription()) != null);
     }
 
+    private String slugify(String value) {
+        String base = trimToNull(value);
+        if (base == null) {
+            return "variant";
+        }
+        String normalized = base.toLowerCase()
+            .replaceAll("[^a-z0-9._-]+", "-")
+            .replaceAll("(^-|-$)", "");
+        return normalized.isBlank() ? "variant" : normalized;
+    }
+
     private String trimToNull(String value) {
         if (value == null) {
             return null;
@@ -336,5 +518,9 @@ public class AdminProductController {
             }
         }
         return "";
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.isBlank();
     }
 }

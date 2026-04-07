@@ -94,6 +94,112 @@
             </div>
         </div>
 
+        <section class="variant-section">
+            <div class="page-header">
+                <h2>Varianti</h2>
+                <button class="btn" type="button" id="add-variant-btn">Aggiungi variante</button>
+            </div>
+            <p class="muted">Gestisci SKU, disponibilita e override prezzo per ogni combinazione commerciale del prodotto.</p>
+
+            <div id="variant-list" class="stack-list">
+                <div class="card-lite" data-variant-row th:each="variant, stat : ${product.variants}">
+                    <div class="field-grid two">
+                        <div class="field">
+                            <label>Variant key</label>
+                            <input type="text" data-field="variantKey" th:name="${'variants[' + stat.index + '].variantKey'}" th:value="${variant.variantKey}" placeholder="rosso-m" />
+                        </div>
+                        <div class="field">
+                            <label>Nome visualizzato</label>
+                            <input type="text" data-field="displayName" th:name="${'variants[' + stat.index + '].displayName'}" th:value="${variant.displayName}" placeholder="Rosso / M" />
+                        </div>
+                        <div class="field">
+                            <label>Riassunto opzioni</label>
+                            <input type="text" data-field="optionSummary" th:name="${'variants[' + stat.index + '].optionSummary'}" th:value="${variant.optionSummary}" placeholder="Colore: Rosso, Taglia: M" />
+                        </div>
+                        <div class="field">
+                            <label>SKU variante</label>
+                            <input type="text" data-field="sku" th:name="${'variants[' + stat.index + '].sku'}" th:value="${variant.sku}" placeholder="SKU-ROSSO-M" />
+                        </div>
+                        <div class="field">
+                            <label>Immagine variante</label>
+                            <input type="url" data-field="imageUrl" th:name="${'variants[' + stat.index + '].imageUrl'}" th:value="${variant.imageUrl}" placeholder="https://..." />
+                        </div>
+                        <div class="field">
+                            <label>Override prezzo</label>
+                            <input type="number" step="0.01" min="0" data-field="priceOverride" th:name="${'variants[' + stat.index + '].priceOverride'}" th:value="${variant.priceOverride != null ? #numbers.formatDecimal(variant.priceOverride, 1, 'POINT', 2, 'POINT') : ''}" />
+                        </div>
+                        <div class="field">
+                            <label>Scorta variante</label>
+                            <input type="number" min="0" data-field="quantity" th:name="${'variants[' + stat.index + '].quantity'}" th:value="${variant.quantity}" />
+                        </div>
+                        <div class="field">
+                            <label>Ordine</label>
+                            <input type="number" min="0" data-field="sortOrder" th:name="${'variants[' + stat.index + '].sortOrder'}" th:value="${variant.sortOrder}" />
+                        </div>
+                        <div class="field full-width">
+                            <input type="hidden" data-field="active" th:name="${'variants[' + stat.index + '].active'}" value="false" />
+                            <label class="inline-control">
+                                <input type="checkbox" data-field-checkbox="active" th:name="${'variants[' + stat.index + '].active'}" value="true" th:checked="${variant.active == null or variant.active}" />
+                                <span>Variante attiva</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="actions">
+                        <button class="btn btn-link" type="button" data-remove-variant>Rimuovi variante</button>
+                    </div>
+                </div>
+            </div>
+
+            <template id="variant-row-template">
+                <div class="card-lite" data-variant-row>
+                    <div class="field-grid two">
+                        <div class="field">
+                            <label>Variant key</label>
+                            <input type="text" data-field="variantKey" name="variants[__index__].variantKey" placeholder="rosso-m" />
+                        </div>
+                        <div class="field">
+                            <label>Nome visualizzato</label>
+                            <input type="text" data-field="displayName" name="variants[__index__].displayName" placeholder="Rosso / M" />
+                        </div>
+                        <div class="field">
+                            <label>Riassunto opzioni</label>
+                            <input type="text" data-field="optionSummary" name="variants[__index__].optionSummary" placeholder="Colore: Rosso, Taglia: M" />
+                        </div>
+                        <div class="field">
+                            <label>SKU variante</label>
+                            <input type="text" data-field="sku" name="variants[__index__].sku" placeholder="SKU-ROSSO-M" />
+                        </div>
+                        <div class="field">
+                            <label>Immagine variante</label>
+                            <input type="url" data-field="imageUrl" name="variants[__index__].imageUrl" placeholder="https://..." />
+                        </div>
+                        <div class="field">
+                            <label>Override prezzo</label>
+                            <input type="number" step="0.01" min="0" data-field="priceOverride" name="variants[__index__].priceOverride" />
+                        </div>
+                        <div class="field">
+                            <label>Scorta variante</label>
+                            <input type="number" min="0" data-field="quantity" name="variants[__index__].quantity" />
+                        </div>
+                        <div class="field">
+                            <label>Ordine</label>
+                            <input type="number" min="0" data-field="sortOrder" name="variants[__index__].sortOrder" value="0" />
+                        </div>
+                        <div class="field full-width">
+                            <input type="hidden" data-field="active" name="variants[__index__].active" value="false" />
+                            <label class="inline-control">
+                                <input type="checkbox" data-field-checkbox="active" name="variants[__index__].active" value="true" checked />
+                                <span>Variante attiva</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="actions">
+                        <button class="btn btn-link" type="button" data-remove-variant>Rimuovi variante</button>
+                    </div>
+                </div>
+            </template>
+        </section>
+
         <div class="field">
             <label th:text="#{common.categories}">Categorie</label>
             <select name="categoryIds" multiple size="8">
@@ -164,5 +270,64 @@
 </main>
 
 <div th:replace="fragments/footer :: footer"></div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const list = document.getElementById('variant-list');
+    const template = document.getElementById('variant-row-template');
+    const addButton = document.getElementById('add-variant-btn');
+    if (!list || !template || !addButton) {
+        return;
+    }
+
+    function renumberRows() {
+        Array.from(list.querySelectorAll('[data-variant-row]')).forEach((row, index) => {
+            row.querySelectorAll('[data-field]').forEach((input) => {
+                input.name = `variants[${index}].${input.dataset.field}`;
+            });
+            row.querySelectorAll('[data-field-checkbox]').forEach((input) => {
+                input.name = `variants[${index}].${input.dataset.fieldCheckbox}`;
+            });
+        });
+    }
+
+    function clearRow(row) {
+        row.querySelectorAll('input').forEach((input) => {
+            if (input.type === 'checkbox') {
+                input.checked = true;
+            } else if (input.type === 'hidden') {
+                input.value = 'false';
+            } else {
+                input.value = '';
+            }
+        });
+    }
+
+    addButton.addEventListener('click', function () {
+        const fragment = template.content.cloneNode(true);
+        list.appendChild(fragment);
+        renumberRows();
+    });
+
+    list.addEventListener('click', function (event) {
+        const removeButton = event.target.closest('[data-remove-variant]');
+        if (!removeButton) {
+            return;
+        }
+        const row = removeButton.closest('[data-variant-row]');
+        if (!row) {
+            return;
+        }
+        const rows = list.querySelectorAll('[data-variant-row]');
+        if (rows.length === 1) {
+            clearRow(row);
+        } else {
+            row.remove();
+        }
+        renumberRows();
+    });
+
+    renumberRows();
+});
+</script>
 </body>
 </html>

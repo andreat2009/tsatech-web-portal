@@ -3,6 +3,7 @@ package com.newproject.web.dto;
 import java.math.BigDecimal;
 import java.text.Normalizer;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -27,6 +28,7 @@ public class Product {
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
     private Map<String, LocalizedContent> translations = new LinkedHashMap<>();
+    private List<ProductVariant> variants = new ArrayList<>();
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -80,6 +82,14 @@ public class Product {
 
     public void setTranslations(Map<String, LocalizedContent> translations) {
         this.translations = translations;
+    }
+
+    public List<ProductVariant> getVariants() {
+        return variants;
+    }
+
+    public void setVariants(List<ProductVariant> variants) {
+        this.variants = variants;
     }
 
     public String getPrimaryImageUrl() {

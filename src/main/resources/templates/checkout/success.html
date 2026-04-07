@@ -53,7 +53,10 @@
             <tbody>
             <tr th:each="item : ${orderItems}">
                 <td th:text="${item.sku}">SKU</td>
-                <td th:text="${item.name}">Name</td>
+                <td>
+                    <strong th:text="${item.name}">Name</strong>
+                    <div class="muted" th:if="${item.variantDisplayName != null and !item.variantDisplayName.isBlank()}" th:text="${item.variantDisplayName}">Variant</div>
+                </td>
                 <td th:text="${item.quantity}">1</td>
                 <td th:text="${item.unitPrice != null ? #numbers.formatDecimal(item.unitPrice, 1, 'POINT', 2, 'POINT') : '0.00'}">0.00</td>
             </tr>

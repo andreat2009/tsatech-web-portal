@@ -33,7 +33,10 @@
             </thead>
             <tbody>
                 <tr th:each="item : ${items}">
-                    <td th:text="${item.productName}">Name</td>
+                    <td>
+                        <strong th:text="${item.productName}">Name</strong>
+                        <div class="muted" th:if="${item.variantDisplayName != null and !item.variantDisplayName.isBlank()}" th:text="${item.variantDisplayName}">Variant</div>
+                    </td>
                     <td>
                         <form class="qty-form" th:action="@{/cart/items/{id}/quantity(id=${item.id})}" method="post">
                             <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />

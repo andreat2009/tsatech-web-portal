@@ -3,17 +3,23 @@ package com.newproject.web.dto;
 import java.math.BigDecimal;
 
 public class CartItemView {
-    private Long id;
+    private String id;
     private Long productId;
+    private String variantKey;
+    private String variantDisplayName;
     private String productName;
     private Integer quantity;
     private BigDecimal unitPrice;
     private BigDecimal lineTotal;
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
     public Long getProductId() { return productId; }
     public void setProductId(Long productId) { this.productId = productId; }
+    public String getVariantKey() { return variantKey; }
+    public void setVariantKey(String variantKey) { this.variantKey = variantKey; }
+    public String getVariantDisplayName() { return variantDisplayName; }
+    public void setVariantDisplayName(String variantDisplayName) { this.variantDisplayName = variantDisplayName; }
     public String getProductName() { return productName; }
     public void setProductName(String productName) { this.productName = productName; }
     public Integer getQuantity() { return quantity; }

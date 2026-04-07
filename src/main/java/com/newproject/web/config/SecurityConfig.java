@@ -36,7 +36,7 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf
                 .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                .ignoringRequestMatchers("/actuator/health", "/actuator/info")
+                .ignoringRequestMatchers("/actuator/health", "/actuator/info", "/analytics/track")
             )
             .headers(headers -> headers
                 .contentSecurityPolicy(csp -> csp.policyDirectives(CONTENT_SECURITY_POLICY))

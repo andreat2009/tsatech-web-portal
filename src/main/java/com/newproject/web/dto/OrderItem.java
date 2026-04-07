@@ -6,6 +6,8 @@ public class OrderItem {
     private Long id;
     private Long orderId;
     private Long productId;
+    private String variantKey;
+    private String variantDisplayName;
     private String sku;
     private String name;
     private Integer quantity;
@@ -33,6 +35,22 @@ public class OrderItem {
 
     public void setProductId(Long productId) {
         this.productId = productId;
+    }
+
+    public String getVariantKey() {
+        return variantKey;
+    }
+
+    public void setVariantKey(String variantKey) {
+        this.variantKey = variantKey;
+    }
+
+    public String getVariantDisplayName() {
+        return variantDisplayName;
+    }
+
+    public void setVariantDisplayName(String variantDisplayName) {
+        this.variantDisplayName = variantDisplayName;
     }
 
     public String getSku() {

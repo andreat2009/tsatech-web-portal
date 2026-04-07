@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 
 public class OrderConfirmationItem {
     private String name;
+    private String variantDisplayName;
     private Integer quantity;
     private BigDecimal unitPrice;
     private BigDecimal lineTotal;
@@ -14,6 +15,14 @@ public class OrderConfirmationItem {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getVariantDisplayName() {
+        return variantDisplayName;
+    }
+
+    public void setVariantDisplayName(String variantDisplayName) {
+        this.variantDisplayName = variantDisplayName;
     }
 
     public Integer getQuantity() {

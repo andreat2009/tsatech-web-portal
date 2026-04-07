@@ -4,6 +4,7 @@ import com.newproject.web.dto.InventoryItem;
 import com.newproject.web.dto.Manufacturer;
 import com.newproject.web.dto.Product;
 import com.newproject.web.dto.ProductPrice;
+import com.newproject.web.dto.ProductVariant;
 import com.newproject.web.service.GatewayClient;
 import jakarta.servlet.http.HttpSession;
 import java.util.ArrayList;
@@ -76,12 +77,31 @@ public class CatalogExperienceController {
             return;
         }
 
-        Map<Long, ProductPrice> pricesByProductId = gatewayClient.listPrices().stream()
+        List<ProductPrice> prices = gatewayClient.listPrices().stream()
             .filter(price -> price.getProductId() != null)
-            .collect(Collectors.toMap(ProductPrice::getProductId, Function.identity(), (first, ignored) -> first));
-        Map<Long, InventoryItem> inventoryByProductId = gatewayClient.listInventory().stream()
+            .collect(Collectors.toList());
+        List<InventoryItem> inventoryItems = gatewayClient.listInventory().stream()
             .filter(item -> item.getProductId() != null)
+            .collect(Collectors.toList());
+
+        Map<Long, ProductPrice> pricesByProductId = prices.stream()
+            .filter(price -> price.getVariantKey() == null || price.getVariantKey().isBlank())
+            .collect(Collectors.toMap(ProductPrice::getProductId, Function.identity(), (first, ignored) -> first));
+        Map<Long, InventoryItem> inventoryByProductId = inventoryItems.stream()
+            .filter(item -> item.getVariantKey() == null || item.getVariantKey().isBlank())
             .collect(Collectors.toMap(InventoryItem::getProductId, Function.identity(), (first, ignored) -> first));
+        Map<Long, Map<String, ProductPrice>> variantPrices = prices.stream()
+            .filter(price -> price.getVariantKey() != null && !price.getVariantKey().isBlank())
+            .collect(Collectors.groupingBy(
+                ProductPrice::getProductId,
+                Collectors.toMap(ProductPrice::getVariantKey, Function.identity(), (first, ignored) -> first)
+            ));
+        Map<Long, Map<String, InventoryItem>> variantInventory = inventoryItems.stream()
+            .filter(item -> item.getVariantKey() != null && !item.getVariantKey().isBlank())
+            .collect(Collectors.groupingBy(
+                InventoryItem::getProductId,
+                Collectors.toMap(InventoryItem::getVariantKey, Function.identity(), (first, ignored) -> first)
+            ));
 
         for (Product product : products) {
             ProductPrice price = pricesByProductId.get(product.getId());
@@ -92,6 +112,29 @@ public class CatalogExperienceController {
             InventoryItem inventory = inventoryByProductId.get(product.getId());
             if (inventory != null && inventory.getOnHand() != null) {
                 product.setQuantity(Math.max(0, inventory.getOnHand()));
+            }
+
+            int variantQuantity = 0;
+            boolean hasActiveVariants = false;
+            for (ProductVariant variant : product.getVariants() != null ? product.getVariants() : List.<ProductVariant>of()) {
+                if (variant == null || !Boolean.TRUE.equals(variant.getActive()) || variant.getVariantKey() == null || variant.getVariantKey().isBlank()) {
+                    continue;
+                }
+                hasActiveVariants = true;
+                ProductPrice variantPrice = variantPrices.getOrDefault(product.getId(), Map.of()).get(variant.getVariantKey());
+                if (variantPrice != null && Boolean.TRUE.equals(variantPrice.getActive()) && variantPrice.getAmount() != null) {
+                    variant.setPriceOverride(variantPrice.getAmount());
+                }
+                InventoryItem variantStock = variantInventory.getOrDefault(product.getId(), Map.of()).get(variant.getVariantKey());
+                if (variantStock != null && variantStock.getOnHand() != null) {
+                    variant.setQuantity(Math.max(0, variantStock.getOnHand()));
+                }
+                if (variant.getQuantity() != null && variant.getQuantity() > 0) {
+                    variantQuantity += variant.getQuantity();
+                }
+            }
+            if (hasActiveVariants) {
+                product.setQuantity(variantQuantity);
             }
         }
     }

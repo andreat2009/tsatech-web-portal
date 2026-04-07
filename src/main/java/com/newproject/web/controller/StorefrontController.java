@@ -5,9 +5,11 @@ import com.newproject.web.service.CustomerResolver;
 import com.newproject.web.service.GatewayClient;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
+import java.nio.charset.StandardCharsets;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -210,6 +212,7 @@ public class StorefrontController {
     @PostMapping("/cart/add")
     public String addToCart(
         @RequestParam Long productId,
+        @RequestParam(required = false) String variantKey,
         @RequestParam(defaultValue = "1") Integer quantity,
         Authentication authentication,
         HttpSession session
@@ -221,10 +224,19 @@ public class StorefrontController {
 
         int normalizedQuantity = quantity != null && quantity > 0 ? quantity : 1;
         Product product = productOpt.get();
+        applyCatalogState(product);
+
+        SelectedProductScope selection = resolveProductSelection(product, variantKey);
+        if (selection == null) {
+            return "redirect:" + productDetailsPath(productId);
+        }
+        if (selection.variantKey() != null && !isVariantAvailable(product, selection.variantKey())) {
+            return "redirect:" + productDetailsPath(productId);
+        }
 
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
-            addGuestCartItem(session, productId, normalizedQuantity);
+            addGuestCartItem(session, productId, selection.variantKey(), normalizedQuantity);
             return "redirect:/carrello";
         }
 
@@ -235,8 +247,10 @@ public class StorefrontController {
         Cart cart = resolveOrCreateCart(customerId);
         CartItemRequest request = new CartItemRequest();
         request.setProductId(productId);
+        request.setVariantKey(selection.variantKey());
+        request.setVariantDisplayName(selection.variantDisplayName());
         request.setQuantity(normalizedQuantity);
-        request.setUnitPrice(product.getPrice() != null ? product.getPrice() : BigDecimal.ZERO);
+        request.setUnitPrice(selection.unitPrice());
         gatewayClient.addCartItem(cart.getId(), request);
 
         return "redirect:/carrello";
@@ -271,7 +285,7 @@ public class StorefrontController {
 
     @PostMapping("/cart/items/{id}/quantity")
     public String updateCartItemQuantity(
-        @PathVariable Long id,
+        @PathVariable String id,
         @RequestParam Integer quantity,
         Authentication authentication,
         HttpSession session
@@ -290,17 +304,22 @@ public class StorefrontController {
             mergeGuestCartIntoCustomerIfPresent(customerId, session);
         }
 
-        if (quantity == null || quantity <= 0) {
-            gatewayClient.deleteCartItem(id);
+        Long cartItemId = asLong(id);
+        if (cartItemId == null) {
             return "redirect:/carrello";
         }
 
-        gatewayClient.updateCartItemQuantity(id, quantity);
+        if (quantity == null || quantity <= 0) {
+            gatewayClient.deleteCartItem(cartItemId);
+            return "redirect:/carrello";
+        }
+
+        gatewayClient.updateCartItemQuantity(cartItemId, quantity);
         return "redirect:/carrello";
     }
 
     @PostMapping("/cart/items/{id}/delete")
-    public String deleteCartItem(@PathVariable Long id, Authentication authentication, HttpSession session) {
+    public String deleteCartItem(@PathVariable String id, Authentication authentication, HttpSession session) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
             removeGuestCartItem(session, id);
@@ -310,7 +329,11 @@ public class StorefrontController {
         if (shouldAutoMergeGuestCart(authentication)) {
             mergeGuestCartIntoCustomerIfPresent(customerId, session);
         }
-        gatewayClient.deleteCartItem(id);
+
+        Long cartItemId = asLong(id);
+        if (cartItemId != null) {
+            gatewayClient.deleteCartItem(cartItemId);
+        }
         return "redirect:/carrello";
     }
 
@@ -531,9 +554,15 @@ public class StorefrontController {
             List<Long> cartItemIds = new ArrayList<>();
             for (CartItem item : cartItems) {
                 Product product = gatewayClient.getProductSafe(item.getProductId()).orElse(null);
+                if (product != null) {
+                    applyCatalogState(product);
+                }
+                SelectedProductScope selection = resolveProductSelection(product, item.getVariantKey());
                 OrderItemRequest request = new OrderItemRequest();
                 request.setProductId(item.getProductId());
-                request.setSku(product != null ? product.getSku() : "N/A");
+                request.setVariantKey(item.getVariantKey());
+                request.setVariantDisplayName(selection != null ? selection.variantDisplayName() : firstNonBlank(item.getVariantDisplayName(), item.getVariantKey()));
+                request.setSku(selection != null ? selection.sku() : (product != null ? product.getSku() : "N/A"));
                 request.setName(product != null ? product.getName() : "Product #" + item.getProductId());
                 request.setQuantity(item.getQuantity());
                 request.setUnitPrice(item.getUnitPrice());
@@ -624,9 +653,15 @@ public class StorefrontController {
             List<OrderConfirmationItem> confirmationItems = new ArrayList<>();
             for (CartItemView item : summary.items()) {
                 Product product = gatewayClient.getProductSafe(item.getProductId()).orElse(null);
+                if (product != null) {
+                    applyCatalogState(product);
+                }
+                SelectedProductScope selection = resolveProductSelection(product, item.getVariantKey());
                 OrderItemRequest request = new OrderItemRequest();
                 request.setProductId(item.getProductId());
-                request.setSku(product != null ? product.getSku() : "N/A");
+                request.setVariantKey(item.getVariantKey());
+                request.setVariantDisplayName(selection != null ? selection.variantDisplayName() : firstNonBlank(item.getVariantDisplayName(), item.getVariantKey()));
+                request.setSku(selection != null ? selection.sku() : (product != null ? product.getSku() : "N/A"));
                 request.setName(product != null ? product.getName() : item.getProductName());
                 request.setQuantity(item.getQuantity());
                 request.setUnitPrice(item.getUnitPrice());
@@ -947,15 +982,36 @@ public class StorefrontController {
             return;
         }
 
-        Map<Long, ProductPrice> pricesByProductId = gatewayClient.listPrices().stream()
+        List<ProductPrice> prices = gatewayClient.listPrices().stream()
             .filter(price -> price.getProductId() != null)
-            .collect(Collectors.toMap(ProductPrice::getProductId, Function.identity(), (first, ignored) -> first));
-        Map<Long, InventoryItem> inventoryByProductId = gatewayClient.listInventory().stream()
+            .collect(Collectors.toList());
+        List<InventoryItem> inventoryItems = gatewayClient.listInventory().stream()
             .filter(item -> item.getProductId() != null)
-            .collect(Collectors.toMap(InventoryItem::getProductId, Function.identity(), (first, ignored) -> first));
+            .collect(Collectors.toList());
+
+        Map<Long, ProductPrice> basePricesByProductId = prices.stream()
+            .filter(price -> !hasVariantScope(price.getVariantKey()))
+            .collect(Collectors.toMap(ProductPrice::getProductId, Function.identity(), (first, ignored) -> first, LinkedHashMap::new));
+        Map<Long, InventoryItem> baseInventoryByProductId = inventoryItems.stream()
+            .filter(item -> !hasVariantScope(item.getVariantKey()))
+            .collect(Collectors.toMap(InventoryItem::getProductId, Function.identity(), (first, ignored) -> first, LinkedHashMap::new));
+        Map<Long, Map<String, ProductPrice>> variantPricesByProductId = prices.stream()
+            .filter(price -> hasVariantScope(price.getVariantKey()))
+            .collect(Collectors.groupingBy(
+                ProductPrice::getProductId,
+                LinkedHashMap::new,
+                Collectors.toMap(price -> normalizeVariantKey(price.getVariantKey()), Function.identity(), (first, ignored) -> first, LinkedHashMap::new)
+            ));
+        Map<Long, Map<String, InventoryItem>> variantInventoryByProductId = inventoryItems.stream()
+            .filter(item -> hasVariantScope(item.getVariantKey()))
+            .collect(Collectors.groupingBy(
+                InventoryItem::getProductId,
+                LinkedHashMap::new,
+                Collectors.toMap(item -> normalizeVariantKey(item.getVariantKey()), Function.identity(), (first, ignored) -> first, LinkedHashMap::new)
+            ));
 
         for (Product product : products) {
-            applyCatalogState(product, pricesByProductId, inventoryByProductId);
+            applyCatalogState(product, basePricesByProductId, baseInventoryByProductId, variantPricesByProductId, variantInventoryByProductId);
         }
     }
 
@@ -964,16 +1020,16 @@ public class StorefrontController {
             return;
         }
 
-        Map<Long, ProductPrice> pricesByProductId = gatewayClient.listPrices().stream()
-            .filter(price -> price.getProductId() != null)
-            .collect(Collectors.toMap(ProductPrice::getProductId, Function.identity(), (first, ignored) -> first));
-        Map<Long, InventoryItem> inventoryByProductId = gatewayClient.listInventory().stream()
-            .filter(item -> item.getProductId() != null)
-            .collect(Collectors.toMap(InventoryItem::getProductId, Function.identity(), (first, ignored) -> first));
-        applyCatalogState(product, pricesByProductId, inventoryByProductId);
+        applyCatalogState(List.of(product));
     }
 
-    private void applyCatalogState(Product product, Map<Long, ProductPrice> pricesByProductId, Map<Long, InventoryItem> inventoryByProductId) {
+    private void applyCatalogState(
+        Product product,
+        Map<Long, ProductPrice> pricesByProductId,
+        Map<Long, InventoryItem> inventoryByProductId,
+        Map<Long, Map<String, ProductPrice>> variantPricesByProductId,
+        Map<Long, Map<String, InventoryItem>> variantInventoryByProductId
+    ) {
         if (product == null) {
             return;
         }
@@ -986,6 +1042,47 @@ public class StorefrontController {
         InventoryItem inventory = inventoryByProductId.get(product.getId());
         if (inventory != null && inventory.getOnHand() != null) {
             product.setQuantity(Math.max(0, inventory.getOnHand()));
+        }
+
+        List<ProductVariant> variants = product.getVariants() != null ? product.getVariants() : List.of();
+        if (!variants.isEmpty()) {
+            variants.sort(Comparator
+                .comparing(ProductVariant::getSortOrder, Comparator.nullsLast(Integer::compareTo))
+                .thenComparing(ProductVariant::getResolvedLabel, Comparator.nullsLast(String::compareToIgnoreCase)));
+        }
+
+        Map<String, ProductPrice> variantPrices = variantPricesByProductId.getOrDefault(product.getId(), Map.of());
+        Map<String, InventoryItem> variantInventory = variantInventoryByProductId.getOrDefault(product.getId(), Map.of());
+
+        int aggregatedVariantQuantity = 0;
+        boolean hasActiveVariants = false;
+        for (ProductVariant variant : variants) {
+            if (variant == null || !Boolean.TRUE.equals(variant.getActive())) {
+                continue;
+            }
+            String normalizedVariantKey = normalizeVariantKey(variant.getVariantKey());
+            if (normalizedVariantKey == null) {
+                continue;
+            }
+            hasActiveVariants = true;
+
+            ProductPrice variantPrice = variantPrices.get(normalizedVariantKey);
+            if (variantPrice != null && Boolean.TRUE.equals(variantPrice.getActive()) && variantPrice.getAmount() != null) {
+                variant.setPriceOverride(variantPrice.getAmount());
+            }
+
+            InventoryItem variantStock = variantInventory.get(normalizedVariantKey);
+            if (variantStock != null && variantStock.getOnHand() != null) {
+                variant.setQuantity(Math.max(0, variantStock.getOnHand()));
+            }
+
+            if (variant.getQuantity() != null && variant.getQuantity() > 0) {
+                aggregatedVariantQuantity += variant.getQuantity();
+            }
+        }
+
+        if (hasActiveVariants) {
+            product.setQuantity(aggregatedVariantQuantity);
         }
     }
 
@@ -1025,28 +1122,36 @@ public class StorefrontController {
     }
 
     private void mergeGuestCartIntoCustomerIfPresent(Long customerId, HttpSession session) {
-        Map<Long, Integer> guestItems = getGuestCartItems(session);
+        Map<String, Integer> guestItems = getGuestCartItems(session);
         if (guestItems.isEmpty()) {
             return;
         }
 
         Cart cart = resolveOrCreateCart(customerId);
-        for (Map.Entry<Long, Integer> entry : guestItems.entrySet()) {
-            Long productId = entry.getKey();
+        for (Map.Entry<String, Integer> entry : guestItems.entrySet()) {
+            GuestCartItem guestCartItem = parseGuestCartItem(entry.getKey());
             Integer quantity = entry.getValue();
-            if (productId == null || quantity == null || quantity <= 0) {
+            if (guestCartItem == null || guestCartItem.productId() == null || quantity == null || quantity <= 0) {
                 continue;
             }
 
-            Product product = gatewayClient.getProductSafe(productId).orElse(null);
+            Product product = gatewayClient.getProductSafe(guestCartItem.productId()).orElse(null);
             if (product == null) {
+                continue;
+            }
+            applyCatalogState(product);
+
+            SelectedProductScope selection = resolveProductSelection(product, guestCartItem.variantKey());
+            if (selection == null) {
                 continue;
             }
 
             CartItemRequest request = new CartItemRequest();
-            request.setProductId(productId);
+            request.setProductId(guestCartItem.productId());
+            request.setVariantKey(selection.variantKey());
+            request.setVariantDisplayName(selection.variantDisplayName());
             request.setQuantity(quantity);
-            request.setUnitPrice(product.getPrice() != null ? product.getPrice() : BigDecimal.ZERO);
+            request.setUnitPrice(selection.unitPrice());
             gatewayClient.addCartItem(cart.getId(), request);
         }
 
@@ -1066,13 +1171,19 @@ public class StorefrontController {
                 }
                 continue;
             }
+            applyCatalogState(product);
 
+            SelectedProductScope selection = resolveProductSelection(product, item.getVariantKey());
             CartItemView view = new CartItemView();
-            view.setId(item.getId());
+            view.setId(item.getId() != null ? item.getId().toString() : guestCartItemKey(item.getProductId(), item.getVariantKey()));
             view.setProductId(item.getProductId());
+            view.setVariantKey(normalizeVariantKey(item.getVariantKey()));
+            view.setVariantDisplayName(selection != null ? selection.variantDisplayName() : firstNonBlank(item.getVariantDisplayName(), item.getVariantKey()));
             view.setProductName(product.getName() != null ? product.getName() : "Product #" + item.getProductId());
             int quantity = item.getQuantity() != null ? item.getQuantity() : 1;
-            BigDecimal unitPrice = item.getUnitPrice() != null ? item.getUnitPrice() : BigDecimal.ZERO;
+            BigDecimal unitPrice = item.getUnitPrice() != null
+                ? item.getUnitPrice()
+                : (selection != null ? selection.unitPrice() : (product.getPrice() != null ? product.getPrice() : BigDecimal.ZERO));
             view.setQuantity(quantity);
             view.setUnitPrice(unitPrice);
             BigDecimal lineTotal = unitPrice.multiply(BigDecimal.valueOf(quantity));
@@ -1099,11 +1210,12 @@ public class StorefrontController {
     }
 
     private CartSummary buildGuestCartSummary(HttpSession session) {
-        Map<Long, Integer> guestCart = new LinkedHashMap<>(getGuestCartItems(session));
+        Map<String, Integer> guestCart = new LinkedHashMap<>(getGuestCartItems(session));
         boolean changed = false;
-        for (Long productId : new ArrayList<>(guestCart.keySet())) {
-            if (gatewayClient.getProductSafe(productId).isEmpty()) {
-                guestCart.remove(productId);
+        for (String itemKey : new ArrayList<>(guestCart.keySet())) {
+            GuestCartItem guestItem = parseGuestCartItem(itemKey);
+            if (guestItem == null || gatewayClient.getProductSafe(guestItem.productId()).isEmpty()) {
+                guestCart.remove(itemKey);
                 changed = true;
             }
         }
@@ -1113,21 +1225,34 @@ public class StorefrontController {
         return buildGuestCartSummary(guestCart);
     }
 
-    private CartSummary buildGuestCartSummary(Map<Long, Integer> guestCart) {
+    private CartSummary buildGuestCartSummary(Map<String, Integer> guestCart) {
         List<CartItemView> items = new LinkedList<>();
 
-        for (Map.Entry<Long, Integer> entry : guestCart.entrySet()) {
-            Long productId = entry.getKey();
+        for (Map.Entry<String, Integer> entry : guestCart.entrySet()) {
+            GuestCartItem guestItem = parseGuestCartItem(entry.getKey());
+            if (guestItem == null) {
+                continue;
+            }
+
+            Long productId = guestItem.productId();
             int quantity = entry.getValue() != null && entry.getValue() > 0 ? entry.getValue() : 1;
             Product product = gatewayClient.getProductSafe(productId).orElse(null);
             if (product == null) {
                 continue;
             }
+            applyCatalogState(product);
 
-            BigDecimal unitPrice = product.getPrice() != null ? product.getPrice() : BigDecimal.ZERO;
+            SelectedProductScope selection = resolveProductSelection(product, guestItem.variantKey());
+            if (selection == null) {
+                continue;
+            }
+
+            BigDecimal unitPrice = selection.unitPrice();
             CartItemView item = new CartItemView();
-            item.setId(productId);
+            item.setId(guestItem.itemKey());
             item.setProductId(productId);
+            item.setVariantKey(selection.variantKey());
+            item.setVariantDisplayName(selection.variantDisplayName());
             item.setProductName(product.getName() != null ? product.getName() : "Product #" + productId);
             item.setQuantity(quantity);
             item.setUnitPrice(unitPrice);
@@ -1170,50 +1295,194 @@ public class StorefrontController {
     }
 
     @SuppressWarnings("unchecked")
-    private Map<Long, Integer> getGuestCartItems(HttpSession session) {
+    private Map<String, Integer> getGuestCartItems(HttpSession session) {
         Object raw = session.getAttribute(GUEST_CART_SESSION_KEY);
         if (raw instanceof Map<?, ?> map) {
-            Map<Long, Integer> normalized = new LinkedHashMap<>();
+            Map<String, Integer> normalized = new LinkedHashMap<>();
             for (Map.Entry<?, ?> entry : map.entrySet()) {
-                Long productId = asLong(entry.getKey());
+                GuestCartItem guestItem = parseGuestCartItem(entry.getKey());
                 Integer quantity = asInteger(entry.getValue());
-                if (productId != null && quantity != null && quantity > 0) {
-                    normalized.put(productId, quantity);
+                if (guestItem != null && quantity != null && quantity > 0) {
+                    normalized.put(guestItem.itemKey(), quantity);
                 }
             }
             session.setAttribute(GUEST_CART_SESSION_KEY, normalized);
             return normalized;
         }
 
-        Map<Long, Integer> empty = new LinkedHashMap<>();
+        Map<String, Integer> empty = new LinkedHashMap<>();
         session.setAttribute(GUEST_CART_SESSION_KEY, empty);
         return empty;
     }
 
-    private void addGuestCartItem(HttpSession session, Long productId, int quantity) {
-        Map<Long, Integer> guestCart = getGuestCartItems(session);
-        guestCart.put(productId, guestCart.getOrDefault(productId, 0) + quantity);
+    private void addGuestCartItem(HttpSession session, Long productId, String variantKey, int quantity) {
+        Map<String, Integer> guestCart = getGuestCartItems(session);
+        String itemKey = guestCartItemKey(productId, variantKey);
+        if (itemKey == null) {
+            return;
+        }
+        guestCart.put(itemKey, guestCart.getOrDefault(itemKey, 0) + quantity);
         session.setAttribute(GUEST_CART_SESSION_KEY, guestCart);
     }
 
-    private void updateGuestCartItemQuantity(HttpSession session, Long productId, int quantity) {
-        Map<Long, Integer> guestCart = getGuestCartItems(session);
+    private void updateGuestCartItemQuantity(HttpSession session, String itemKey, int quantity) {
+        Map<String, Integer> guestCart = getGuestCartItems(session);
+        GuestCartItem guestItem = parseGuestCartItem(itemKey);
+        if (guestItem == null) {
+            return;
+        }
         if (quantity <= 0) {
-            guestCart.remove(productId);
+            guestCart.remove(guestItem.itemKey());
         } else {
-            guestCart.put(productId, quantity);
+            guestCart.put(guestItem.itemKey(), quantity);
         }
         session.setAttribute(GUEST_CART_SESSION_KEY, guestCart);
     }
 
-    private void removeGuestCartItem(HttpSession session, Long productId) {
-        Map<Long, Integer> guestCart = getGuestCartItems(session);
-        guestCart.remove(productId);
-        session.setAttribute(GUEST_CART_SESSION_KEY, guestCart);
+    private void removeGuestCartItem(HttpSession session, String itemKey) {
+        Map<String, Integer> guestCart = getGuestCartItems(session);
+        GuestCartItem guestItem = parseGuestCartItem(itemKey);
+        if (guestItem != null) {
+            guestCart.remove(guestItem.itemKey());
+            session.setAttribute(GUEST_CART_SESSION_KEY, guestCart);
+        }
     }
 
     private void clearGuestCart(HttpSession session) {
         session.removeAttribute(GUEST_CART_SESSION_KEY);
+    }
+
+    private String guestCartItemKey(Long productId, String variantKey) {
+        if (productId == null) {
+            return null;
+        }
+        String normalizedVariantKey = normalizeVariantKey(variantKey);
+        if (normalizedVariantKey == null) {
+            return String.valueOf(productId);
+        }
+        String encodedVariantKey = Base64.getUrlEncoder().withoutPadding()
+            .encodeToString(normalizedVariantKey.getBytes(StandardCharsets.UTF_8));
+        return productId + "::" + encodedVariantKey;
+    }
+
+    private GuestCartItem parseGuestCartItem(Object rawKey) {
+        String raw = rawKey != null ? rawKey.toString() : null;
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+
+        int separatorIndex = raw.indexOf("::");
+        if (separatorIndex < 0) {
+            Long productId = asLong(raw);
+            return productId != null ? new GuestCartItem(guestCartItemKey(productId, null), productId, null) : null;
+        }
+
+        Long productId = asLong(raw.substring(0, separatorIndex));
+        if (productId == null) {
+            return null;
+        }
+        String variantKey = decodeGuestVariantKey(raw.substring(separatorIndex + 2));
+        return new GuestCartItem(guestCartItemKey(productId, variantKey), productId, variantKey);
+    }
+
+    private String decodeGuestVariantKey(String encodedVariantKey) {
+        String normalized = normalizeVariantKey(encodedVariantKey);
+        if (normalized == null) {
+            return null;
+        }
+        try {
+            byte[] decoded = Base64.getUrlDecoder().decode(normalized);
+            return normalizeVariantKey(new String(decoded, StandardCharsets.UTF_8));
+        } catch (IllegalArgumentException ex) {
+            return normalized;
+        }
+    }
+
+    private boolean requiresVariantSelection(Product product) {
+        return product != null
+            && product.getVariants() != null
+            && product.getVariants().stream().anyMatch(variant -> variant != null && Boolean.TRUE.equals(variant.getActive()) && hasVariantScope(variant.getVariantKey()));
+    }
+
+    private boolean isVariantAvailable(Product product, String variantKey) {
+        return findVariant(product, variantKey)
+            .map(ProductVariant::getQuantity)
+            .map(quantity -> quantity == null || quantity > 0)
+            .orElse(false);
+    }
+
+    private Optional<ProductVariant> findVariant(Product product, String variantKey) {
+        String normalizedVariantKey = normalizeVariantKey(variantKey);
+        if (product == null || normalizedVariantKey == null || product.getVariants() == null) {
+            return Optional.empty();
+        }
+        return product.getVariants().stream()
+            .filter(variant -> variant != null && Boolean.TRUE.equals(variant.getActive()))
+            .filter(variant -> normalizedVariantKey.equalsIgnoreCase(normalizeVariantKey(variant.getVariantKey())))
+            .findFirst();
+    }
+
+    private SelectedProductScope resolveProductSelection(Product product, String variantKey) {
+        if (product == null) {
+            return null;
+        }
+        if (!requiresVariantSelection(product)) {
+            return new SelectedProductScope(
+                null,
+                null,
+                firstNonBlank(product.getSku(), "N/A"),
+                product.getPrice() != null ? product.getPrice() : BigDecimal.ZERO
+            );
+        }
+
+        String normalizedVariantKey = normalizeVariantKey(variantKey);
+        if (normalizedVariantKey == null) {
+            return null;
+        }
+
+        ProductVariant variant = findVariant(product, normalizedVariantKey).orElse(null);
+        if (variant == null) {
+            return null;
+        }
+
+        BigDecimal unitPrice = variant.getPriceOverride() != null
+            ? variant.getPriceOverride()
+            : (product.getPrice() != null ? product.getPrice() : BigDecimal.ZERO);
+
+        return new SelectedProductScope(
+            normalizedVariantKey,
+            resolveVariantDisplayName(variant),
+            firstNonBlank(variant.getSku(), product.getSku(), "N/A"),
+            unitPrice
+        );
+    }
+
+    private String resolveVariantDisplayName(ProductVariant variant) {
+        if (variant == null) {
+            return null;
+        }
+        return firstNonBlank(variant.getDisplayName(), variant.getOptionSummary(), variant.getVariantKey());
+    }
+
+    private String normalizeVariantKey(String variantKey) {
+        return safeTrim(variantKey);
+    }
+
+    private boolean hasVariantScope(String variantKey) {
+        return normalizeVariantKey(variantKey) != null;
+    }
+
+    private String firstNonBlank(String... values) {
+        if (values == null) {
+            return null;
+        }
+        for (String value : values) {
+            String normalized = safeTrim(value);
+            if (normalized != null) {
+                return normalized;
+            }
+        }
+        return null;
     }
 
     private CheckoutForm buildDefaultCheckoutForm(String defaultPaymentMethod) {
@@ -1582,6 +1851,7 @@ public class StorefrontController {
     private OrderConfirmationItem toConfirmationItem(OrderItemRequest request) {
         OrderConfirmationItem confirmationItem = new OrderConfirmationItem();
         confirmationItem.setName(request.getName());
+        confirmationItem.setVariantDisplayName(request.getVariantDisplayName());
         confirmationItem.setQuantity(request.getQuantity() != null ? request.getQuantity() : 1);
         confirmationItem.setUnitPrice(request.getUnitPrice() != null ? request.getUnitPrice() : BigDecimal.ZERO);
         confirmationItem.setLineTotal(confirmationItem.getUnitPrice().multiply(BigDecimal.valueOf(confirmationItem.getQuantity())));
@@ -1681,6 +1951,8 @@ public class StorefrontController {
             CartItemView cloned = new CartItemView();
             cloned.setId(item.getId());
             cloned.setProductId(item.getProductId());
+            cloned.setVariantKey(item.getVariantKey());
+            cloned.setVariantDisplayName(item.getVariantDisplayName());
             cloned.setProductName(item.getProductName());
             cloned.setQuantity(item.getQuantity());
             cloned.setUnitPrice(item.getUnitPrice());
@@ -1700,6 +1972,8 @@ public class StorefrontController {
             OrderItem orderItem = new OrderItem();
             orderItem.setOrderId(orderId);
             orderItem.setProductId(item.getProductId());
+            orderItem.setVariantKey(item.getVariantKey());
+            orderItem.setVariantDisplayName(item.getVariantDisplayName());
             orderItem.setSku("SKU-" + item.getProductId());
             orderItem.setName(item.getProductName());
             orderItem.setQuantity(item.getQuantity());
@@ -1805,6 +2079,12 @@ public class StorefrontController {
     }
 
     private record CartSummary(List<CartItemView> items, BigDecimal subtotal, BigDecimal shipping, BigDecimal total) {
+    }
+
+    private record GuestCartItem(String itemKey, Long productId, String variantKey) {
+    }
+
+    private record SelectedProductScope(String variantKey, String variantDisplayName, String sku, BigDecimal unitPrice) {
     }
 
     private record WishlistEntry(Product product, OffsetDateTime addedAt) {

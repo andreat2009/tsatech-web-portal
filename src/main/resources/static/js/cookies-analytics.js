@@ -13,10 +13,6 @@
     return null;
   }
 
-  function getCsrfToken() {
-    return getCookie('XSRF-TOKEN');
-  }
-
   function setCookie(name, value, maxAgeSeconds) {
     document.cookie = `${name}=${encodeURIComponent(value)}; Path=/; Max-Age=${maxAgeSeconds}; SameSite=Lax`;
   }
@@ -37,6 +33,29 @@
     return { entityType, entityId };
   }
 
+  function sendTrackingPayload(payload) {
+    const body = JSON.stringify(payload);
+
+    if (navigator.sendBeacon) {
+      try {
+        const blob = new Blob([body], { type: 'application/json' });
+        if (navigator.sendBeacon('/analytics/track', blob)) {
+          return;
+        }
+      } catch (error) {
+        // Fall back to fetch below.
+      }
+    }
+
+    fetch('/analytics/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body,
+      keepalive: true,
+      credentials: 'same-origin'
+    }).catch(() => {});
+  }
+
   function trackPageView() {
     if (getCookie(CONSENT_COOKIE) !== 'accepted') {
       return;
@@ -45,27 +64,17 @@
       return;
     }
 
-    const csrfToken = getCsrfToken();
-    const headers = { 'Content-Type': 'application/json' };
-    if (csrfToken) {
-      headers['X-XSRF-TOKEN'] = csrfToken;
-    }
-
     const { entityType, entityId } = parseEntity();
-    fetch('/analytics/track', {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
-        visitorId: ensureVisitorId(),
-        eventType: 'page_view',
-        path: window.location.pathname + window.location.search,
-        pageTitle: document.title,
-        referrer: document.referrer || null,
-        entityType,
-        entityId,
-        locale: document.documentElement.lang || null
-      })
-    }).catch(() => {});
+    sendTrackingPayload({
+      visitorId: ensureVisitorId(),
+      eventType: 'page_view',
+      path: window.location.pathname + window.location.search,
+      pageTitle: document.title,
+      referrer: document.referrer || null,
+      entityType,
+      entityId,
+      locale: document.documentElement.lang || null
+    });
   }
 
   function bindConsentBanner() {

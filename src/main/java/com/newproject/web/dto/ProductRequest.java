@@ -1,7 +1,9 @@
 package com.newproject.web.dto;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -18,6 +20,7 @@ public class ProductRequest {
     private Long manufacturerId;
     private Set<Long> categoryIds;
     private Map<String, LocalizedContent> translations = new LinkedHashMap<>();
+    private List<ProductVariantRequest> variants = new ArrayList<>();
 
     public String getSku() { return sku; }
     public void setSku(String sku) { this.sku = sku; }
@@ -43,4 +46,6 @@ public class ProductRequest {
     public void setCategoryIds(Set<Long> categoryIds) { this.categoryIds = categoryIds; }
     public Map<String, LocalizedContent> getTranslations() { return translations; }
     public void setTranslations(Map<String, LocalizedContent> translations) { this.translations = translations; }
+    public List<ProductVariantRequest> getVariants() { return variants; }
+    public void setVariants(List<ProductVariantRequest> variants) { this.variants = variants; }
 }

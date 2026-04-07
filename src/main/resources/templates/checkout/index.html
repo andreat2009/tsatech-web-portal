@@ -228,7 +228,10 @@
                     </thead>
                     <tbody>
                     <tr th:each="item : ${items}">
-                        <td th:text="${item.productName}">Product</td>
+                        <td>
+                            <strong th:text="${item.productName}">Product</strong>
+                            <div class="muted" th:if="${item.variantDisplayName != null and !item.variantDisplayName.isBlank()}" th:text="${item.variantDisplayName}">Variant</div>
+                        </td>
                         <td class="qty-col" th:text="${item.quantity}">1</td>
                         <td class="amount-col"
                             th:text="${item.lineTotal != null ? #numbers.formatDecimal(item.lineTotal, 1, 'POINT', 2, 'POINT') : '0.00'}">0.00</td>

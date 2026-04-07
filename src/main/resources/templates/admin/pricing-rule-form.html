@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title th:text="${formTitle}">Pricing rule</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+</head>
+<body>
+<div th:replace="fragments/header :: header"></div>
+
+<main class="container admin">
+    <div class="page-header">
+        <h1 th:text="${formTitle}">Pricing rule</h1>
+        <a class="btn" th:href="@{/admin/pricing}">Back to pricing</a>
+    </div>
+
+    <form class="form" th:action="${formAction}" method="post" th:object="${price}">
+        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+        <div class="field grid-2">
+            <div>
+                <label>Product</label>
+                <select th:field="*{productId}" required>
+                    <option value="">Select product</option>
+                    <option th:each="product : ${products}" th:value="${product.id}" th:text="${product.id + ' - ' + product.name}">Product</option>
+                </select>
+            </div>
+            <div>
+                <label>Variant key</label>
+                <input th:field="*{variantKey}" placeholder="Optional variant key" />
+            </div>
+        </div>
+
+        <div class="field grid-2">
+            <div>
+                <label>Price list</label>
+                <input th:field="*{priceListCode}" placeholder="DEFAULT" />
+            </div>
+            <div>
+                <label>Customer group</label>
+                <input th:field="*{customerGroupCode}" placeholder="Optional group" />
+            </div>
+        </div>
+
+        <div class="field grid-2">
+            <div>
+                <label>Amount</label>
+                <input type="number" step="0.0001" th:field="*{amount}" required />
+            </div>
+            <div>
+                <label>Compare at amount</label>
+                <input type="number" step="0.0001" th:field="*{compareAtAmount}" />
+            </div>
+        </div>
+
+        <div class="field grid-2">
+            <div>
+                <label>Currency</label>
+                <input th:field="*{currency}" required />
+            </div>
+            <div>
+                <label>Priority</label>
+                <input type="number" th:field="*{priority}" />
+            </div>
+        </div>
+
+        <div class="field grid-2">
+            <div>
+                <label>Starts at</label>
+                <input th:field="*{startsAt}" placeholder="2026-04-07T10:00:00+02:00" />
+            </div>
+            <div>
+                <label>Ends at</label>
+                <input th:field="*{endsAt}" placeholder="2026-04-30T23:59:59+02:00" />
+            </div>
+        </div>
+
+        <div class="field">
+            <label>Active</label>
+            <select th:field="*{active}">
+                <option th:value="true">true</option>
+                <option th:value="false">false</option>
+            </select>
+        </div>
+
+        <div class="actions space-top">
+            <button class="btn btn-primary" type="submit">Save rule</button>
+            <a class="btn" th:href="@{/admin/pricing}">Cancel</a>
+        </div>
+    </form>
+</main>
+
+<div th:replace="fragments/footer :: footer"></div>
+</body>
+</html>

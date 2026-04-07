@@ -44,6 +44,10 @@ public class AdminCouponController {
     public String createForm(Model model) {
         CouponRequest coupon = new CouponRequest();
         coupon.setDiscountType("PERCENT");
+        coupon.setOfferScope("ORDER");
+        coupon.setAutoApply(false);
+        coupon.setStackable(true);
+        coupon.setPriority(0);
         coupon.setValue(new BigDecimal("10"));
         coupon.setMinTotal(BigDecimal.ZERO);
         coupon.setCurrency("EUR");
@@ -86,12 +90,19 @@ public class AdminCouponController {
         request.setCode(coupon.getCode());
         request.setName(coupon.getName());
         request.setDiscountType(coupon.getDiscountType());
+        request.setOfferScope(coupon.getOfferScope());
+        request.setAutoApply(coupon.getAutoApply());
+        request.setStackable(coupon.getStackable());
+        request.setCustomerGroupCode(coupon.getCustomerGroupCode());
+        request.setPriority(coupon.getPriority());
         request.setValue(coupon.getValue());
         request.setMinTotal(coupon.getMinTotal());
         request.setMaxDiscount(coupon.getMaxDiscount());
         request.setCurrency(coupon.getCurrency());
         request.setActive(coupon.getActive());
         request.setUsageLimit(coupon.getUsageLimit());
+        request.setDateStart(coupon.getDateStart());
+        request.setDateEnd(coupon.getDateEnd());
         request.setTranslations(ensureCouponTranslations(coupon.getTranslations(), coupon));
 
         model.addAttribute("coupon", request);
@@ -165,6 +176,11 @@ public class AdminCouponController {
         if (request.getDiscountType() == null || request.getDiscountType().isBlank()) {
             request.setDiscountType("PERCENT");
         }
+        if (request.getOfferScope() == null || request.getOfferScope().isBlank()) {
+            request.setOfferScope("ORDER");
+        } else {
+            request.setOfferScope(request.getOfferScope().trim().toUpperCase());
+        }
         if (request.getValue() == null) {
             request.setValue(BigDecimal.ZERO);
         }
@@ -176,6 +192,18 @@ public class AdminCouponController {
         }
         if (request.getActive() == null) {
             request.setActive(true);
+        }
+        if (request.getAutoApply() == null) {
+            request.setAutoApply(false);
+        }
+        if (request.getStackable() == null) {
+            request.setStackable(true);
+        }
+        if (request.getPriority() == null) {
+            request.setPriority(0);
+        }
+        if (request.getCustomerGroupCode() != null && request.getCustomerGroupCode().isBlank()) {
+            request.setCustomerGroupCode(null);
         }
 
         request.setTranslations(ensureCouponTranslations(request.getTranslations(), null));

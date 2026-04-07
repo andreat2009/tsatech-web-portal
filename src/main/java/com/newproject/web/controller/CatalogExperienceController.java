@@ -1,22 +1,37 @@
 package com.newproject.web.controller;
 
+import com.newproject.web.dto.Customer;
 import com.newproject.web.dto.InventoryItem;
 import com.newproject.web.dto.Manufacturer;
+import com.newproject.web.dto.PriceResolutionItemRequest;
+import com.newproject.web.dto.PriceResolutionItemResponse;
+import com.newproject.web.dto.PriceResolutionRequest;
+import com.newproject.web.dto.PriceResolutionResponse;
 import com.newproject.web.dto.Product;
-import com.newproject.web.dto.ProductPrice;
 import com.newproject.web.dto.ProductVariant;
+import com.newproject.web.service.CustomerResolver;
 import com.newproject.web.service.GatewayClient;
 import jakarta.servlet.http.HttpSession;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 @RequestMapping({"/product", "/catalogo"})
@@ -24,13 +39,21 @@ public class CatalogExperienceController {
     private static final String COMPARE_SESSION_KEY = "compareProductIds";
 
     private final GatewayClient gatewayClient;
+    private final CustomerResolver customerResolver;
+    private final String currency;
 
-    public CatalogExperienceController(GatewayClient gatewayClient) {
+    public CatalogExperienceController(
+        GatewayClient gatewayClient,
+        CustomerResolver customerResolver,
+        @Value("${app.currency}") String currency
+    ) {
         this.gatewayClient = gatewayClient;
+        this.customerResolver = customerResolver;
+        this.currency = currency;
     }
 
     @GetMapping({"/manufacturer", "/produttori"})
-    public String byManufacturer(@RequestParam(required = false) Long manufacturerId, Model model) {
+    public String byManufacturer(@RequestParam(required = false) Long manufacturerId, Model model, Authentication authentication) {
         List<Manufacturer> manufacturers = gatewayClient.listManufacturers();
         List<Product> products = gatewayClient.listProducts(null, null, true, null, null, "name_asc");
         if (manufacturerId != null) {
@@ -39,7 +62,7 @@ public class CatalogExperienceController {
                 .collect(Collectors.toList());
         }
 
-        applyCatalogState(products);
+        applyCatalogState(products, resolveCustomerGroupCode(authentication));
 
         model.addAttribute("manufacturers", manufacturers);
         model.addAttribute("selectedManufacturerId", manufacturerId);
@@ -48,64 +71,59 @@ public class CatalogExperienceController {
     }
 
     @GetMapping({"/special", "/offerte"})
-    public String specials(Model model) {
-        List<Product> products = gatewayClient.listProducts(null, null, true, null, null, "price_asc").stream()
+    public String specials(Model model, Authentication authentication) {
+        List<Product> products = gatewayClient.listProducts(null, null, true, null, null, "price_asc");
+        applyCatalogState(products, resolveCustomerGroupCode(authentication));
+        products = products.stream()
             .filter(product -> product.getPrice() != null)
+            .sorted(Comparator.comparing(Product::getPrice, Comparator.nullsLast(Comparator.naturalOrder())))
             .limit(30)
             .collect(Collectors.toList());
-
-        applyCatalogState(products);
 
         model.addAttribute("products", products);
         return "shop/special";
     }
 
     @GetMapping({"/compare", "/confronta"})
-    public String compare(HttpSession session, Model model) {
+    public String compare(HttpSession session, Model model, Authentication authentication) {
         Set<Long> ids = getCompareIds(session);
         List<Product> products = new ArrayList<>();
         for (Long id : ids) {
             gatewayClient.getProductSafe(id).ifPresent(products::add);
         }
-        applyCatalogState(products);
+        applyCatalogState(products, resolveCustomerGroupCode(authentication));
         model.addAttribute("products", products);
         return "shop/compare";
     }
 
     private void applyCatalogState(List<Product> products) {
+        applyCatalogState(products, defaultCustomerGroupCode());
+    }
+
+    private void applyCatalogState(List<Product> products, String customerGroupCode) {
         if (products == null || products.isEmpty()) {
             return;
         }
 
-        List<ProductPrice> prices = gatewayClient.listPrices().stream()
-            .filter(price -> price.getProductId() != null)
-            .collect(Collectors.toList());
+        Map<String, PriceResolutionItemResponse> resolvedPrices = resolvePriceMap(products, customerGroupCode);
         List<InventoryItem> inventoryItems = gatewayClient.listInventory().stream()
             .filter(item -> item.getProductId() != null)
             .collect(Collectors.toList());
 
-        Map<Long, ProductPrice> pricesByProductId = prices.stream()
-            .filter(price -> price.getVariantKey() == null || price.getVariantKey().isBlank())
-            .collect(Collectors.toMap(ProductPrice::getProductId, Function.identity(), (first, ignored) -> first));
         Map<Long, InventoryItem> inventoryByProductId = inventoryItems.stream()
-            .filter(item -> item.getVariantKey() == null || item.getVariantKey().isBlank())
-            .collect(Collectors.toMap(InventoryItem::getProductId, Function.identity(), (first, ignored) -> first));
-        Map<Long, Map<String, ProductPrice>> variantPrices = prices.stream()
-            .filter(price -> price.getVariantKey() != null && !price.getVariantKey().isBlank())
-            .collect(Collectors.groupingBy(
-                ProductPrice::getProductId,
-                Collectors.toMap(ProductPrice::getVariantKey, Function.identity(), (first, ignored) -> first)
-            ));
+            .filter(item -> !hasVariantScope(item.getVariantKey()))
+            .collect(Collectors.toMap(InventoryItem::getProductId, Function.identity(), (first, ignored) -> first, LinkedHashMap::new));
         Map<Long, Map<String, InventoryItem>> variantInventory = inventoryItems.stream()
-            .filter(item -> item.getVariantKey() != null && !item.getVariantKey().isBlank())
+            .filter(item -> hasVariantScope(item.getVariantKey()))
             .collect(Collectors.groupingBy(
                 InventoryItem::getProductId,
-                Collectors.toMap(InventoryItem::getVariantKey, Function.identity(), (first, ignored) -> first)
+                LinkedHashMap::new,
+                Collectors.toMap(item -> normalizeVariantKey(item.getVariantKey()), Function.identity(), (first, ignored) -> first, LinkedHashMap::new)
             ));
 
         for (Product product : products) {
-            ProductPrice price = pricesByProductId.get(product.getId());
-            if (price != null && Boolean.TRUE.equals(price.getActive()) && price.getAmount() != null) {
+            PriceResolutionItemResponse price = resolvedPrices.get(priceResolutionKey(product.getId(), null));
+            if (price != null && price.getAmount() != null) {
                 product.setPrice(price.getAmount());
             }
 
@@ -117,15 +135,16 @@ public class CatalogExperienceController {
             int variantQuantity = 0;
             boolean hasActiveVariants = false;
             for (ProductVariant variant : product.getVariants() != null ? product.getVariants() : List.<ProductVariant>of()) {
-                if (variant == null || !Boolean.TRUE.equals(variant.getActive()) || variant.getVariantKey() == null || variant.getVariantKey().isBlank()) {
+                if (variant == null || !Boolean.TRUE.equals(variant.getActive()) || !hasVariantScope(variant.getVariantKey())) {
                     continue;
                 }
                 hasActiveVariants = true;
-                ProductPrice variantPrice = variantPrices.getOrDefault(product.getId(), Map.of()).get(variant.getVariantKey());
-                if (variantPrice != null && Boolean.TRUE.equals(variantPrice.getActive()) && variantPrice.getAmount() != null) {
+                String variantKey = normalizeVariantKey(variant.getVariantKey());
+                PriceResolutionItemResponse variantPrice = resolvedPrices.get(priceResolutionKey(product.getId(), variantKey));
+                if (variantPrice != null && variantPrice.getAmount() != null) {
                     variant.setPriceOverride(variantPrice.getAmount());
                 }
-                InventoryItem variantStock = variantInventory.getOrDefault(product.getId(), Map.of()).get(variant.getVariantKey());
+                InventoryItem variantStock = variantInventory.getOrDefault(product.getId(), Map.of()).get(variantKey);
                 if (variantStock != null && variantStock.getOnHand() != null) {
                     variant.setQuantity(Math.max(0, variantStock.getOnHand()));
                 }
@@ -137,6 +156,87 @@ public class CatalogExperienceController {
                 product.setQuantity(variantQuantity);
             }
         }
+    }
+
+    private Map<String, PriceResolutionItemResponse> resolvePriceMap(List<Product> products, String customerGroupCode) {
+        PriceResolutionRequest request = new PriceResolutionRequest();
+        request.setCurrency(currency);
+        request.setCustomerGroupCode(normalizeCustomerGroupCode(customerGroupCode));
+        request.setAt(OffsetDateTime.now());
+        request.setItems(buildPriceResolutionItems(products));
+        if (request.getItems().isEmpty()) {
+            return Map.of();
+        }
+
+        PriceResolutionResponse response = gatewayClient.resolvePrices(request);
+        if (response == null || response.getItems() == null || response.getItems().isEmpty()) {
+            return Map.of();
+        }
+
+        return response.getItems().stream()
+            .filter(item -> item.getProductId() != null)
+            .collect(Collectors.toMap(
+                item -> priceResolutionKey(item.getProductId(), item.getVariantKey()),
+                Function.identity(),
+                (first, ignored) -> first,
+                LinkedHashMap::new
+            ));
+    }
+
+    private List<PriceResolutionItemRequest> buildPriceResolutionItems(List<Product> products) {
+        List<PriceResolutionItemRequest> items = new ArrayList<>();
+        for (Product product : products) {
+            if (product == null || product.getId() == null) {
+                continue;
+            }
+            PriceResolutionItemRequest baseItem = new PriceResolutionItemRequest();
+            baseItem.setProductId(product.getId());
+            baseItem.setQuantity(1);
+            items.add(baseItem);
+
+            for (ProductVariant variant : product.getVariants() != null ? product.getVariants() : List.<ProductVariant>of()) {
+                if (variant == null || !Boolean.TRUE.equals(variant.getActive()) || !hasVariantScope(variant.getVariantKey())) {
+                    continue;
+                }
+                PriceResolutionItemRequest variantItem = new PriceResolutionItemRequest();
+                variantItem.setProductId(product.getId());
+                variantItem.setVariantKey(normalizeVariantKey(variant.getVariantKey()));
+                variantItem.setQuantity(1);
+                items.add(variantItem);
+            }
+        }
+        return items;
+    }
+
+    private String resolveCustomerGroupCode(Authentication authentication) {
+        Customer customer = customerResolver.resolveCurrentCustomer(authentication);
+        return normalizeCustomerGroupCode(customer != null ? customer.getCustomerGroupCode() : null);
+    }
+
+    private String normalizeCustomerGroupCode(String customerGroupCode) {
+        if (customerGroupCode == null || customerGroupCode.isBlank()) {
+            return defaultCustomerGroupCode();
+        }
+        return customerGroupCode.trim().replace(' ', '_').toUpperCase(Locale.ROOT);
+    }
+
+    private String defaultCustomerGroupCode() {
+        return "RETAIL";
+    }
+
+    private String priceResolutionKey(Long productId, String variantKey) {
+        return productId + "::" + (normalizeVariantKey(variantKey) != null ? normalizeVariantKey(variantKey) : "");
+    }
+
+    private String normalizeVariantKey(String variantKey) {
+        if (variantKey == null || variantKey.isBlank()) {
+            return null;
+        }
+        return variantKey.trim();
+    }
+
+    private boolean hasVariantScope(String variantKey) {
+        return normalizeVariantKey(variantKey) != null;
     }
 
     @PostMapping({"/compare/add", "/confronta/aggiungi"})

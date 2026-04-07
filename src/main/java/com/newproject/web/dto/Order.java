@@ -9,6 +9,10 @@ public class Order {
     private Long customerId;
     private String currency;
     private BigDecimal total;
+    private BigDecimal discountTotal;
+    private String customerGroupCode;
+    private String appliedCouponCode;
+    private String appliedOfferCodes;
     private String status;
     private String customerEmail;
     private String customerFirstName;
@@ -29,6 +33,14 @@ public class Order {
     public void setCurrency(String currency) { this.currency = currency; }
     public BigDecimal getTotal() { return total; }
     public void setTotal(BigDecimal total) { this.total = total; }
+    public BigDecimal getDiscountTotal() { return discountTotal; }
+    public void setDiscountTotal(BigDecimal discountTotal) { this.discountTotal = discountTotal; }
+    public String getCustomerGroupCode() { return customerGroupCode; }
+    public void setCustomerGroupCode(String customerGroupCode) { this.customerGroupCode = customerGroupCode; }
+    public String getAppliedCouponCode() { return appliedCouponCode; }
+    public void setAppliedCouponCode(String appliedCouponCode) { this.appliedCouponCode = appliedCouponCode; }
+    public String getAppliedOfferCodes() { return appliedOfferCodes; }
+    public void setAppliedOfferCodes(String appliedOfferCodes) { this.appliedOfferCodes = appliedOfferCodes; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
     public String getCustomerEmail() { return customerEmail; }

@@ -750,16 +750,21 @@ public class GatewayClient {
     }
 
     public List<Customer> listCustomers() {
-        return listCustomers(null, null, null);
+        return listCustomers(null, null, null, null);
     }
 
     public List<Customer> listCustomers(String email, String keycloakUserId, Boolean active) {
+        return listCustomers(email, keycloakUserId, null, active);
+    }
+
+    public List<Customer> listCustomers(String email, String keycloakUserId, String customerGroupCode, Boolean active) {
         return safeList(
             () -> client().get()
                 .uri(uriBuilder -> uriBuilder
                     .path(baseUrl + "/api/customers")
                     .queryParamIfPresent("email", Optional.ofNullable(email))
                     .queryParamIfPresent("keycloakUserId", Optional.ofNullable(keycloakUserId))
+                    .queryParamIfPresent("customerGroupCode", Optional.ofNullable(customerGroupCode))
                     .queryParamIfPresent("active", Optional.ofNullable(active))
                     .build())
                 .retrieve()
@@ -1234,6 +1239,36 @@ public class GatewayClient {
         );
     }
 
+    public Optional<ProductPrice> getPriceRuleSafe(Long id) {
+        return safeCall(
+            () -> Optional.ofNullable(
+                client().get()
+                    .uri(baseUrl + "/api/pricing/rules/{id}", id)
+                    .retrieve()
+                    .bodyToMono(ProductPrice.class)
+                    .block()
+            ),
+            "/api/pricing/rules/{id}",
+            Optional.empty()
+        );
+    }
+
+    public PriceResolutionResponse resolvePrices(PriceResolutionRequest request) {
+        PriceResolutionResponse fallback = new PriceResolutionResponse();
+        fallback.setPriceListCode(request != null ? request.getPriceListCode() : null);
+        fallback.setCustomerGroupCode(request != null ? request.getCustomerGroupCode() : null);
+        return safeCall(
+            () -> client().post()
+                .uri(baseUrl + "/api/pricing/resolve")
+                .bodyValue(request)
+                .retrieve()
+                .bodyToMono(PriceResolutionResponse.class)
+                .block(),
+            "/api/pricing/resolve",
+            fallback
+        );
+    }
+
     public Optional<ProductPrice> getPriceSafe(Long productId) {
         return safeCall(
             () -> Optional.ofNullable(
@@ -1289,6 +1324,15 @@ public class GatewayClient {
             .block();
     }
 
+    public ProductPrice updatePriceRule(Long id, ProductPrice request) {
+        return client().put()
+            .uri(baseUrl + "/api/pricing/rules/{id}", id)
+            .bodyValue(request)
+            .retrieve()
+            .bodyToMono(ProductPrice.class)
+            .block();
+    }
+
     public ProductPrice upsertPrice(Long productId, ProductPrice request) {
         return getPriceSafe(productId)
             .map(existing -> updatePrice(productId, request))
@@ -1317,6 +1361,13 @@ public class GatewayClient {
             .block();
     }
 
+    public void deletePriceRule(Long id) {
+        client().delete()
+            .uri(baseUrl + "/api/pricing/rules/{id}", id)
+            .retrieve()
+            .toBodilessEntity()
+            .block();
+    }
 
     public List<Coupon> listCoupons() {
         return safeList(
@@ -1376,12 +1427,18 @@ public class GatewayClient {
     }
 
     private PriceQuoteResponse fallbackQuote(PriceQuoteRequest request) {
+        BigDecimal subtotal = request != null && request.getSubtotal() != null ? request.getSubtotal() : BigDecimal.ZERO;
+        BigDecimal shipping = request != null && request.getShipping() != null ? request.getShipping() : BigDecimal.ZERO;
         PriceQuoteResponse fallback = new PriceQuoteResponse();
-        fallback.setSubtotal(request.getSubtotal());
-        fallback.setShipping(request.getShipping());
+        fallback.setSubtotal(subtotal);
+        fallback.setShipping(shipping);
         fallback.setDiscount(BigDecimal.ZERO);
-        fallback.setTotal(request.getSubtotal().add(request.getShipping()));
-        fallback.setMessage("Pricing service non raggiungibile: nessun coupon applicato");
+        fallback.setCouponDiscount(BigDecimal.ZERO);
+        fallback.setAutomaticDiscount(BigDecimal.ZERO);
+        fallback.setShippingDiscount(BigDecimal.ZERO);
+        fallback.setTotal(subtotal.add(shipping));
+        fallback.setAppliedOffers(List.of());
+        fallback.setMessage("Pricing service non raggiungibile: nessuna offerta applicata");
         return fallback;
     }
 

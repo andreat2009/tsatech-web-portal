@@ -248,6 +248,18 @@
                     <span th:text="#{checkout.shipping}">Shipping</span>
                     <strong class="amount" th:text="${shipping != null ? #numbers.formatDecimal(shipping, 1, 'POINT', 2, 'POINT') : '0.00'}">0.00</strong>
                 </div>
+                <div class="summary-row" th:if="${couponDiscount != null and couponDiscount.compareTo(T(java.math.BigDecimal).ZERO) > 0}">
+                    <span>Coupon discount</span>
+                    <strong class="amount" th:text="${#numbers.formatDecimal(couponDiscount, 1, 'POINT', 2, 'POINT')}">0.00</strong>
+                </div>
+                <div class="summary-row" th:if="${automaticDiscount != null and automaticDiscount.compareTo(T(java.math.BigDecimal).ZERO) > 0}">
+                    <span>Automatic offers</span>
+                    <strong class="amount" th:text="${#numbers.formatDecimal(automaticDiscount, 1, 'POINT', 2, 'POINT')}">0.00</strong>
+                </div>
+                <div class="summary-row" th:if="${shippingDiscount != null and shippingDiscount.compareTo(T(java.math.BigDecimal).ZERO) > 0}">
+                    <span>Shipping discount</span>
+                    <strong class="amount" th:text="${#numbers.formatDecimal(shippingDiscount, 1, 'POINT', 2, 'POINT')}">0.00</strong>
+                </div>
                 <div class="summary-row" th:if="${discount != null}">
                     <span th:text="#{checkout.discount}">Discount</span>
                     <strong class="amount" th:text="${#numbers.formatDecimal(discount, 1, 'POINT', 2, 'POINT')}">0.00</strong>
@@ -256,6 +268,15 @@
                     <span th:text="#{checkout.total}">Total</span>
                     <strong class="amount" th:text="${total != null ? #numbers.formatDecimal(total, 1, 'POINT', 2, 'POINT') : '0.00'}">0.00</strong>
                 </div>
+            </div>
+            <div class="space-top" th:if="${appliedOffers != null and !appliedOffers.isEmpty()}">
+                <h3>Applied offers</h3>
+                <ul class="list-unstyled">
+                    <li th:each="offer : ${appliedOffers}">
+                        <strong th:text="${offer.name != null and !offer.name.isBlank() ? offer.name : offer.code}">Offer</strong>
+                        <span class="muted" th:text="${' (' + offer.offerScope + ') - ' + #numbers.formatDecimal(offer.discount, 1, 'POINT', 2, 'POINT')}">(ORDER)</span>
+                    </li>
+                </ul>
             </div>
         </aside>
     </div>

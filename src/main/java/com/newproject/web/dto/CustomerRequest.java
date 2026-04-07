@@ -6,6 +6,7 @@ public class CustomerRequest {
     private String firstName;
     private String lastName;
     private String phone;
+    private String customerGroupCode;
     private Boolean active;
     private Boolean newsletter;
 
@@ -19,6 +20,8 @@ public class CustomerRequest {
     public void setLastName(String lastName) { this.lastName = lastName; }
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
+    public String getCustomerGroupCode() { return customerGroupCode; }
+    public void setCustomerGroupCode(String customerGroupCode) { this.customerGroupCode = customerGroupCode; }
     public Boolean getActive() { return active; }
     public void setActive(Boolean active) { this.active = active; }
     public Boolean getNewsletter() { return newsletter; }

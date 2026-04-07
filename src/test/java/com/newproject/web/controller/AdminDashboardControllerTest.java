@@ -87,10 +87,10 @@ class AdminDashboardControllerTest {
         mockMvc.perform(get("/admin").with(csrf()))
             .andExpect(status().isOk())
             .andExpect(content().string(org.hamcrest.Matchers.containsString("Dashboard Admin")))
-            .andExpect(content().string(org.hamcrest.Matchers.containsString("Custom fields")))
-            .andExpect(content().string(org.hamcrest.Matchers.containsString("Payment Credentials")))
-            .andExpect(content().string(org.hamcrest.Matchers.containsString("Integrations Hub")))
-            .andExpect(content().string(org.hamcrest.Matchers.containsString("Manage backend connectors")))
-            .andExpect(content().string(org.hamcrest.Matchers.containsString("Admin Audit Trail")));
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("Campi personalizzati")))
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("Credenziali pagamento")))
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("Hub integrazioni")))
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("Gestisci connettori backend")))
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("Registro audit admin")));
     }
 }

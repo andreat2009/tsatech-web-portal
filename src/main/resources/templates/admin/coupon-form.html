@@ -28,7 +28,6 @@
             </div>
         </div>
 
-
         <section class="translation-controls">
             <h2 th:text="#{admin.coupon.translation.title}">Traduzione automatica</h2>
             <div class="field-grid two">
@@ -73,6 +72,21 @@
 
         <div class="field grid-2">
             <div>
+                <label>Offer scope</label>
+                <select th:field="*{offerScope}">
+                    <option value="ORDER">ORDER</option>
+                    <option value="ITEM">ITEM</option>
+                    <option value="SHIPPING">SHIPPING</option>
+                </select>
+            </div>
+            <div>
+                <label>Customer group</label>
+                <input th:field="*{customerGroupCode}" placeholder="Optional group" />
+            </div>
+        </div>
+
+        <div class="field grid-2">
+            <div>
                 <label th:text="#{admin.coupon.discount.type}">Tipo sconto</label>
                 <select th:field="*{discountType}">
                     <option value="PERCENT">PERCENT</option>
@@ -98,16 +112,49 @@
 
         <div class="field grid-2">
             <div>
+                <label>Priority</label>
+                <input type="number" th:field="*{priority}" />
+            </div>
+            <div>
                 <label th:text="#{admin.coupon.usage.limit}">Usage limit</label>
                 <input type="number" th:field="*{usageLimit}" />
             </div>
+        </div>
+
+        <div class="field grid-2">
             <div>
-                <label th:text="#{common.active}">Attivo</label>
-                <select th:field="*{active}">
+                <label>Starts at</label>
+                <input th:field="*{dateStart}" placeholder="2026-04-07T10:00:00+02:00" />
+            </div>
+            <div>
+                <label>Ends at</label>
+                <input th:field="*{dateEnd}" placeholder="2026-04-30T23:59:59+02:00" />
+            </div>
+        </div>
+
+        <div class="field grid-2">
+            <div>
+                <label>Auto apply</label>
+                <select th:field="*{autoApply}">
                     <option th:value="true">true</option>
                     <option th:value="false">false</option>
                 </select>
             </div>
+            <div>
+                <label>Stackable</label>
+                <select th:field="*{stackable}">
+                    <option th:value="true">true</option>
+                    <option th:value="false">false</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="field">
+            <label th:text="#{common.active}">Attivo</label>
+            <select th:field="*{active}">
+                <option th:value="true">true</option>
+                <option th:value="false">false</option>
+            </select>
         </div>
 
         <div class="actions space-top">

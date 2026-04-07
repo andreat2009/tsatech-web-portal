@@ -11,27 +11,48 @@
 <main class="container admin">
     <div class="page-header">
         <h1 th:text="#{admin.pricing.title}">Prezzi</h1>
-        <a class="btn" th:href="@{/admin/marketing/coupon}" th:text="#{admin.pricing.goto.coupons}">Vai ai coupon</a>
+        <div class="actions">
+            <a class="btn btn-primary" th:href="@{/admin/pricing/rules/new}">New rule</a>
+            <a class="btn" th:href="@{/admin/marketing/coupon}" th:text="#{admin.pricing.goto.coupons}">Vai ai coupon</a>
+        </div>
     </div>
     <table class="table">
         <thead>
             <tr>
                 <th>ID</th>
                 <th th:text="#{common.product}">Prodotto</th>
+                <th>Variant</th>
+                <th>Price list</th>
+                <th>Customer group</th>
                 <th th:text="#{common.amount}">Importo</th>
+                <th>Compare at</th>
                 <th th:text="#{common.currency}">Valuta</th>
+                <th>Priority</th>
                 <th th:text="#{common.active}">Attivo</th>
                 <th th:text="#{common.updated.at}">Aggiornato</th>
+                <th th:text="#{common.actions}">Azioni</th>
             </tr>
         </thead>
         <tbody>
             <tr th:each="price : ${prices}">
                 <td th:text="${price.id}">1</td>
                 <td th:text="${price.productId}">1001</td>
+                <td th:text="${price.variantKey}">-</td>
+                <td th:text="${price.priceListCode}">DEFAULT</td>
+                <td th:text="${price.customerGroupCode}">RETAIL</td>
                 <td th:text="${price.amount != null ? #numbers.formatDecimal(price.amount, 1, 'POINT', 2, 'POINT') : '0.00'}">0.00</td>
+                <td th:text="${price.compareAtAmount != null ? #numbers.formatDecimal(price.compareAtAmount, 1, 'POINT', 2, 'POINT') : '-'}">-</td>
                 <td th:text="${price.currency}">EUR</td>
+                <td th:text="${price.priority}">0</td>
                 <td th:text="${price.active}">true</td>
                 <td th:text="${price.updatedAt}">-</td>
+                <td class="actions">
+                    <a class="btn" th:href="@{/admin/pricing/rules/{id}/edit(id=${price.id})}">Edit</a>
+                    <form th:action="@{/admin/pricing/rules/{id}/delete(id=${price.id})}" method="post">
+                        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                        <button class="btn btn-link" type="submit">Delete</button>
+                    </form>
+                </td>
             </tr>
         </tbody>
     </table>

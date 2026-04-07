@@ -109,14 +109,15 @@ public class StorefrontController {
         List<Product> products = gatewayClient.listProducts(q, categoryId, true, null, null, sort);
 
         Long customerId = null;
+        String customerGroupCode = resolveCustomerGroupCode(authentication);
         if (isAuthenticated(authentication)) {
             customerId = customerResolver.resolveCustomerId(authentication);
             if (customerId != null && shouldAutoMergeGuestCart(authentication)) {
-                mergeGuestCartIntoCustomerIfPresent(customerId, session);
+                mergeGuestCartIntoCustomerIfPresent(customerId, customerGroupCode, session);
             }
         }
 
-        applyCatalogState(products);
+        applyCatalogState(products, customerGroupCode);
 
         Set<Long> wishlistProductIds = customerId == null
             ? Set.of()
@@ -147,7 +148,8 @@ public class StorefrontController {
         if (slug == null || !product.getSeoSlug().equals(slug)) {
             return "redirect:" + product.getSeoPath();
         }
-        applyCatalogState(product);
+        String customerGroupCode = resolveCustomerGroupCode(authentication);
+        applyCatalogState(product, customerGroupCode);
         List<ProductReview> reviews = gatewayClient.listProductReviews(id).stream()
             .filter(review -> Boolean.TRUE.equals(review.getApproved()))
             .collect(Collectors.toList());
@@ -224,7 +226,8 @@ public class StorefrontController {
 
         int normalizedQuantity = quantity != null && quantity > 0 ? quantity : 1;
         Product product = productOpt.get();
-        applyCatalogState(product);
+        String customerGroupCode = resolveCustomerGroupCode(authentication);
+        applyCatalogState(product, customerGroupCode);
 
         SelectedProductScope selection = resolveProductSelection(product, variantKey);
         if (selection == null) {
@@ -258,16 +261,17 @@ public class StorefrontController {
 
     @GetMapping({"/cart", "/carrello"})
     public String viewCart(Model model, Authentication authentication, HttpSession session) {
+        String customerGroupCode = resolveCustomerGroupCode(authentication);
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
-            CartSummary summary = buildGuestCartSummary(session);
+            CartSummary summary = buildGuestCartSummary(session, customerGroupCode);
             applyCartModel(model, summary);
             model.addAttribute("guestCheckout", true);
             return "cart/view";
         }
 
         if (shouldAutoMergeGuestCart(authentication)) {
-            mergeGuestCartIntoCustomerIfPresent(customerId, session);
+            mergeGuestCartIntoCustomerIfPresent(customerId, customerGroupCode, session);
         }
 
         Optional<Cart> cartOpt = resolveCart(customerId);
@@ -277,7 +281,7 @@ public class StorefrontController {
             return "cart/view";
         }
 
-        CartSummary summary = buildCartSummary(cartOpt.get());
+        CartSummary summary = buildCartSummary(cartOpt.get(), customerGroupCode);
         applyCartModel(model, summary);
         model.addAttribute("guestCheckout", false);
         return "cart/view";
@@ -347,11 +351,13 @@ public class StorefrontController {
         List<CustomFieldDefinition> checkoutCustomFields = loadCheckoutCustomFields();
         List<PaymentMethod> paymentMethods = loadAvailablePaymentMethods();
         String defaultPaymentMethod = defaultPaymentMethodCode(paymentMethods);
-        Long customerId = customerResolver.resolveCustomerId(authentication);
+        Customer currentCustomer = isAuthenticated(authentication) ? customerResolver.resolveCurrentCustomer(authentication) : null;
+        Long customerId = currentCustomer != null ? currentCustomer.getId() : null;
+        String customerGroupCode = resolveCustomerGroupCode(currentCustomer);
 
         if (customerId != null) {
             if (shouldAutoMergeGuestCart(authentication)) {
-                mergeGuestCartIntoCustomerIfPresent(customerId, session);
+                mergeGuestCartIntoCustomerIfPresent(customerId, customerGroupCode, session);
             }
 
             Optional<Cart> cartOpt = resolveCart(customerId);
@@ -359,7 +365,7 @@ public class StorefrontController {
                 return "redirect:/carrello";
             }
 
-            CartSummary summary = buildCartSummary(cartOpt.get());
+            CartSummary summary = buildCartSummary(cartOpt.get(), customerGroupCode);
             if (summary.items().isEmpty()) {
                 return "redirect:/carrello";
             }
@@ -375,18 +381,18 @@ public class StorefrontController {
                     .orElse(addresses.get(0).getId()));
             }
             populateCustomFields(checkoutForm, checkoutCustomFields, gatewayClient.listCustomerCustomFieldValues(customerId, "CHECKOUT"));
-            applyCheckoutModel(model, summary, addresses, paymentMethods, checkoutCustomFields, checkoutForm, false);
+            applyCheckoutModel(model, summary, addresses, paymentMethods, checkoutCustomFields, checkoutForm, customerGroupCode, false);
             model.addAttribute("checkoutError", checkoutErrorMessage(error));
             return "checkout/index";
         }
 
-        CartSummary summary = buildGuestCartSummary(session);
+        CartSummary summary = buildGuestCartSummary(session, customerGroupCode);
         if (summary.items().isEmpty()) {
             return "redirect:/carrello";
         }
 
         CheckoutForm guestForm = guestCheckoutFormFromSession(session, defaultPaymentMethod, checkoutCustomFields);
-        applyCheckoutModel(model, summary, List.of(), paymentMethods, checkoutCustomFields, guestForm, true);
+        applyCheckoutModel(model, summary, List.of(), paymentMethods, checkoutCustomFields, guestForm, customerGroupCode, true);
         model.addAttribute("checkoutError", checkoutErrorMessage(error));
         return "checkout/index";
     }
@@ -503,11 +509,18 @@ public class StorefrontController {
             return "redirect:/carrello";
         }
 
+        Customer customer = gatewayClient.getCustomerSafe(customerId).orElse(null);
+        String customerGroupCode = resolveCustomerGroupCode(customer);
         Cart cart = cartOpt.get();
-        List<CartItem> cartItems = gatewayClient.listCartItems(cart.getId());
-        if (cartItems.isEmpty()) {
+        CartSummary summary = buildCartSummary(cart, customerGroupCode);
+        if (summary.items().isEmpty()) {
             return "redirect:/carrello";
         }
+
+        List<Long> cartItemIds = gatewayClient.listCartItems(cart.getId()).stream()
+            .map(CartItem::getId)
+            .filter(java.util.Objects::nonNull)
+            .toList();
 
         List<Address> addresses = gatewayClient.listCustomerAddresses(customerId);
         Long resolvedAddressId = resolveOrCreateCheckoutAddress(customerId, checkoutForm, addresses);
@@ -527,18 +540,20 @@ public class StorefrontController {
             return "redirect:/checkout-rapido?error=payment_failed";
         }
 
-        BigDecimal subtotal = calculateSubtotal(cartItems);
         BigDecimal shippingCost = shippingMethods().get(shippingMethod);
-        PriceQuoteResponse quote = quoteCheckout(subtotal, shippingCost, checkoutForm.getCouponCode());
-        BigDecimal total = quote.getTotal() != null ? quote.getTotal() : subtotal.add(shippingCost);
+        PriceQuoteResponse quote = quoteCheckout(summary.subtotal(), shippingCost, checkoutForm.getCouponCode(), customerGroupCode, cartItemCount(summary.items()));
+        BigDecimal total = quote.getTotal() != null ? quote.getTotal() : summary.subtotal().add(shippingCost);
 
         Order order = null;
         try {
-            Customer customer = gatewayClient.getCustomerSafe(customerId).orElse(null);
             OrderRequest orderRequest = new OrderRequest();
             orderRequest.setCustomerId(customerId);
             orderRequest.setCurrency(currency);
             orderRequest.setTotal(total);
+            orderRequest.setDiscountTotal(quote.getDiscount());
+            orderRequest.setCustomerGroupCode(customerGroupCode);
+            orderRequest.setAppliedCouponCode(quote.getAppliedCoupon());
+            orderRequest.setAppliedOfferCodes(joinAppliedOfferCodes(quote));
             orderRequest.setStatus("PENDING_PAYMENT");
             orderRequest.setCustomerEmail(customer != null ? customer.getEmail() : null);
             orderRequest.setCustomerFirstName(customer != null ? customer.getFirstName() : null);
@@ -551,26 +566,17 @@ public class StorefrontController {
 
             order = gatewayClient.createOrder(orderRequest);
             List<OrderConfirmationItem> confirmationItems = new ArrayList<>();
-            List<Long> cartItemIds = new ArrayList<>();
-            for (CartItem item : cartItems) {
-                Product product = gatewayClient.getProductSafe(item.getProductId()).orElse(null);
-                if (product != null) {
-                    applyCatalogState(product);
-                }
-                SelectedProductScope selection = resolveProductSelection(product, item.getVariantKey());
+            for (CartItemView item : summary.items()) {
                 OrderItemRequest request = new OrderItemRequest();
                 request.setProductId(item.getProductId());
                 request.setVariantKey(item.getVariantKey());
-                request.setVariantDisplayName(selection != null ? selection.variantDisplayName() : firstNonBlank(item.getVariantDisplayName(), item.getVariantKey()));
-                request.setSku(selection != null ? selection.sku() : (product != null ? product.getSku() : "N/A"));
-                request.setName(product != null ? product.getName() : "Product #" + item.getProductId());
+                request.setVariantDisplayName(item.getVariantDisplayName());
+                request.setSku(firstNonBlank(item.getVariantKey(), "SKU-" + item.getProductId()));
+                request.setName(item.getProductName());
                 request.setQuantity(item.getQuantity());
                 request.setUnitPrice(item.getUnitPrice());
                 gatewayClient.addOrderItem(order.getId(), request);
                 confirmationItems.add(toConfirmationItem(request));
-                if (item.getId() != null) {
-                    cartItemIds.add(item.getId());
-                }
             }
 
             persistCustomerCustomFields(customerId, checkoutForm, checkoutCustomFields);
@@ -604,7 +610,8 @@ public class StorefrontController {
     }
 
     private String checkoutConfirmGuest(CheckoutForm checkoutForm, HttpSession session) {
-        CartSummary summary = buildGuestCartSummary(session);
+        String customerGroupCode = defaultCustomerGroupCode();
+        CartSummary summary = buildGuestCartSummary(session, customerGroupCode);
         if (summary.items().isEmpty()) {
             return "redirect:/carrello";
         }
@@ -627,7 +634,7 @@ public class StorefrontController {
         }
 
         BigDecimal shippingCost = shippingMethods().get(shippingMethod);
-        PriceQuoteResponse quote = quoteCheckout(summary.subtotal(), shippingCost, checkoutForm.getCouponCode());
+        PriceQuoteResponse quote = quoteCheckout(summary.subtotal(), shippingCost, checkoutForm.getCouponCode(), customerGroupCode, cartItemCount(summary.items()));
         BigDecimal total = quote.getTotal() != null ? quote.getTotal() : summary.subtotal().add(shippingCost);
 
         Order order = null;
@@ -639,6 +646,10 @@ public class StorefrontController {
             orderRequest.setCustomerId(guestCustomer.getId());
             orderRequest.setCurrency(currency);
             orderRequest.setTotal(total);
+            orderRequest.setDiscountTotal(quote.getDiscount());
+            orderRequest.setCustomerGroupCode(resolveCustomerGroupCode(guestCustomer));
+            orderRequest.setAppliedCouponCode(quote.getAppliedCoupon());
+            orderRequest.setAppliedOfferCodes(joinAppliedOfferCodes(quote));
             orderRequest.setStatus("PENDING_PAYMENT");
             orderRequest.setCustomerEmail(normalizeGuestEmail(checkoutForm.getGuestEmail()));
             orderRequest.setCustomerFirstName(safeTrim(checkoutForm.getGuestFirstName()));
@@ -652,17 +663,12 @@ public class StorefrontController {
             order = gatewayClient.createOrder(orderRequest);
             List<OrderConfirmationItem> confirmationItems = new ArrayList<>();
             for (CartItemView item : summary.items()) {
-                Product product = gatewayClient.getProductSafe(item.getProductId()).orElse(null);
-                if (product != null) {
-                    applyCatalogState(product);
-                }
-                SelectedProductScope selection = resolveProductSelection(product, item.getVariantKey());
                 OrderItemRequest request = new OrderItemRequest();
                 request.setProductId(item.getProductId());
                 request.setVariantKey(item.getVariantKey());
-                request.setVariantDisplayName(selection != null ? selection.variantDisplayName() : firstNonBlank(item.getVariantDisplayName(), item.getVariantKey()));
-                request.setSku(selection != null ? selection.sku() : (product != null ? product.getSku() : "N/A"));
-                request.setName(product != null ? product.getName() : item.getProductName());
+                request.setVariantDisplayName(item.getVariantDisplayName());
+                request.setSku(firstNonBlank(item.getVariantKey(), "SKU-" + item.getProductId()));
+                request.setName(item.getProductName());
                 request.setQuantity(item.getQuantity());
                 request.setUnitPrice(item.getUnitPrice());
                 gatewayClient.addOrderItem(order.getId(), request);
@@ -978,30 +984,22 @@ public class StorefrontController {
     }
 
     private void applyCatalogState(List<Product> products) {
+        applyCatalogState(products, defaultCustomerGroupCode());
+    }
+
+    private void applyCatalogState(List<Product> products, String customerGroupCode) {
         if (products == null || products.isEmpty()) {
             return;
         }
 
-        List<ProductPrice> prices = gatewayClient.listPrices().stream()
-            .filter(price -> price.getProductId() != null)
-            .collect(Collectors.toList());
+        Map<String, PriceResolutionItemResponse> resolvedPrices = resolvePriceMap(products, customerGroupCode);
         List<InventoryItem> inventoryItems = gatewayClient.listInventory().stream()
             .filter(item -> item.getProductId() != null)
             .collect(Collectors.toList());
 
-        Map<Long, ProductPrice> basePricesByProductId = prices.stream()
-            .filter(price -> !hasVariantScope(price.getVariantKey()))
-            .collect(Collectors.toMap(ProductPrice::getProductId, Function.identity(), (first, ignored) -> first, LinkedHashMap::new));
         Map<Long, InventoryItem> baseInventoryByProductId = inventoryItems.stream()
             .filter(item -> !hasVariantScope(item.getVariantKey()))
             .collect(Collectors.toMap(InventoryItem::getProductId, Function.identity(), (first, ignored) -> first, LinkedHashMap::new));
-        Map<Long, Map<String, ProductPrice>> variantPricesByProductId = prices.stream()
-            .filter(price -> hasVariantScope(price.getVariantKey()))
-            .collect(Collectors.groupingBy(
-                ProductPrice::getProductId,
-                LinkedHashMap::new,
-                Collectors.toMap(price -> normalizeVariantKey(price.getVariantKey()), Function.identity(), (first, ignored) -> first, LinkedHashMap::new)
-            ));
         Map<Long, Map<String, InventoryItem>> variantInventoryByProductId = inventoryItems.stream()
             .filter(item -> hasVariantScope(item.getVariantKey()))
             .collect(Collectors.groupingBy(
@@ -1011,32 +1009,35 @@ public class StorefrontController {
             ));
 
         for (Product product : products) {
-            applyCatalogState(product, basePricesByProductId, baseInventoryByProductId, variantPricesByProductId, variantInventoryByProductId);
+            applyCatalogState(product, resolvedPrices, baseInventoryByProductId, variantInventoryByProductId);
         }
     }
 
     private void applyCatalogState(Product product) {
+        applyCatalogState(product, defaultCustomerGroupCode());
+    }
+
+    private void applyCatalogState(Product product, String customerGroupCode) {
         if (product == null) {
             return;
         }
 
-        applyCatalogState(List.of(product));
+        applyCatalogState(List.of(product), customerGroupCode);
     }
 
     private void applyCatalogState(
         Product product,
-        Map<Long, ProductPrice> pricesByProductId,
+        Map<String, PriceResolutionItemResponse> resolvedPrices,
         Map<Long, InventoryItem> inventoryByProductId,
-        Map<Long, Map<String, ProductPrice>> variantPricesByProductId,
         Map<Long, Map<String, InventoryItem>> variantInventoryByProductId
     ) {
         if (product == null) {
             return;
         }
 
-        ProductPrice price = pricesByProductId.get(product.getId());
-        if (price != null && Boolean.TRUE.equals(price.getActive()) && price.getAmount() != null) {
-            product.setPrice(price.getAmount());
+        PriceResolutionItemResponse basePrice = resolvedPrices.get(priceResolutionKey(product.getId(), null));
+        if (basePrice != null && basePrice.getAmount() != null) {
+            product.setPrice(basePrice.getAmount());
         }
 
         InventoryItem inventory = inventoryByProductId.get(product.getId());
@@ -1051,9 +1052,7 @@ public class StorefrontController {
                 .thenComparing(ProductVariant::getResolvedLabel, Comparator.nullsLast(String::compareToIgnoreCase)));
         }
 
-        Map<String, ProductPrice> variantPrices = variantPricesByProductId.getOrDefault(product.getId(), Map.of());
         Map<String, InventoryItem> variantInventory = variantInventoryByProductId.getOrDefault(product.getId(), Map.of());
-
         int aggregatedVariantQuantity = 0;
         boolean hasActiveVariants = false;
         for (ProductVariant variant : variants) {
@@ -1066,8 +1065,8 @@ public class StorefrontController {
             }
             hasActiveVariants = true;
 
-            ProductPrice variantPrice = variantPrices.get(normalizedVariantKey);
-            if (variantPrice != null && Boolean.TRUE.equals(variantPrice.getActive()) && variantPrice.getAmount() != null) {
+            PriceResolutionItemResponse variantPrice = resolvedPrices.get(priceResolutionKey(product.getId(), normalizedVariantKey));
+            if (variantPrice != null && variantPrice.getAmount() != null) {
                 variant.setPriceOverride(variantPrice.getAmount());
             }
 
@@ -1084,6 +1083,82 @@ public class StorefrontController {
         if (hasActiveVariants) {
             product.setQuantity(aggregatedVariantQuantity);
         }
+    }
+
+    private Map<String, PriceResolutionItemResponse> resolvePriceMap(List<Product> products, String customerGroupCode) {
+        PriceResolutionRequest request = new PriceResolutionRequest();
+        request.setCurrency(currency);
+        request.setCustomerGroupCode(normalizeCustomerGroupCode(customerGroupCode));
+        request.setAt(OffsetDateTime.now());
+        request.setItems(buildPriceResolutionItems(products));
+        if (request.getItems() == null || request.getItems().isEmpty()) {
+            return Map.of();
+        }
+
+        PriceResolutionResponse response = gatewayClient.resolvePrices(request);
+        if (response == null || response.getItems() == null || response.getItems().isEmpty()) {
+            return Map.of();
+        }
+
+        return response.getItems().stream()
+            .filter(item -> item.getProductId() != null)
+            .collect(Collectors.toMap(
+                item -> priceResolutionKey(item.getProductId(), item.getVariantKey()),
+                Function.identity(),
+                (first, ignored) -> first,
+                LinkedHashMap::new
+            ));
+    }
+
+    private List<PriceResolutionItemRequest> buildPriceResolutionItems(List<Product> products) {
+        List<PriceResolutionItemRequest> items = new ArrayList<>();
+        for (Product product : products) {
+            if (product == null || product.getId() == null) {
+                continue;
+            }
+            PriceResolutionItemRequest baseItem = new PriceResolutionItemRequest();
+            baseItem.setProductId(product.getId());
+            baseItem.setQuantity(1);
+            items.add(baseItem);
+
+            for (ProductVariant variant : product.getVariants() != null ? product.getVariants() : List.<ProductVariant>of()) {
+                if (variant == null || !Boolean.TRUE.equals(variant.getActive()) || !hasVariantScope(variant.getVariantKey())) {
+                    continue;
+                }
+                PriceResolutionItemRequest variantItem = new PriceResolutionItemRequest();
+                variantItem.setProductId(product.getId());
+                variantItem.setVariantKey(normalizeVariantKey(variant.getVariantKey()));
+                variantItem.setQuantity(1);
+                items.add(variantItem);
+            }
+        }
+        return items;
+    }
+
+    private String priceResolutionKey(Long productId, String variantKey) {
+        return productId + "::" + (normalizeVariantKey(variantKey) != null ? normalizeVariantKey(variantKey) : "");
+    }
+
+    private String resolveCustomerGroupCode(Authentication authentication) {
+        if (!isAuthenticated(authentication)) {
+            return defaultCustomerGroupCode();
+        }
+        return resolveCustomerGroupCode(customerResolver.resolveCurrentCustomer(authentication));
+    }
+
+    private String resolveCustomerGroupCode(Customer customer) {
+        return normalizeCustomerGroupCode(customer != null ? customer.getCustomerGroupCode() : null);
+    }
+
+    private String normalizeCustomerGroupCode(String customerGroupCode) {
+        if (customerGroupCode == null || customerGroupCode.isBlank()) {
+            return defaultCustomerGroupCode();
+        }
+        return customerGroupCode.trim().replace(' ', '_').toUpperCase(Locale.ROOT);
+    }
+
+    private String defaultCustomerGroupCode() {
+        return "RETAIL";
     }
 
     private boolean shouldAutoMergeGuestCart(Authentication authentication) {
@@ -1122,6 +1197,10 @@ public class StorefrontController {
     }
 
     private void mergeGuestCartIntoCustomerIfPresent(Long customerId, HttpSession session) {
+        mergeGuestCartIntoCustomerIfPresent(customerId, defaultCustomerGroupCode(), session);
+    }
+
+    private void mergeGuestCartIntoCustomerIfPresent(Long customerId, String customerGroupCode, HttpSession session) {
         Map<String, Integer> guestItems = getGuestCartItems(session);
         if (guestItems.isEmpty()) {
             return;
@@ -1139,7 +1218,7 @@ public class StorefrontController {
             if (product == null) {
                 continue;
             }
-            applyCatalogState(product);
+            applyCatalogState(product, customerGroupCode);
 
             SelectedProductScope selection = resolveProductSelection(product, guestCartItem.variantKey());
             if (selection == null) {
@@ -1159,6 +1238,10 @@ public class StorefrontController {
     }
 
     private CartSummary buildCartSummary(Cart cart) {
+        return buildCartSummary(cart, defaultCustomerGroupCode());
+    }
+
+    private CartSummary buildCartSummary(Cart cart, String customerGroupCode) {
         List<CartItem> cartItems = gatewayClient.listCartItems(cart.getId());
         List<CartItemView> items = new ArrayList<>();
         List<Long> staleItemIds = new ArrayList<>();
@@ -1171,7 +1254,7 @@ public class StorefrontController {
                 }
                 continue;
             }
-            applyCatalogState(product);
+            applyCatalogState(product, customerGroupCode);
 
             SelectedProductScope selection = resolveProductSelection(product, item.getVariantKey());
             CartItemView view = new CartItemView();
@@ -1181,13 +1264,12 @@ public class StorefrontController {
             view.setVariantDisplayName(selection != null ? selection.variantDisplayName() : firstNonBlank(item.getVariantDisplayName(), item.getVariantKey()));
             view.setProductName(product.getName() != null ? product.getName() : "Product #" + item.getProductId());
             int quantity = item.getQuantity() != null ? item.getQuantity() : 1;
-            BigDecimal unitPrice = item.getUnitPrice() != null
-                ? item.getUnitPrice()
-                : (selection != null ? selection.unitPrice() : (product.getPrice() != null ? product.getPrice() : BigDecimal.ZERO));
+            BigDecimal unitPrice = selection != null
+                ? selection.unitPrice()
+                : (item.getUnitPrice() != null ? item.getUnitPrice() : (product.getPrice() != null ? product.getPrice() : BigDecimal.ZERO));
             view.setQuantity(quantity);
             view.setUnitPrice(unitPrice);
-            BigDecimal lineTotal = unitPrice.multiply(BigDecimal.valueOf(quantity));
-            view.setLineTotal(lineTotal);
+            view.setLineTotal(unitPrice.multiply(BigDecimal.valueOf(quantity)));
             items.add(view);
         }
 
@@ -1210,6 +1292,10 @@ public class StorefrontController {
     }
 
     private CartSummary buildGuestCartSummary(HttpSession session) {
+        return buildGuestCartSummary(session, defaultCustomerGroupCode());
+    }
+
+    private CartSummary buildGuestCartSummary(HttpSession session, String customerGroupCode) {
         Map<String, Integer> guestCart = new LinkedHashMap<>(getGuestCartItems(session));
         boolean changed = false;
         for (String itemKey : new ArrayList<>(guestCart.keySet())) {
@@ -1222,10 +1308,14 @@ public class StorefrontController {
         if (changed) {
             session.setAttribute(GUEST_CART_SESSION_KEY, guestCart);
         }
-        return buildGuestCartSummary(guestCart);
+        return buildGuestCartSummary(guestCart, customerGroupCode);
     }
 
     private CartSummary buildGuestCartSummary(Map<String, Integer> guestCart) {
+        return buildGuestCartSummary(guestCart, defaultCustomerGroupCode());
+    }
+
+    private CartSummary buildGuestCartSummary(Map<String, Integer> guestCart, String customerGroupCode) {
         List<CartItemView> items = new LinkedList<>();
 
         for (Map.Entry<String, Integer> entry : guestCart.entrySet()) {
@@ -1240,7 +1330,7 @@ public class StorefrontController {
             if (product == null) {
                 continue;
             }
-            applyCatalogState(product);
+            applyCatalogState(product, customerGroupCode);
 
             SelectedProductScope selection = resolveProductSelection(product, guestItem.variantKey());
             if (selection == null) {
@@ -1512,18 +1602,26 @@ public class StorefrontController {
         List<PaymentMethod> paymentMethods,
         List<CustomFieldDefinition> checkoutCustomFields,
         CheckoutForm checkoutForm,
+        String customerGroupCode,
         boolean guestCheckout
     ) {
         PriceQuoteResponse initialQuote = quoteCheckout(
             summary.subtotal(),
             shippingMethods().get(normalizeShippingMethod(checkoutForm.getShippingMethod())),
-            checkoutForm.getCouponCode()
+            checkoutForm.getCouponCode(),
+            customerGroupCode,
+            cartItemCount(summary.items())
         );
 
         model.addAttribute("items", summary.items());
         model.addAttribute("subtotal", summary.subtotal());
         model.addAttribute("shipping", initialQuote.getShipping());
         model.addAttribute("discount", initialQuote.getDiscount());
+        model.addAttribute("couponDiscount", initialQuote.getCouponDiscount());
+        model.addAttribute("automaticDiscount", initialQuote.getAutomaticDiscount());
+        model.addAttribute("shippingDiscount", initialQuote.getShippingDiscount());
+        model.addAttribute("appliedCoupon", initialQuote.getAppliedCoupon());
+        model.addAttribute("appliedOffers", initialQuote.getAppliedOffers());
         model.addAttribute("total", initialQuote.getTotal());
         model.addAttribute("quoteMessage", initialQuote.getMessage());
         model.addAttribute("addresses", addresses);
@@ -1660,12 +1758,34 @@ public class StorefrontController {
         }
     }
 
-    private PriceQuoteResponse quoteCheckout(BigDecimal subtotal, BigDecimal shippingCost, String couponCode) {
+    private PriceQuoteResponse quoteCheckout(BigDecimal subtotal, BigDecimal shippingCost, String couponCode, String customerGroupCode, int itemCount) {
         PriceQuoteRequest quoteRequest = new PriceQuoteRequest();
         quoteRequest.setSubtotal(subtotal);
         quoteRequest.setShipping(shippingCost);
         quoteRequest.setCouponCode(couponCode);
+        quoteRequest.setCustomerGroupCode(normalizeCustomerGroupCode(customerGroupCode));
+        quoteRequest.setItemCount(itemCount);
         return gatewayClient.quote(quoteRequest);
+    }
+
+    private int cartItemCount(List<CartItemView> items) {
+        return items.stream()
+            .map(CartItemView::getQuantity)
+            .filter(java.util.Objects::nonNull)
+            .mapToInt(Integer::intValue)
+            .sum();
+    }
+
+    private String joinAppliedOfferCodes(PriceQuoteResponse quote) {
+        if (quote == null || quote.getAppliedOffers() == null || quote.getAppliedOffers().isEmpty()) {
+            return null;
+        }
+        String joined = quote.getAppliedOffers().stream()
+            .map(AppliedOffer::getCode)
+            .filter(code -> code != null && !code.isBlank())
+            .distinct()
+            .collect(Collectors.joining(","));
+        return joined.isBlank() ? null : joined;
     }
 
     private PaymentRequest buildPaymentRequest(Long orderId, BigDecimal total, String paymentMethodCode, OrderRequest orderRequest) {
@@ -1815,6 +1935,10 @@ public class StorefrontController {
         request.setCustomerPhone(source.getCustomerPhone());
         request.setCustomerLocale(source.getCustomerLocale());
         request.setOrderComment(source.getOrderComment());
+        request.setDiscountTotal(source.getDiscountTotal());
+        request.setCustomerGroupCode(source.getCustomerGroupCode());
+        request.setAppliedCouponCode(source.getAppliedCouponCode());
+        request.setAppliedOfferCodes(source.getAppliedOfferCodes());
         request.setGuestCheckout(source.getGuestCheckout());
         request.setCustomFields(source.getCustomFields());
         return request;
@@ -1907,6 +2031,7 @@ public class StorefrontController {
         request.setFirstName(safeTrim(checkoutForm.getGuestFirstName()));
         request.setLastName(safeTrim(checkoutForm.getGuestLastName()));
         request.setPhone(safeTrim(checkoutForm.getGuestPhone()));
+        request.setCustomerGroupCode(defaultCustomerGroupCode());
         request.setNewsletter(Boolean.TRUE.equals(checkoutForm.getNewsletter()));
         request.setActive(true);
 

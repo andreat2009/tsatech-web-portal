@@ -7,11 +7,12 @@ import com.newproject.web.dto.BlogComment;
 import com.newproject.web.dto.BlogPost;
 import com.newproject.web.dto.Cart;
 import com.newproject.web.dto.Category;
-import com.newproject.web.dto.ContactMessage;
 import com.newproject.web.dto.CommerceIntegration;
+import com.newproject.web.dto.ContactMessage;
 import com.newproject.web.dto.Coupon;
-import com.newproject.web.dto.CustomFieldDefinition;
 import com.newproject.web.dto.Customer;
+import com.newproject.web.dto.CustomerRequest;
+import com.newproject.web.dto.CustomFieldDefinition;
 import com.newproject.web.dto.InformationPage;
 import com.newproject.web.dto.InventoryItem;
 import com.newproject.web.dto.Manufacturer;
@@ -209,9 +210,26 @@ public class AdminController {
     @GetMapping("/customers")
     public String customers(Model model) {
         List<Customer> customers = gatewayClient.listCustomers();
-        List<CustomFieldDefinition> customFields = gatewayClient.listCustomFields(null, null);
         model.addAttribute("customers", customers);
         return "admin/customers";
+    }
+
+    @PostMapping("/customers/{id}/group")
+    public String updateCustomerGroup(@PathVariable Long id, @RequestParam String customerGroupCode) {
+        Customer existing = gatewayClient.getCustomerSafe(id).orElse(null);
+        if (existing == null) {
+            return "redirect:/admin/customers";
+        }
+        CustomerRequest request = new CustomerRequest();
+        request.setKeycloakUserId(existing.getKeycloakUserId());
+        request.setEmail(existing.getEmail());
+        request.setFirstName(existing.getFirstName());
+        request.setLastName(existing.getLastName());
+        request.setPhone(existing.getPhone());
+        request.setActive(existing.getActive());
+        request.setCustomerGroupCode(customerGroupCode);
+        gatewayClient.updateCustomer(id, request);
+        return "redirect:/admin/customers";
     }
 
     @GetMapping("/carts")

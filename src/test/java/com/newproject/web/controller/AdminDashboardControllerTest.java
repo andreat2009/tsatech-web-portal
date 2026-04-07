@@ -1,6 +1,7 @@
 package com.newproject.web.controller;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -9,6 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.newproject.web.dto.AnalyticsSummary;
+import com.newproject.web.dto.PagedResponse;
 import com.newproject.web.dto.PublicStoreSettings;
 import com.newproject.web.error.PortalExceptionHandler;
 import com.newproject.web.service.GatewayClient;
@@ -75,6 +77,7 @@ class AdminDashboardControllerTest {
         when(gatewayClient.listContactMessages(eq(null))).thenReturn(List.of());
         when(gatewayClient.getAnalyticsSummary()).thenReturn(new AnalyticsSummary());
         when(gatewayClient.listAnalyticsEvents(any())).thenReturn(List.of());
+        when(gatewayClient.listAdminAuditEvents(anyInt(), anyInt())).thenReturn(PagedResponse.empty(0, 8));
         when(gatewayClient.notificationPing()).thenReturn("ok");
     }
 
@@ -87,6 +90,7 @@ class AdminDashboardControllerTest {
             .andExpect(content().string(org.hamcrest.Matchers.containsString("Custom fields")))
             .andExpect(content().string(org.hamcrest.Matchers.containsString("Payment Credentials")))
             .andExpect(content().string(org.hamcrest.Matchers.containsString("Integrations Hub")))
-            .andExpect(content().string(org.hamcrest.Matchers.containsString("Manage backend connectors")));
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("Manage backend connectors")))
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("Admin Audit Trail")));
     }
 }

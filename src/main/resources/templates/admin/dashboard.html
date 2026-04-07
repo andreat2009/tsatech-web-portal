@@ -123,6 +123,12 @@
             <div class="stat-value" th:text="${integrationCount}">0</div>
             <a class="btn" th:href="@{/admin/integrations}">Manage backend connectors</a>
         </div>
+        <div class="card dashboard-tile tile-settings">
+            <img class="dashboard-tile-icon" th:src="@{/img/dashboard/settings.svg}" alt="Admin audit" />
+            <div class="stat-label">Admin Audit Trail</div>
+            <div class="stat-value" th:text="${auditEventCount}">0</div>
+            <a class="btn" th:href="@{/admin/audit}">Open audit log</a>
+        </div>
         <div class="card dashboard-tile tile-shipments">
             <img class="dashboard-tile-icon" th:src="@{/img/dashboard/shipments.svg}" alt="Shipments" />
             <div class="stat-label" th:text="#{admin.dashboard.shipments}">Spedizioni</div>
@@ -235,6 +241,38 @@
                     </table>
                 </div>
             </div>
+        </div>
+    </section>
+
+    <section class="card section-pad analytics-section">
+        <h2>Recent admin audit events</h2>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                <tr>
+                    <th>When</th>
+                    <th>Actor</th>
+                    <th>Action</th>
+                    <th>Target</th>
+                    <th>Outcome</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${recentAdminAuditEvents == null or recentAdminAuditEvents.isEmpty()}">
+                    <td colspan="5" class="muted">No admin audit events yet.</td>
+                </tr>
+                <tr th:each="event : ${recentAdminAuditEvents}">
+                    <td th:text="${event.createdAt}">now</td>
+                    <td th:text="${event.actorUsername}">admin</td>
+                    <td th:text="${event.actionType}">UPDATE</td>
+                    <td>
+                        <span th:text="${event.targetType}">PRODUCTS</span>
+                        <span th:if="${event.targetId != null}" th:text="${' #' + event.targetId}">#1</span>
+                    </td>
+                    <td th:text="${event.outcome}">SUCCESS</td>
+                </tr>
+                </tbody>
+            </table>
         </div>
     </section>
 

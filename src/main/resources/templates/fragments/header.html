@@ -86,6 +86,7 @@
                 <a th:href="@{/admin/information}" th:classappend="${#strings.startsWith(currentRequestUri, '/admin/information') or #strings.startsWith(currentRequestUri, '/admin/blog') or #strings.startsWith(currentRequestUri, '/admin/store-settings')} ? ' is-active' : ''">Content</a>
                 <a th:href="@{/admin/marketing/coupon}" th:classappend="${#strings.startsWith(currentRequestUri, '/admin/marketing') or #strings.startsWith(currentRequestUri, '/admin/coupons')} ? ' is-active' : ''">Growth</a>
                 <a th:href="@{/admin/integrations}" th:classappend="${#strings.startsWith(currentRequestUri, '/admin/integrations')} ? ' is-active' : ''">Integrations</a>
+                <a th:href="@{/admin/audit}" th:classappend="${#strings.startsWith(currentRequestUri, '/admin/audit')} ? ' is-active' : ''">Audit</a>
                 <a th:href="@{/admin/store-settings}" th:classappend="${#strings.startsWith(currentRequestUri, '/admin/store-settings')} ? ' is-active' : ''">Settings</a>
             </div>
         </div>

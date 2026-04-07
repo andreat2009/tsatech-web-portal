@@ -1,5 +1,6 @@
 package com.newproject.web.controller;
 
+import com.newproject.web.dto.AdminAuditEvent;
 import com.newproject.web.dto.AnalyticsEvent;
 import com.newproject.web.dto.AnalyticsSummary;
 import com.newproject.web.dto.BlogComment;
@@ -74,6 +75,7 @@ public class AdminController {
         List<ContactMessage> contactMessages = gatewayClient.listContactMessages(null);
         AnalyticsSummary analyticsSummary = gatewayClient.getAnalyticsSummary();
         List<AnalyticsEvent> recentAnalyticsEvents = gatewayClient.listAnalyticsEvents(30);
+        PagedResponse<AdminAuditEvent> auditPage = gatewayClient.listAdminAuditEvents(0, 8);
 
         model.addAttribute("productCount", products.size());
         model.addAttribute("categoryCount", categories.size());
@@ -95,6 +97,8 @@ public class AdminController {
         model.addAttribute("blogCommentCount", blogComments.size());
         model.addAttribute("contactMessageCount", contactMessages.size());
         model.addAttribute("notificationStatus", gatewayClient.notificationPing());
+        model.addAttribute("auditEventCount", auditPage.getTotalElements());
+        model.addAttribute("recentAdminAuditEvents", auditPage.getContent());
         model.addAttribute("analyticsSummary", analyticsSummary);
         model.addAttribute("recentAnalyticsEvents", recentAnalyticsEvents);
         return "admin/dashboard";

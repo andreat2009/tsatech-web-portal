@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>Admin Audit Trail</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+</head>
+<body>
+<div th:replace="fragments/header :: header"></div>
+
+<main class="container admin">
+    <section class="page-title-row">
+        <div>
+            <p class="section-kicker">Governance</p>
+            <h1>Admin Audit Trail</h1>
+            <p class="muted">Cronologia delle operazioni amministrative critiche registrate dal back office.</p>
+        </div>
+        <div class="actions">
+            <a class="btn" th:href="@{/admin}">Back to dashboard</a>
+        </div>
+    </section>
+
+    <section class="card section-pad">
+        <div class="admin-summary-row">
+            <div>
+                <strong th:text="${totalAuditEvents}">0</strong> eventi registrati
+            </div>
+            <div class="muted">Pagina <span th:text="${currentPage}">1</span>/<span th:text="${totalPages}">1</span></div>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                <tr>
+                    <th>When</th>
+                    <th>Actor</th>
+                    <th>Action</th>
+                    <th>Target</th>
+                    <th>Outcome</th>
+                    <th>Status</th>
+                    <th>Path</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${auditEvents == null or auditEvents.isEmpty()}">
+                    <td colspan="7" class="muted">No admin audit events yet.</td>
+                </tr>
+                <tr th:each="event : ${auditEvents}">
+                    <td th:text="${event.createdAt}">now</td>
+                    <td>
+                        <strong th:text="${event.actorUsername}">admin</strong>
+                        <div class="muted" th:if="${event.actorSubject != null}" th:text="${event.actorSubject}">subject</div>
+                    </td>
+                    <td>
+                        <strong th:text="${event.actionType}">UPDATE</strong>
+                        <div class="muted" th:if="${event.summary != null}" th:text="${event.summary}">summary</div>
+                    </td>
+                    <td>
+                        <span th:text="${event.targetType}">PRODUCTS</span>
+                        <span th:if="${event.targetId != null}" th:text="${' #' + event.targetId}">#1</span>
+                    </td>
+                    <td>
+                        <span class="badge" th:text="${event.outcome}">SUCCESS</span>
+                    </td>
+                    <td th:text="${event.statusCode}">200</td>
+                    <td>
+                        <code th:text="${event.httpMethod + ' ' + event.requestPath}">POST /admin</code>
+                        <div class="muted" th:if="${event.ipAddress != null}" th:text="${event.ipAddress}">127.0.0.1</div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pagination-row" th:if="${totalPages > 1}">
+            <a class="btn" th:if="${hasPrevious}" th:href="@{|/admin/audit?page=${currentPage - 1}|}">Previous</a>
+            <span class="muted" th:if="${!hasPrevious}">Start</span>
+            <a class="btn" th:if="${hasNext}" th:href="@{|/admin/audit?page=${currentPage + 1}|}">Next</a>
+            <span class="muted" th:if="${!hasNext}">End</span>
+        </div>
+    </section>
+</main>
+
+<div th:replace="fragments/footer :: footer"></div>
+</body>
+</html>

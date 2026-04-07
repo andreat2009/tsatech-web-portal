@@ -1029,6 +1029,34 @@ public class GatewayClient {
             .block();
     }
 
+    public PagedResponse<AdminAuditEvent> listAdminAuditEvents(int page, int size) {
+        int safePage = Math.max(0, page);
+        int safeSize = Math.max(1, size);
+        return safeCall(
+            () -> client().get()
+                .uri(uriBuilder -> uriBuilder
+                    .path(baseUrl + "/api/cms/admin-audit")
+                    .queryParam("page", safePage)
+                    .queryParam("size", safeSize)
+                    .build())
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<PagedResponse<AdminAuditEvent>>() {})
+                .blockOptional()
+                .orElse(PagedResponse.empty(safePage, safeSize)),
+            "/api/cms/admin-audit",
+            PagedResponse.empty(safePage, safeSize)
+        );
+    }
+
+    public AdminAuditEvent recordAdminAuditEvent(AdminAuditEventRequest request) {
+        return client().post()
+            .uri(baseUrl + "/api/cms/admin-audit")
+            .bodyValue(request)
+            .retrieve()
+            .bodyToMono(AdminAuditEvent.class)
+            .block();
+    }
+
     public Payment createPayment(PaymentRequest request) {
         return client().post()
             .uri(baseUrl + "/api/payments")

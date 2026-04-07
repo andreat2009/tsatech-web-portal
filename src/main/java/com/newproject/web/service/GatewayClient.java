@@ -982,6 +982,53 @@ public class GatewayClient {
             .block();
     }
 
+
+    public List<CommerceIntegration> listCommerceIntegrations() {
+        return safeList(
+            () -> client().get()
+                .uri(baseUrl + "/api/cms/integrations")
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<List<CommerceIntegration>>() {})
+                .blockOptional()
+                .orElse(List.of()),
+            "/api/cms/integrations"
+        );
+    }
+
+    public CommerceIntegration getCommerceIntegration(Long id) {
+        return client().get()
+            .uri(baseUrl + "/api/cms/integrations/{id}", id)
+            .retrieve()
+            .bodyToMono(CommerceIntegration.class)
+            .block();
+    }
+
+    public CommerceIntegration createCommerceIntegration(AdminCommerceIntegrationForm form) {
+        return client().post()
+            .uri(baseUrl + "/api/cms/integrations")
+            .bodyValue(form)
+            .retrieve()
+            .bodyToMono(CommerceIntegration.class)
+            .block();
+    }
+
+    public CommerceIntegration updateCommerceIntegration(Long id, AdminCommerceIntegrationForm form) {
+        return client().put()
+            .uri(baseUrl + "/api/cms/integrations/{id}", id)
+            .bodyValue(form)
+            .retrieve()
+            .bodyToMono(CommerceIntegration.class)
+            .block();
+    }
+
+    public void deleteCommerceIntegration(Long id) {
+        client().delete()
+            .uri(baseUrl + "/api/cms/integrations/{id}", id)
+            .retrieve()
+            .toBodilessEntity()
+            .block();
+    }
+
     public Payment createPayment(PaymentRequest request) {
         return client().post()
             .uri(baseUrl + "/api/payments")

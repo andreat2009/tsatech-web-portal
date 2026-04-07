@@ -66,6 +66,7 @@ class AdminDashboardControllerTest {
         when(gatewayClient.listCoupons()).thenReturn(List.of());
         when(gatewayClient.listPayments(eq(null))).thenReturn(List.of());
         when(gatewayClient.listAdminPaymentMethods()).thenReturn(List.of());
+        when(gatewayClient.listCommerceIntegrations()).thenReturn(List.of());
         when(gatewayClient.listShipments(eq(null))).thenReturn(List.of());
         when(gatewayClient.listReturns(eq(null), eq(null))).thenReturn(List.of());
         when(gatewayClient.listInformationPages(eq(null))).thenReturn(List.of());
@@ -85,6 +86,7 @@ class AdminDashboardControllerTest {
             .andExpect(content().string(org.hamcrest.Matchers.containsString("Dashboard Admin")))
             .andExpect(content().string(org.hamcrest.Matchers.containsString("Custom fields")))
             .andExpect(content().string(org.hamcrest.Matchers.containsString("Payment Credentials")))
-            .andExpect(content().string(org.hamcrest.Matchers.containsString("Manage payment methods & credentials")));
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("Integrations Hub")))
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("Manage backend connectors")));
     }
 }

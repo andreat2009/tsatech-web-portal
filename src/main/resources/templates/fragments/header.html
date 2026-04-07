@@ -2,9 +2,13 @@
     <div id="top">
         <div class="container top-row">
             <div class="top-left">
+                <span class="support-kicker">Always-on support</span>
                 <span th:text="${#messages.msg('header.support.prefix') + ' ' + ((storeSettings != null and storeSettings.supportPhone != null and !#strings.isEmpty(storeSettings.supportPhone)) ? storeSettings.supportPhone : '+39 800 000 000')}">Support: +39 800 000 000</span>
             </div>
-            <ul class="top-links">
+            <button class="shell-toggle shell-toggle-top" type="button" data-shell-toggle="top-links-panel" aria-controls="top-links-panel" aria-expanded="false">
+                Account &amp; tools
+            </button>
+            <ul class="top-links" id="top-links-panel">
                 <li>
                     <form class="lang-switcher" method="get" th:action="${currentRequestUri}" data-lang-switcher-form>
                         <select name="lang" data-lang-switcher-select>
@@ -44,12 +48,17 @@
                 <input type="text" name="q" th:placeholder="#{header.search.placeholder}" />
                 <button type="submit" class="btn btn-search" th:text="#{header.search}">Cerca</button>
             </form>
-            <a class="header-cart" th:href="@{/carrello}" th:text="#{header.goto.cart}">Vai al carrello</a>
+            <div class="header-cta-group">
+                <a class="header-cart" th:href="@{/carrello}" th:text="#{header.goto.cart}">Vai al carrello</a>
+                <button class="shell-toggle shell-toggle-menu" type="button" data-shell-toggle="menu-links-panel" aria-controls="menu-links-panel" aria-expanded="false">
+                    Menu
+                </button>
+            </div>
         </div>
     </div>
 
     <nav id="menu">
-        <div class="container menu-links">
+        <div class="container menu-links" id="menu-links-panel">
             <a th:href="@{/}" th:text="#{menu.home}">Home</a>
             <a th:href="@{/catalogo}" th:text="#{menu.catalog}">Catalogo</a>
             <a th:href="@{/catalogo/offerte}" th:text="#{menu.specials}">Offerte</a>
@@ -64,4 +73,22 @@
             <a th:href="@{/admin}" sec:authorize="hasRole('ADMIN')" th:text="#{menu.admin}">Admin</a>
         </div>
     </nav>
+
+    <nav class="admin-quickbar" th:if="${isAdminArea}" sec:authorize="hasRole('ADMIN')">
+        <div class="container admin-quickbar-inner">
+            <span class="admin-quickbar-label">Back office</span>
+            <div class="admin-quickbar-links">
+                <a th:href="@{/admin}" th:classappend="${currentRequestUri == '/admin' or currentRequestUri == '/amministrazione'} ? ' is-active' : ''">Overview</a>
+                <a th:href="@{/admin/catalogo/prodotti}" th:classappend="${#strings.startsWith(currentRequestUri, '/admin/catalogo') or #strings.startsWith(currentRequestUri, '/admin/products')} ? ' is-active' : ''">Catalog</a>
+                <a th:href="@{/admin/orders}" th:classappend="${#strings.startsWith(currentRequestUri, '/admin/orders')} ? ' is-active' : ''">Orders</a>
+                <a th:href="@{/admin/customers}" th:classappend="${#strings.startsWith(currentRequestUri, '/admin/customers')} ? ' is-active' : ''">Customers</a>
+                <a th:href="@{/admin/payment-methods}" th:classappend="${#strings.startsWith(currentRequestUri, '/admin/payment-methods') or #strings.startsWith(currentRequestUri, '/admin/payments')} ? ' is-active' : ''">Payments</a>
+                <a th:href="@{/admin/information}" th:classappend="${#strings.startsWith(currentRequestUri, '/admin/information') or #strings.startsWith(currentRequestUri, '/admin/blog') or #strings.startsWith(currentRequestUri, '/admin/store-settings')} ? ' is-active' : ''">Content</a>
+                <a th:href="@{/admin/marketing/coupon}" th:classappend="${#strings.startsWith(currentRequestUri, '/admin/marketing') or #strings.startsWith(currentRequestUri, '/admin/coupons')} ? ' is-active' : ''">Growth</a>
+                <a th:href="@{/admin/integrations}" th:classappend="${#strings.startsWith(currentRequestUri, '/admin/integrations')} ? ' is-active' : ''">Integrations</a>
+                <a th:href="@{/admin/store-settings}" th:classappend="${#strings.startsWith(currentRequestUri, '/admin/store-settings')} ? ' is-active' : ''">Settings</a>
+            </div>
+        </div>
+    </nav>
 </header>
+<script th:src="@{/js/app-shell.js}" defer></script>

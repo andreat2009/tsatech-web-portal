@@ -7,6 +7,7 @@ import com.newproject.web.dto.BlogPost;
 import com.newproject.web.dto.Cart;
 import com.newproject.web.dto.Category;
 import com.newproject.web.dto.ContactMessage;
+import com.newproject.web.dto.CommerceIntegration;
 import com.newproject.web.dto.Coupon;
 import com.newproject.web.dto.CustomFieldDefinition;
 import com.newproject.web.dto.Customer;
@@ -64,6 +65,7 @@ public class AdminController {
         List<Coupon> coupons = gatewayClient.listCoupons();
         List<Payment> payments = gatewayClient.listPayments(null);
         List<PaymentMethod> paymentMethods = gatewayClient.listAdminPaymentMethods();
+        List<CommerceIntegration> integrations = gatewayClient.listCommerceIntegrations();
         List<Shipment> shipments = gatewayClient.listShipments(null);
         List<OrderReturn> returns = gatewayClient.listReturns(null, null);
         List<InformationPage> informationPages = gatewayClient.listInformationPages(null);
@@ -85,6 +87,7 @@ public class AdminController {
         model.addAttribute("couponCount", coupons.size());
         model.addAttribute("paymentCount", payments.size());
         model.addAttribute("paymentMethodCount", paymentMethods.size());
+        model.addAttribute("integrationCount", integrations.size());
         model.addAttribute("shipmentCount", shipments.size());
         model.addAttribute("returnCount", returns.size());
         model.addAttribute("informationCount", informationPages.size());

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title th:text="${formTitle}">Integration Connector</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+</head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main class="container admin">
+    <div class="page-header">
+        <div>
+            <h1 th:text="${formTitle}">Integration Connector</h1>
+            <p class="muted">Definisci come questo store deve parlare con un backend esterno. La configurazione e valida sia per ambiente locale sia per deploy server.</p>
+        </div>
+        <div class="actions">
+            <a class="btn" th:href="@{/admin/integrations}">Back to hub</a>
+            <button class="btn btn-primary" type="submit" form="integration-form">Save connector</button>
+        </div>
+    </div>
+
+    <form id="integration-form" class="form" th:action="${formAction}" method="post" th:object="${integration}">
+        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+        <section class="card-lite form-section-block">
+            <h2>Identity & rollout</h2>
+            <div class="field-grid two">
+                <div class="field">
+                    <label>Code</label>
+                    <input th:field="*{code}" placeholder="broadleaf-master" required />
+                </div>
+                <div class="field">
+                    <label>Display name</label>
+                    <input th:field="*{displayName}" placeholder="Broadleaf master backend" required />
+                </div>
+            </div>
+            <div class="field-grid three">
+                <div class="field">
+                    <label>Provider</label>
+                    <select th:field="*{providerType}">
+                        <option th:each="provider : ${providerOptions}" th:value="${provider}" th:text="${provider}">CUSTOM_REST</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Sync mode</label>
+                    <select th:field="*{syncMode}">
+                        <option th:each="mode : ${syncModeOptions}" th:value="${mode}" th:text="${mode}">BIDIRECTIONAL</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Active</label>
+                    <select th:field="*{active}">
+                        <option th:value="true">true</option>
+                        <option th:value="false">false</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <section class="card-lite form-section-block">
+            <h2>Connection</h2>
+            <div class="field-grid two">
+                <div class="field">
+                    <label>Base URL</label>
+                    <input th:field="*{baseUrl}" placeholder="https://backend.example.com" required />
+                </div>
+                <div class="field">
+                    <label>Auth type</label>
+                    <select th:field="*{authType}">
+                        <option th:each="authType : ${authTypeOptions}" th:value="${authType}" th:text="${authType}">API_KEY</option>
+                    </select>
+                </div>
+            </div>
+            <div class="field-grid two">
+                <div class="field">
+                    <label>Username / client id</label>
+                    <input th:field="*{username}" placeholder="only for BASIC or client-based flows" />
+                </div>
+                <div class="field">
+                    <label>Credential storage</label>
+                    <div class="integration-status-card">
+                        <strong th:text="${integration.providerConfigurationAvailable != null and integration.providerConfigurationAvailable} ? 'Configured' : 'Waiting for credentials'">Configured</strong>
+                        <span th:text="${integration.credentialKeySource != null ? integration.credentialKeySource : 'encrypted-backend'}">encrypted-backend</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="card-lite form-section-block">
+            <h2>Sync domains</h2>
+            <div class="field-grid two integration-toggle-grid">
+                <label class="toggle-card"><input type="checkbox" th:field="*{syncCatalog}" /> <span>Catalog sync</span></label>
+                <label class="toggle-card"><input type="checkbox" th:field="*{syncInventory}" /> <span>Inventory sync</span></label>
+                <label class="toggle-card"><input type="checkbox" th:field="*{syncOrders}" /> <span>Order sync</span></label>
+                <label class="toggle-card"><input type="checkbox" th:field="*{syncCustomers}" /> <span>Customer sync</span></label>
+            </div>
+            <div class="field-grid two">
+                <div class="field">
+                    <label>Catalog endpoint</label>
+                    <input th:field="*{catalogEndpoint}" placeholder="/api/catalog/products" />
+                </div>
+                <div class="field">
+                    <label>Inventory endpoint</label>
+                    <input th:field="*{inventoryEndpoint}" placeholder="/api/inventory" />
+                </div>
+            </div>
+            <div class="field-grid two">
+                <div class="field">
+                    <label>Orders endpoint</label>
+                    <input th:field="*{ordersEndpoint}" placeholder="/api/orders" />
+                </div>
+                <div class="field">
+                    <label>Customers endpoint</label>
+                    <input th:field="*{customersEndpoint}" placeholder="/api/customers" />
+                </div>
+            </div>
+        </section>
+
+        <section class="card-lite form-section-block">
+            <h2>Secure credentials</h2>
+            <p class="muted">API key e secret vengono cifrati lato backend. Se lasci i campi vuoti mantieni quelli gia salvati.</p>
+            <div class="field-grid two">
+                <div class="field">
+                    <label>API key / bearer token</label>
+                    <input type="password" th:field="*{apiKey}" autocomplete="new-password" placeholder="Leave blank to keep current value" />
+                    <small class="muted" th:text="${integration.apiKeyConfigured != null and integration.apiKeyConfigured} ? 'Credential present' : 'No API key saved yet.'">Credential status</small>
+                </div>
+                <div class="field">
+                    <label>API secret / password</label>
+                    <input type="password" th:field="*{apiSecret}" autocomplete="new-password" placeholder="Leave blank to keep current value" />
+                    <small class="muted" th:text="${integration.apiSecretConfigured != null and integration.apiSecretConfigured} ? 'Secret present' : 'No secret saved yet.'">Secret status</small>
+                </div>
+            </div>
+            <div class="field-grid two integration-toggle-grid">
+                <label class="toggle-card"><input type="checkbox" th:field="*{clearApiKey}" /> <span>Clear saved API key</span></label>
+                <label class="toggle-card"><input type="checkbox" th:field="*{clearApiSecret}" /> <span>Clear saved API secret</span></label>
+            </div>
+        </section>
+
+        <div class="actions space-top">
+            <button class="btn btn-primary" type="submit">Save connector</button>
+            <a class="btn" th:href="@{/admin/integrations}">Cancel</a>
+        </div>
+    </form>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

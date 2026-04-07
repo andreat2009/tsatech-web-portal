@@ -9,7 +9,35 @@
 <div th:replace="fragments/header :: header"></div>
 
 <main class="container admin">
-    <h1 th:text="#{admin.dashboard.title}">Dashboard Admin</h1>
+    <section class="admin-dashboard-hero">
+        <div class="admin-hero-copy card">
+            <p class="admin-hero-kicker">Control room</p>
+            <h1 th:text="#{admin.dashboard.title}">Dashboard Admin</h1>
+            <p class="admin-hero-copy-text">Gestisci catalogo, contenuti, pagamenti e connettori esterni da un back office unico pensato per lavorare bene anche da tablet e smartphone.</p>
+            <div class="actions admin-hero-actions">
+                <a class="btn btn-primary" th:href="@{/admin/catalogo/prodotti/new}">Nuovo prodotto</a>
+                <a class="btn" th:href="@{/admin/custom-fields}">Custom fields</a>
+                <a class="btn" th:href="@{/admin/integrations}">Integrations Hub</a>
+            </div>
+        </div>
+        <aside class="card admin-hero-side">
+            <div class="admin-hero-metric">
+                <span class="admin-hero-metric-label">Payment methods</span>
+                <strong th:text="${paymentMethodCount}">0</strong>
+            </div>
+            <div class="admin-hero-metric">
+                <span class="admin-hero-metric-label">Custom fields</span>
+                <strong th:text="${customFieldCount}">0</strong>
+            </div>
+            <div class="admin-hero-metric">
+                <span class="admin-hero-metric-label">Integrations</span>
+                <strong th:text="${integrationCount}">0</strong>
+            </div>
+            <p class="muted admin-hero-note">Pronto per collegare Broadleaf, Magento, WooCommerce, OpenCart o backend REST custom senza toccare il codice applicativo.</p>
+        </aside>
+    </section>
+
+    <h1 class="admin-section-title" th:text="#{admin.dashboard.title}">Dashboard Admin</h1>
     <div class="grid stats">
         <div class="card dashboard-tile tile-products">
             <img class="dashboard-tile-icon" th:src="@{/img/dashboard/products.svg}" alt="Products" />
@@ -88,6 +116,12 @@
             <div class="stat-label">Payment Credentials</div>
             <div class="stat-value" th:text="${paymentMethodCount}">0</div>
             <a class="btn" th:href="@{/admin/payment-methods}">Manage payment methods & credentials</a>
+        </div>
+        <div class="card dashboard-tile tile-settings">
+            <img class="dashboard-tile-icon" th:src="@{/img/dashboard/settings.svg}" alt="Integrations" />
+            <div class="stat-label">Integrations Hub</div>
+            <div class="stat-value" th:text="${integrationCount}">0</div>
+            <a class="btn" th:href="@{/admin/integrations}">Manage backend connectors</a>
         </div>
         <div class="card dashboard-tile tile-shipments">
             <img class="dashboard-tile-icon" th:src="@{/img/dashboard/shipments.svg}" alt="Shipments" />

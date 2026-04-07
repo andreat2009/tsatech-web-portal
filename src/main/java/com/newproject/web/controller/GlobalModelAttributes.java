@@ -35,6 +35,7 @@ public class GlobalModelAttributes {
         String currentRequestUri = request != null && request.getRequestURI() != null
             ? request.getRequestURI()
             : "/";
+        boolean isAdminArea = currentRequestUri.startsWith("/admin") || currentRequestUri.startsWith("/amministrazione");
 
         PublicStoreSettings settings = gatewayClient.getPublicStoreSettings();
         if (settings == null) {
@@ -55,6 +56,7 @@ public class GlobalModelAttributes {
         model.addAttribute("languageOptions", options);
         model.addAttribute("currentLanguage", current);
         model.addAttribute("currentRequestUri", currentRequestUri);
+        model.addAttribute("isAdminArea", isAdminArea);
         model.addAttribute("storeSettings", settings);
         model.addAttribute("footerInformationPages", footerInformationPages);
     }

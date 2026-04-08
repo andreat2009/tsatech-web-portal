@@ -10,15 +10,114 @@
 <div th:replace="~{fragments/header :: header}"></div>
 <main class="container">
     <section class="card section-pad">
-        <h1 th:text="#{account.payment.method.heading}">Default payment method</h1>
-        <p th:text="#{account.payment.method.description}">Payment methods are managed in checkout and Keycloak.</p>
-        <h2 th:text="#{account.payment.method.addresses}">Available addresses</h2>
-        <ul data-paginate-collection="true" data-paginate="10" data-pagination-item="li">
-            <li th:each="a : ${addresses}">
-                <span th:text="${a.line1 + ', ' + a.city + ' (' + a.country + ')'}">address</span>
-                <strong th:if="${a.isDefault}" th:text="#{account.payment.method.default}"> [Default]</strong>
+        <h1 th:text="#{account.payment.method.heading}">Secure payment vault</h1>
+        <p th:text="#{account.payment.method.description}">Tokenize payment methods with the provider and store only secure references.</p>
+        <p class="muted" th:text="#{account.payment.method.token.note}">Only provider tokens and non-sensitive metadata are stored. Raw card data never reaches the backend.</p>
+
+        <div class="success-box" th:if="${param.saved}">
+            <strong th:text="#{common.success.saved}">Saved.</strong>
+        </div>
+        <div class="success-box" th:if="${param.deleted}">
+            <strong th:text="#{account.payment.method.deleted}">Payment instrument deleted.</strong>
+        </div>
+        <div class="alert-error" th:if="${param.error != null and param.error[0] == 'data'}" th:text="#{account.payment.method.error.data}">Provide a payment method and a provider token.</div>
+        <div class="alert-error" th:if="${param.error != null and param.error[0] == 'processing'}" th:text="#{account.payment.method.error.processing}">Unable to save the payment instrument.</div>
+
+        <div th:if="${#lists.isEmpty(tokenizablePaymentMethods)}" class="alert-error" th:text="#{account.payment.method.no.tokenizable}">
+            No tokenizable payment method is configured yet.
+        </div>
+
+        <form class="form" th:if="${!#lists.isEmpty(tokenizablePaymentMethods)}" method="post" th:action="@{/account/payment-method/instruments}" th:object="${paymentInstrumentForm}">
+            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+            <div class="field-grid two">
+                <div class="field full-width">
+                    <h2 th:text="#{account.payment.method.form.heading}">Save a tokenized payment method</h2>
+                    <p class="muted" th:text="#{account.payment.method.form.description}">Use provider-hosted fields or SDKs to obtain a token, then store only that secure token reference here.</p>
+                </div>
+                <div class="field">
+                    <label th:text="#{account.payment.method.form.method}">Payment method</label>
+                    <select th:field="*{paymentMethodCode}" required>
+                        <option value="" th:text="#{common.select}">Select</option>
+                        <option th:each="method : ${tokenizablePaymentMethods}"
+                                th:value="${method.code}"
+                                th:data-provider="${method.provider}"
+                                th:data-lightbox-script="${method.providerLightboxScriptUrl}"
+                                th:text="${method.displayName}">PayPal</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label th:text="#{account.payment.method.form.customer.reference}">Gateway customer reference</label>
+                    <input type="text" th:field="*{gatewayCustomerReference}" autocomplete="off" />
+                </div>
+                <div class="field full-width">
+                    <label th:text="#{account.payment.method.form.token}">Provider token</label>
+                    <input type="password" th:field="*{providerToken}" autocomplete="off" required data-provider-token-input />
+                    <small class="muted" th:text="#{account.payment.method.token.help}">Paste the secure token returned by the provider widget or SDK. Never paste raw card data.</small>
+                </div>
+                <div class="field full-width">
+                    <label th:text="#{account.payment.method.form.label}">Display label</label>
+                    <input type="text" th:field="*{displayLabel}" autocomplete="off" />
+                </div>
+                <div class="field">
+                    <label th:text="#{account.payment.method.form.brand}">Brand</label>
+                    <input type="text" th:field="*{brand}" autocomplete="off" />
+                </div>
+                <div class="field">
+                    <label th:text="#{account.payment.method.form.last4}">Last 4 digits</label>
+                    <input type="text" th:field="*{last4}" inputmode="numeric" maxlength="4" autocomplete="off" />
+                </div>
+                <div class="field">
+                    <label th:text="#{account.payment.method.form.expiry.month}">Expiry month</label>
+                    <input type="number" th:field="*{expiryMonth}" min="1" max="12" inputmode="numeric" />
+                </div>
+                <div class="field">
+                    <label th:text="#{account.payment.method.form.expiry.year}">Expiry year</label>
+                    <input type="number" th:field="*{expiryYear}" min="2026" max="2100" inputmode="numeric" />
+                </div>
+                <div class="field full-width settings-inline-flags">
+                    <label class="inline-control">
+                        <input type="checkbox" th:field="*{defaultInstrument}" />
+                        <span th:text="#{account.payment.method.form.default}">Set as preferred payment instrument</span>
+                    </label>
+                    <label class="inline-control">
+                        <input type="checkbox" th:field="*{active}" />
+                        <span th:text="#{account.payment.method.form.active}">Keep active</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="actions-row">
+                <button class="btn btn-primary" type="submit" th:text="#{common.save}">Save</button>
+                <a class="btn" th:href="@{/account/edit}" th:text="#{account.edit.heading}">Edit profile</a>
+            </div>
+        </form>
+
+        <h2 th:text="#{account.payment.method.saved.heading}">Saved secure payment instruments</h2>
+        <ul th:if="${!#lists.isEmpty(paymentInstruments)}" data-paginate-collection="true" data-paginate="10" data-pagination-item="li">
+            <li th:each="instrument : ${paymentInstruments}">
+                <div class="table-actions spaced">
+                    <span th:text="${(instrument.displayLabel != null ? instrument.displayLabel : instrument.provider) + (instrument.last4 != null ? ' •••• ' + instrument.last4 : '') + (instrument.expiryMonth != null and instrument.expiryYear != null ? ' · ' + instrument.expiryMonth + '/' + instrument.expiryYear : '')}">instrument</span>
+                    <span>
+                        <strong th:if="${instrument.defaultInstrument}" th:text="#{account.payment.method.default}">Default</strong>
+                        <form class="inline-link-form" method="post" th:action="@{'/account/payment-method/instruments/' + ${instrument.id} + '/delete'}">
+                            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                            <button type="submit" class="inline-link-button danger-link" th:text="#{common.delete}">Delete</button>
+                        </form>
+                    </span>
+                </div>
             </li>
         </ul>
+        <p class="muted" th:if="${#lists.isEmpty(paymentInstruments)}" th:text="#{account.payment.method.saved.empty}">No secure payment instruments saved yet.</p>
+
+        <h2 th:text="#{account.payment.method.addresses}">Available addresses</h2>
+        <ul th:if="${!#lists.isEmpty(addresses)}" data-paginate-collection="true" data-paginate="10" data-pagination-item="li">
+            <li th:each="a : ${addresses}">
+                <span th:text="${a.line1 + ', ' + a.city + ' (' + a.country + ') - ' + (a.addressType != null ? a.addressType : 'ADDRESS')}">address</span>
+                <strong th:if="${a.isDefault}" th:text="#{account.payment.method.default}">Default</strong>
+            </li>
+        </ul>
+        <p class="muted" th:if="${#lists.isEmpty(addresses)}" th:text="#{account.payment.method.addresses.empty}">No addresses saved yet.</p>
     </section>
 </main>
 <div th:replace="~{fragments/footer :: footer}"></div>

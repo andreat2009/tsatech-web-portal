@@ -1,5 +1,7 @@
 package com.newproject.web.dto;
 
+import java.time.OffsetDateTime;
+
 public class CustomerRequest {
     private String keycloakUserId;
     private String email;
@@ -7,6 +9,10 @@ public class CustomerRequest {
     private String lastName;
     private String phone;
     private String customerGroupCode;
+    private String preferredPaymentMethodCode;
+    private String preferredShippingMethodCode;
+    private OffsetDateTime privacyAcceptedAt;
+    private String privacyPolicyVersion;
     private Boolean active;
     private Boolean newsletter;
 
@@ -22,6 +28,14 @@ public class CustomerRequest {
     public void setPhone(String phone) { this.phone = phone; }
     public String getCustomerGroupCode() { return customerGroupCode; }
     public void setCustomerGroupCode(String customerGroupCode) { this.customerGroupCode = customerGroupCode; }
+    public String getPreferredPaymentMethodCode() { return preferredPaymentMethodCode; }
+    public void setPreferredPaymentMethodCode(String preferredPaymentMethodCode) { this.preferredPaymentMethodCode = preferredPaymentMethodCode; }
+    public String getPreferredShippingMethodCode() { return preferredShippingMethodCode; }
+    public void setPreferredShippingMethodCode(String preferredShippingMethodCode) { this.preferredShippingMethodCode = preferredShippingMethodCode; }
+    public OffsetDateTime getPrivacyAcceptedAt() { return privacyAcceptedAt; }
+    public void setPrivacyAcceptedAt(OffsetDateTime privacyAcceptedAt) { this.privacyAcceptedAt = privacyAcceptedAt; }
+    public String getPrivacyPolicyVersion() { return privacyPolicyVersion; }
+    public void setPrivacyPolicyVersion(String privacyPolicyVersion) { this.privacyPolicyVersion = privacyPolicyVersion; }
     public Boolean getActive() { return active; }
     public void setActive(Boolean active) { this.active = active; }
     public Boolean getNewsletter() { return newsletter; }

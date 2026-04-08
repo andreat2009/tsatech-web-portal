@@ -7,61 +7,23 @@ public class AddressRequest {
     private String region;
     private String country;
     private String postalCode;
+    private String addressType;
     private Boolean isDefault;
 
-    public String getLine1() {
-        return line1;
-    }
-
-    public void setLine1(String line1) {
-        this.line1 = line1;
-    }
-
-    public String getLine2() {
-        return line2;
-    }
-
-    public void setLine2(String line2) {
-        this.line2 = line2;
-    }
-
-    public String getCity() {
-        return city;
-    }
-
-    public void setCity(String city) {
-        this.city = city;
-    }
-
-    public String getRegion() {
-        return region;
-    }
-
-    public void setRegion(String region) {
-        this.region = region;
-    }
-
-    public String getCountry() {
-        return country;
-    }
-
-    public void setCountry(String country) {
-        this.country = country;
-    }
-
-    public String getPostalCode() {
-        return postalCode;
-    }
-
-    public void setPostalCode(String postalCode) {
-        this.postalCode = postalCode;
-    }
-
-    public Boolean getIsDefault() {
-        return isDefault;
-    }
-
-    public void setIsDefault(Boolean aDefault) {
-        isDefault = aDefault;
-    }
+    public String getLine1() { return line1; }
+    public void setLine1(String line1) { this.line1 = line1; }
+    public String getLine2() { return line2; }
+    public void setLine2(String line2) { this.line2 = line2; }
+    public String getCity() { return city; }
+    public void setCity(String city) { this.city = city; }
+    public String getRegion() { return region; }
+    public void setRegion(String region) { this.region = region; }
+    public String getCountry() { return country; }
+    public void setCountry(String country) { this.country = country; }
+    public String getPostalCode() { return postalCode; }
+    public void setPostalCode(String postalCode) { this.postalCode = postalCode; }
+    public String getAddressType() { return addressType; }
+    public void setAddressType(String addressType) { this.addressType = addressType; }
+    public Boolean getIsDefault() { return isDefault; }
+    public void setIsDefault(Boolean aDefault) { isDefault = aDefault; }
 }

@@ -7,7 +7,7 @@
     <link rel="stylesheet" th:href="@{/css/app.css}" />
 </head>
 <body>
-<div th:replace="fragments/header :: header"></div>
+<div th:replace="~{fragments/header :: header}"></div>
 
 <main class="container">
     <div class="breadcrumbs">
@@ -17,8 +17,8 @@
     </div>
 
     <h1 th:text="#{account.register.heading}">Create account</h1>
-    <p class="muted" th:text="#{account.register.description}">Create your account and profile.</p>
-    <p class="muted" th:text="#{account.register.keycloak.note}">Credentials are saved on Keycloak, customer data in profile tables linked 1:1.</p>
+    <p class="muted" th:text="#{account.register.description}">Create your account with email and password.</p>
+    <p class="muted" th:text="#{account.register.keycloak.note}">Credentials are saved on Keycloak, profile information can be completed later from account.</p>
 
     <div class="success-box" th:if="${param.success}">
         <strong th:text="#{account.register.success}">Registration completed.</strong>
@@ -26,6 +26,7 @@
     </div>
 
     <div class="alert-error" th:if="${param.error != null and param.error[0] == 'data'}" th:text="#{account.register.error.data}">Invalid data.</div>
+    <div class="alert-error" th:if="${param.error != null and param.error[0] == 'privacy'}" th:text="#{account.register.error.privacy}">Privacy acceptance is required.</div>
     <div class="alert-error" th:if="${param.error != null and param.error[0] == 'password'}" th:text="#{account.register.error.password}">Invalid password.</div>
     <div class="alert-error" th:if="${param.error != null and param.error[0] == 'password_policy'}" th:text="#{account.register.error.password.policy}">Password policy rejected.</div>
     <div class="alert-error" th:if="${param.error != null and param.error[0] == 'exists'}" th:text="#{account.register.error.exists}">User already exists.</div>
@@ -36,59 +37,27 @@
         <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 
         <div class="field-grid two">
-            <div class="field">
+            <div class="field full-width">
                 <label th:text="#{checkout.field.email}">Email</label>
-                <input type="email" th:field="*{email}" required />
-            </div>
-            <div class="field">
-                <label th:text="#{checkout.field.phone}">Phone</label>
-                <input th:field="*{phone}" />
+                <input type="email" th:field="*{email}" required autocomplete="email" />
             </div>
             <div class="field">
                 <label th:text="#{account.register.field.password}">Password</label>
-                <input type="password" th:field="*{password}" minlength="8" required />
+                <input type="password" th:field="*{password}" minlength="8" required autocomplete="new-password" />
             </div>
             <div class="field">
                 <label th:text="#{account.register.field.password.confirm}">Confirm password</label>
-                <input type="password" th:field="*{passwordConfirm}" minlength="8" required />
-            </div>
-            <div class="field">
-                <label th:text="#{checkout.field.first.name}">First name</label>
-                <input th:field="*{firstName}" required />
-            </div>
-            <div class="field">
-                <label th:text="#{checkout.field.last.name}">Last name</label>
-                <input th:field="*{lastName}" required />
-            </div>
-            <div class="field">
-                <label th:text="#{checkout.field.address1}">Address</label>
-                <input th:field="*{addressLine1}" required />
-            </div>
-            <div class="field">
-                <label th:text="#{checkout.field.address2}">Address line 2</label>
-                <input th:field="*{addressLine2}" />
-            </div>
-            <div class="field">
-                <label th:text="#{checkout.field.city}">City</label>
-                <input th:field="*{city}" required />
-            </div>
-            <div class="field">
-                <label th:text="#{checkout.field.region}">Region</label>
-                <input th:field="*{region}" />
-            </div>
-            <div class="field">
-                <label th:text="#{checkout.field.country}">Country</label>
-                <input th:field="*{country}" required />
-            </div>
-            <div class="field">
-                <label th:text="#{checkout.field.postal}">Postal code</label>
-                <input th:field="*{postalCode}" required />
+                <input type="password" th:field="*{passwordConfirm}" minlength="8" required autocomplete="new-password" />
             </div>
             <div class="field full-width">
-                <div class="inline-control">
-                    <input type="checkbox" th:field="*{newsletter}" />
-                    <label th:text="#{checkout.newsletter}">Subscribe to newsletter</label>
-                </div>
+                <label class="inline-control privacy-check">
+                    <input type="checkbox" th:field="*{privacyAccepted}" required />
+                    <span>
+                        <span th:text="#{account.register.field.privacy.prefix}">I have read the</span>
+                        <a th:href="${privacyPolicyPath}" th:text="#{account.register.field.privacy.link}" target="_blank" rel="noopener">privacy policy</a>
+                        <span th:text="#{account.register.field.privacy.suffix}">and I accept it.</span>
+                    </span>
+                </label>
             </div>
         </div>
 
@@ -99,6 +68,6 @@
     </form>
 </main>
 
-<div th:replace="fragments/footer :: footer"></div>
+<div th:replace="~{fragments/footer :: footer}"></div>
 </body>
 </html>

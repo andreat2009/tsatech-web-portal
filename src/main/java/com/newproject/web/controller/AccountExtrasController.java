@@ -1,6 +1,16 @@
 package com.newproject.web.controller;
 
-import com.newproject.web.dto.*;
+import com.newproject.web.dto.AccountProfileForm;
+import com.newproject.web.dto.Address;
+import com.newproject.web.dto.AddressRequest;
+import com.newproject.web.dto.Customer;
+import com.newproject.web.dto.CustomerRegistrationForm;
+import com.newproject.web.dto.CustomerRequest;
+import com.newproject.web.dto.CustomerSubscription;
+import com.newproject.web.dto.CustomerSubscriptionRequest;
+import com.newproject.web.dto.NewsletterPreference;
+import com.newproject.web.dto.PaymentInstrumentForm;
+import com.newproject.web.dto.PaymentMethod;
 import com.newproject.web.service.CustomerResolver;
 import com.newproject.web.service.GatewayClient;
 import com.newproject.web.service.KeycloakRegistrationException;
@@ -15,15 +25,25 @@ import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 @RequestMapping("/account")
 public class AccountExtrasController {
+    private static final String ADDRESS_TYPE_SHIPPING = "SHIPPING";
+    private static final String ADDRESS_TYPE_BILLING = "BILLING";
+
     private final GatewayClient gatewayClient;
     private final CustomerResolver customerResolver;
     private final String keycloakAccountUrl;
     private final String currency;
+    private final String privacyPolicyVersion;
+    private final String privacyPolicyPath;
     private final KeycloakRegistrationService keycloakRegistrationService;
 
     public AccountExtrasController(
@@ -31,19 +51,22 @@ public class AccountExtrasController {
         CustomerResolver customerResolver,
         KeycloakRegistrationService keycloakRegistrationService,
         @Value("${app.keycloak-account-url:}") String keycloakAccountUrl,
-        @Value("${app.currency:EUR}") String currency
+        @Value("${app.currency:EUR}") String currency,
+        @Value("${app.privacy-policy-version:2026-04}") String privacyPolicyVersion,
+        @Value("${app.privacy-policy-path:/information/privacy-policy}") String privacyPolicyPath
     ) {
         this.gatewayClient = gatewayClient;
         this.customerResolver = customerResolver;
         this.keycloakAccountUrl = keycloakAccountUrl;
         this.currency = currency;
+        this.privacyPolicyVersion = privacyPolicyVersion;
+        this.privacyPolicyPath = privacyPolicyPath;
         this.keycloakRegistrationService = keycloakRegistrationService;
     }
 
-
     @GetMapping("/login")
     public String login(Model model, Authentication authentication) {
-        if (authentication != null && authentication.isAuthenticated() && !(authentication instanceof AnonymousAuthenticationToken)) {
+        if (isAuthenticated(authentication)) {
             return "redirect:/account";
         }
         model.addAttribute("loginReturnTarget", "/catalogo");
@@ -52,30 +75,25 @@ public class AccountExtrasController {
 
     @GetMapping("/register")
     public String register(Model model, Authentication authentication) {
-        if (authentication != null && authentication.isAuthenticated() && !(authentication instanceof AnonymousAuthenticationToken)) {
+        if (isAuthenticated(authentication)) {
             return "redirect:/account";
         }
 
         CustomerRegistrationForm form = new CustomerRegistrationForm();
-        form.setNewsletter(false);
+        form.setPrivacyAccepted(Boolean.FALSE);
         model.addAttribute("registrationForm", form);
+        model.addAttribute("privacyPolicyPath", privacyPolicyPath);
         return "account/register";
     }
 
     @PostMapping("/register")
     public String registerSubmit(@ModelAttribute("registrationForm") CustomerRegistrationForm form) {
-        if (isBlank(form.getEmail())
-            || isBlank(form.getPassword())
-            || isBlank(form.getPasswordConfirm())
-            || isBlank(form.getFirstName())
-            || isBlank(form.getLastName())
-            || isBlank(form.getAddressLine1())
-            || isBlank(form.getCity())
-            || isBlank(form.getCountry())
-            || isBlank(form.getPostalCode())) {
+        if (isBlank(form.getEmail()) || isBlank(form.getPassword()) || isBlank(form.getPasswordConfirm())) {
             return "redirect:/account/register?error=data";
         }
-
+        if (!Boolean.TRUE.equals(form.getPrivacyAccepted())) {
+            return "redirect:/account/register?error=privacy";
+        }
         if (form.getPassword().length() < 8 || !form.getPassword().equals(form.getPasswordConfirm())) {
             return "redirect:/account/register?error=password";
         }
@@ -96,10 +114,9 @@ public class AccountExtrasController {
         CustomerRequest request = new CustomerRequest();
         request.setKeycloakUserId(keycloakUserId);
         request.setEmail(form.getEmail().trim().toLowerCase(Locale.ROOT));
-        request.setFirstName(form.getFirstName().trim());
-        request.setLastName(form.getLastName().trim());
-        request.setPhone(form.getPhone() != null ? form.getPhone().trim() : null);
-        request.setNewsletter(Boolean.TRUE.equals(form.getNewsletter()));
+        request.setCustomerGroupCode("RETAIL");
+        request.setPrivacyAcceptedAt(OffsetDateTime.now());
+        request.setPrivacyPolicyVersion(privacyPolicyVersion);
         request.setActive(true);
 
         try {
@@ -108,17 +125,6 @@ public class AccountExtrasController {
                 keycloakRegistrationService.deleteUserQuietly(keycloakUserId);
                 return "redirect:/account/register?error=processing";
             }
-
-            AddressRequest addressRequest = new AddressRequest();
-            addressRequest.setLine1(form.getAddressLine1().trim());
-            addressRequest.setLine2(form.getAddressLine2() != null ? form.getAddressLine2().trim() : null);
-            addressRequest.setCity(form.getCity().trim());
-            addressRequest.setRegion(form.getRegion() != null ? form.getRegion().trim() : null);
-            addressRequest.setCountry(form.getCountry().trim());
-            addressRequest.setPostalCode(form.getPostalCode().trim());
-            addressRequest.setIsDefault(true);
-
-            gatewayClient.createCustomerAddress(created.getId(), addressRequest);
         } catch (Exception ex) {
             keycloakRegistrationService.deleteUserQuietly(keycloakUserId);
             return "redirect:/account/register?error=processing";
@@ -137,11 +143,6 @@ public class AccountExtrasController {
         return "redirect:/account/password";
     }
 
-    private boolean isBlank(String value) {
-        return value == null || value.isBlank();
-    }
-
-
     @GetMapping
     public String accountHome(Model model, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
@@ -158,6 +159,7 @@ public class AccountExtrasController {
         NewsletterPreference newsletterPreference = gatewayClient.getNewsletterPreference(customerId);
 
         model.addAttribute("customer", customer);
+        model.addAttribute("accountDisplayName", buildAccountDisplayName(customer));
         model.addAttribute("newsletterSubscribed", Boolean.TRUE.equals(newsletterPreference.getSubscribed()));
         model.addAttribute("rewardSummary", gatewayClient.getRewardSummary(customerId));
         model.addAttribute("latestOrders", gatewayClient.listOrders(customerId).stream().limit(5).toList());
@@ -178,20 +180,16 @@ public class AccountExtrasController {
             return "redirect:/account";
         }
 
-        CustomerRequest form = new CustomerRequest();
-        form.setKeycloakUserId(customer.getKeycloakUserId());
-        form.setEmail(customer.getEmail());
-        form.setFirstName(customer.getFirstName());
-        form.setLastName(customer.getLastName());
-        form.setPhone(customer.getPhone());
-        form.setActive(Boolean.TRUE.equals(customer.getActive()));
-
+        List<Address> addresses = gatewayClient.listCustomerAddresses(customerId);
+        AccountProfileForm form = buildProfileForm(customer, addresses);
         model.addAttribute("profileForm", form);
+        model.addAttribute("paymentMethods", gatewayClient.listPaymentMethods());
+        model.addAttribute("savedPaymentInstruments", gatewayClient.listPaymentInstruments(customerId));
         return "account/edit";
     }
 
     @PostMapping("/edit")
-    public String saveProfile(@ModelAttribute("profileForm") CustomerRequest form, Authentication authentication) {
+    public String saveProfile(@ModelAttribute("profileForm") AccountProfileForm form, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
             return "redirect:/account/login";
@@ -202,16 +200,35 @@ public class AccountExtrasController {
             return "redirect:/account";
         }
 
+        if (!validateAddressSection(form.getShippingLine1(), form.getShippingCity(), form.getShippingCountry(), form.getShippingPostalCode())) {
+            return "redirect:/account/edit?error=address";
+        }
+        if (!validateAddressSection(form.getBillingLine1(), form.getBillingCity(), form.getBillingCountry(), form.getBillingPostalCode())) {
+            return "redirect:/account/edit?error=address";
+        }
+
         CustomerRequest update = new CustomerRequest();
         update.setKeycloakUserId(current.getKeycloakUserId());
         update.setEmail(current.getEmail());
-        update.setFirstName(form.getFirstName());
-        update.setLastName(form.getLastName());
-        update.setPhone(form.getPhone());
+        update.setFirstName(trimToNull(form.getFirstName()));
+        update.setLastName(trimToNull(form.getLastName()));
+        update.setPhone(trimToNull(form.getPhone()));
+        update.setCustomerGroupCode(current.getCustomerGroupCode());
+        update.setPreferredPaymentMethodCode(trimToNull(form.getPreferredPaymentMethodCode()));
+        update.setPreferredShippingMethodCode(trimToNull(form.getPreferredShippingMethodCode()));
+        update.setPrivacyAcceptedAt(current.getPrivacyAcceptedAt());
+        update.setPrivacyPolicyVersion(current.getPrivacyPolicyVersion());
         update.setActive(Boolean.TRUE.equals(current.getActive()));
         update.setNewsletter(Boolean.TRUE.equals(current.getNewsletter()));
 
-        gatewayClient.updateCustomer(customerId, update);
+        try {
+            gatewayClient.updateCustomer(customerId, update);
+            saveTypedAddressIfPresent(customerId, ADDRESS_TYPE_SHIPPING, form.getShippingLine1(), form.getShippingLine2(), form.getShippingCity(), form.getShippingRegion(), form.getShippingCountry(), form.getShippingPostalCode());
+            saveTypedAddressIfPresent(customerId, ADDRESS_TYPE_BILLING, form.getBillingLine1(), form.getBillingLine2(), form.getBillingCity(), form.getBillingRegion(), form.getBillingCountry(), form.getBillingPostalCode());
+        } catch (Exception ex) {
+            return "redirect:/account/edit?error=processing";
+        }
+
         return "redirect:/account?updated=1";
     }
 
@@ -230,7 +247,6 @@ public class AccountExtrasController {
         gatewayClient.updateNewsletterPreference(customerId, newsletter);
         return "redirect:/account";
     }
-
 
     @GetMapping("/transaction")
     public String transactionAlias() {
@@ -253,8 +269,70 @@ public class AccountExtrasController {
         if (customerId == null) {
             return "redirect:/account/login";
         }
+        Customer customer = gatewayClient.getCustomerSafe(customerId).orElse(null);
+        List<PaymentMethod> paymentMethods = gatewayClient.listPaymentMethods();
+        List<PaymentMethod> tokenizablePaymentMethods = tokenizablePaymentMethods(paymentMethods);
+        PaymentInstrumentForm paymentInstrumentForm = new PaymentInstrumentForm();
+        paymentInstrumentForm.setPaymentMethodCode(resolveDefaultTokenizablePaymentMethodCode(customer, tokenizablePaymentMethods));
+        paymentInstrumentForm.setActive(Boolean.TRUE);
+        paymentInstrumentForm.setDefaultInstrument(Boolean.TRUE);
+
         model.addAttribute("addresses", gatewayClient.listCustomerAddresses(customerId));
+        model.addAttribute("paymentMethods", paymentMethods);
+        model.addAttribute("tokenizablePaymentMethods", tokenizablePaymentMethods);
+        model.addAttribute("paymentInstruments", gatewayClient.listPaymentInstruments(customerId));
+        model.addAttribute("preferredPaymentMethodCode", customer != null ? customer.getPreferredPaymentMethodCode() : null);
+        model.addAttribute("paymentInstrumentForm", paymentInstrumentForm);
         return "account/payment-method";
+    }
+
+    @PostMapping("/payment-method/instruments")
+    public String createPaymentInstrument(@ModelAttribute("paymentInstrumentForm") PaymentInstrumentForm form, Authentication authentication) {
+        Long customerId = customerResolver.resolveCustomerId(authentication);
+        if (customerId == null) {
+            return "redirect:/account/login";
+        }
+        if (isBlank(form.getPaymentMethodCode()) || isBlank(form.getProviderToken())) {
+            return "redirect:/account/payment-method?error=data";
+        }
+
+        try {
+            gatewayClient.createPaymentInstrument(customerId, form);
+            Customer customer = gatewayClient.getCustomerSafe(customerId).orElse(null);
+            if (customer != null && (Boolean.TRUE.equals(form.getDefaultInstrument()) || isBlank(customer.getPreferredPaymentMethodCode()))) {
+                CustomerRequest request = new CustomerRequest();
+                request.setKeycloakUserId(customer.getKeycloakUserId());
+                request.setEmail(customer.getEmail());
+                request.setFirstName(customer.getFirstName());
+                request.setLastName(customer.getLastName());
+                request.setPhone(customer.getPhone());
+                request.setCustomerGroupCode(customer.getCustomerGroupCode());
+                request.setPreferredPaymentMethodCode(trimToNull(form.getPaymentMethodCode()));
+                request.setPreferredShippingMethodCode(customer.getPreferredShippingMethodCode());
+                request.setPrivacyAcceptedAt(customer.getPrivacyAcceptedAt());
+                request.setPrivacyPolicyVersion(customer.getPrivacyPolicyVersion());
+                request.setActive(Boolean.TRUE.equals(customer.getActive()));
+                request.setNewsletter(Boolean.TRUE.equals(customer.getNewsletter()));
+                gatewayClient.updateCustomer(customerId, request);
+            }
+            return "redirect:/account/payment-method?saved=1";
+        } catch (Exception ex) {
+            return "redirect:/account/payment-method?error=processing";
+        }
+    }
+
+    @PostMapping("/payment-method/instruments/{instrumentId}/delete")
+    public String deletePaymentInstrument(@PathVariable Long instrumentId, Authentication authentication) {
+        Long customerId = customerResolver.resolveCustomerId(authentication);
+        if (customerId == null) {
+            return "redirect:/account/login";
+        }
+        try {
+            gatewayClient.deletePaymentInstrument(customerId, instrumentId);
+            return "redirect:/account/payment-method?deleted=1";
+        } catch (Exception ex) {
+            return "redirect:/account/payment-method?error=processing";
+        }
     }
 
     @GetMapping("/reward")
@@ -373,4 +451,132 @@ public class AccountExtrasController {
         return "redirect:/";
     }
 
+    private AccountProfileForm buildProfileForm(Customer customer, List<Address> addresses) {
+        AccountProfileForm form = new AccountProfileForm();
+        form.setFirstName(customer.getFirstName());
+        form.setLastName(customer.getLastName());
+        form.setPhone(customer.getPhone());
+        form.setPreferredPaymentMethodCode(customer.getPreferredPaymentMethodCode());
+        form.setPreferredShippingMethodCode(customer.getPreferredShippingMethodCode());
+        applyAddressToForm(findAddressByType(addresses, ADDRESS_TYPE_SHIPPING).orElse(null), true, form);
+        applyAddressToForm(findAddressByType(addresses, ADDRESS_TYPE_BILLING).orElse(null), false, form);
+        return form;
+    }
+
+    private Optional<Address> findAddressByType(List<Address> addresses, String addressType) {
+        return addresses.stream()
+            .filter(address -> addressType.equalsIgnoreCase(address.getAddressType()))
+            .findFirst();
+    }
+
+    private void applyAddressToForm(Address address, boolean shipping, AccountProfileForm form) {
+        if (address == null) {
+            return;
+        }
+        if (shipping) {
+            form.setShippingLine1(address.getLine1());
+            form.setShippingLine2(address.getLine2());
+            form.setShippingCity(address.getCity());
+            form.setShippingRegion(address.getRegion());
+            form.setShippingCountry(address.getCountry());
+            form.setShippingPostalCode(address.getPostalCode());
+            return;
+        }
+        form.setBillingLine1(address.getLine1());
+        form.setBillingLine2(address.getLine2());
+        form.setBillingCity(address.getCity());
+        form.setBillingRegion(address.getRegion());
+        form.setBillingCountry(address.getCountry());
+        form.setBillingPostalCode(address.getPostalCode());
+    }
+
+    private void saveTypedAddressIfPresent(
+        Long customerId,
+        String addressType,
+        String line1,
+        String line2,
+        String city,
+        String region,
+        String country,
+        String postalCode
+    ) {
+        if (isBlank(line1) && isBlank(city) && isBlank(country) && isBlank(postalCode) && isBlank(line2) && isBlank(region)) {
+            return;
+        }
+        AddressRequest request = new AddressRequest();
+        request.setAddressType(addressType);
+        request.setLine1(line1.trim());
+        request.setLine2(trimToNull(line2));
+        request.setCity(city.trim());
+        request.setRegion(trimToNull(region));
+        request.setCountry(country.trim());
+        request.setPostalCode(postalCode.trim());
+        request.setIsDefault(Boolean.TRUE);
+        gatewayClient.upsertCustomerAddressByType(customerId, addressType, request);
+    }
+
+    private boolean validateAddressSection(String line1, String city, String country, String postalCode) {
+        boolean anyProvided = !isBlank(line1) || !isBlank(city) || !isBlank(country) || !isBlank(postalCode);
+        if (!anyProvided) {
+            return true;
+        }
+        return !isBlank(line1) && !isBlank(city) && !isBlank(country) && !isBlank(postalCode);
+    }
+
+    private List<PaymentMethod> tokenizablePaymentMethods(List<PaymentMethod> paymentMethods) {
+        return paymentMethods.stream()
+            .filter(method -> Boolean.TRUE.equals(method.getActive()))
+            .filter(method -> !isBlank(method.getCode()))
+            .filter(method -> !"OFFLINE".equalsIgnoreCase(method.getProvider()))
+            .filter(method -> !"OFFLINE".equalsIgnoreCase(method.getPaymentFlow()))
+            .filter(method -> !Boolean.FALSE.equals(method.getProviderConfigurationAvailable()))
+            .toList();
+    }
+
+    private String resolveDefaultTokenizablePaymentMethodCode(Customer customer, List<PaymentMethod> tokenizablePaymentMethods) {
+        String preferred = customer != null ? trimToNull(customer.getPreferredPaymentMethodCode()) : null;
+        if (preferred != null) {
+            for (PaymentMethod method : tokenizablePaymentMethods) {
+                if (preferred.equalsIgnoreCase(method.getCode())) {
+                    return method.getCode();
+                }
+            }
+        }
+        return tokenizablePaymentMethods.stream()
+            .map(PaymentMethod::getCode)
+            .filter(code -> code != null && !code.isBlank())
+            .findFirst()
+            .orElse(null);
+    }
+
+    private String buildAccountDisplayName(Customer customer) {
+        String firstName = trimToNull(customer.getFirstName());
+        String lastName = trimToNull(customer.getLastName());
+        if (firstName != null && lastName != null) {
+            return firstName + " " + lastName + " - " + customer.getEmail();
+        }
+        if (firstName != null) {
+            return firstName + " - " + customer.getEmail();
+        }
+        if (lastName != null) {
+            return lastName + " - " + customer.getEmail();
+        }
+        return customer.getEmail();
+    }
+
+    private boolean isAuthenticated(Authentication authentication) {
+        return authentication != null && authentication.isAuthenticated() && !(authentication instanceof AnonymousAuthenticationToken);
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.isBlank();
+    }
+
+    private String trimToNull(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isBlank() ? null : trimmed;
+    }
 }

@@ -350,10 +350,11 @@ public class StorefrontController {
     ) {
         List<CustomFieldDefinition> checkoutCustomFields = loadCheckoutCustomFields();
         List<PaymentMethod> paymentMethods = loadAvailablePaymentMethods();
-        String defaultPaymentMethod = defaultPaymentMethodCode(paymentMethods);
         Customer currentCustomer = isAuthenticated(authentication) ? customerResolver.resolveCurrentCustomer(authentication) : null;
         Long customerId = currentCustomer != null ? currentCustomer.getId() : null;
         String customerGroupCode = resolveCustomerGroupCode(currentCustomer);
+        String defaultPaymentMethod = defaultPaymentMethodCode(paymentMethods, currentCustomer);
+        String defaultShippingMethod = defaultShippingMethodCode(currentCustomer);
 
         if (customerId != null) {
             if (shouldAutoMergeGuestCart(authentication)) {
@@ -371,14 +372,10 @@ public class StorefrontController {
             }
 
             List<Address> addresses = gatewayClient.listCustomerAddresses(customerId);
-            CheckoutForm checkoutForm = buildDefaultCheckoutForm(defaultPaymentMethod);
+            CheckoutForm checkoutForm = buildDefaultCheckoutForm(defaultShippingMethod, defaultPaymentMethod);
             checkoutForm.setUseNewAddress(addresses.isEmpty());
             if (!addresses.isEmpty()) {
-                checkoutForm.setAddressId(addresses.stream()
-                    .filter(address -> Boolean.TRUE.equals(address.getIsDefault()))
-                    .map(Address::getId)
-                    .findFirst()
-                    .orElse(addresses.get(0).getId()));
+                checkoutForm.setAddressId(defaultShippingAddressId(addresses));
             }
             populateCustomFields(checkoutForm, checkoutCustomFields, gatewayClient.listCustomerCustomFieldValues(customerId, "CHECKOUT"));
             applyCheckoutModel(model, summary, addresses, paymentMethods, checkoutCustomFields, checkoutForm, customerGroupCode, false);
@@ -391,7 +388,7 @@ public class StorefrontController {
             return "redirect:/carrello";
         }
 
-        CheckoutForm guestForm = guestCheckoutFormFromSession(session, defaultPaymentMethod, checkoutCustomFields);
+        CheckoutForm guestForm = guestCheckoutFormFromSession(session, defaultShippingMethod, defaultPaymentMethod, checkoutCustomFields);
         applyCheckoutModel(model, summary, List.of(), paymentMethods, checkoutCustomFields, guestForm, customerGroupCode, true);
         model.addAttribute("checkoutError", checkoutErrorMessage(error));
         return "checkout/index";
@@ -1575,9 +1572,9 @@ public class StorefrontController {
         return null;
     }
 
-    private CheckoutForm buildDefaultCheckoutForm(String defaultPaymentMethod) {
+    private CheckoutForm buildDefaultCheckoutForm(String defaultShippingMethod, String defaultPaymentMethod) {
         CheckoutForm form = new CheckoutForm();
-        form.setShippingMethod(SHIPPING_FLAT);
+        form.setShippingMethod(normalizeShippingMethod(defaultShippingMethod));
         form.setPaymentMethod(defaultPaymentMethod);
         form.setCouponCode("");
         form.setCreateAccount(false);
@@ -1585,8 +1582,8 @@ public class StorefrontController {
         return form;
     }
 
-    private CheckoutForm guestCheckoutFormFromSession(HttpSession session, String defaultPaymentMethod, List<CustomFieldDefinition> customFieldDefinitions) {
-        CheckoutForm form = buildDefaultCheckoutForm(defaultPaymentMethod);
+    private CheckoutForm guestCheckoutFormFromSession(HttpSession session, String defaultShippingMethod, String defaultPaymentMethod, List<CustomFieldDefinition> customFieldDefinitions) {
+        CheckoutForm form = buildDefaultCheckoutForm(defaultShippingMethod, defaultPaymentMethod);
         String previousEmail = asString(session.getAttribute(GUEST_CUSTOMER_EMAIL_SESSION_KEY));
         if (previousEmail != null) {
             form.setGuestEmail(previousEmail);
@@ -1644,12 +1641,36 @@ public class StorefrontController {
         return gatewayClient.listPaymentMethods();
     }
 
-    private String defaultPaymentMethodCode(List<PaymentMethod> paymentMethods) {
+    private String defaultPaymentMethodCode(List<PaymentMethod> paymentMethods, Customer currentCustomer) {
+        String preferred = currentCustomer != null ? safeTrim(currentCustomer.getPreferredPaymentMethodCode()) : null;
+        if (preferred != null) {
+            for (PaymentMethod method : paymentMethods) {
+                if (preferred.equalsIgnoreCase(method.getCode())) {
+                    return method.getCode();
+                }
+            }
+        }
         return paymentMethods.stream()
             .map(PaymentMethod::getCode)
             .filter(code -> code != null && !code.isBlank())
             .findFirst()
             .orElse(null);
+    }
+
+    private String defaultShippingMethodCode(Customer currentCustomer) {
+        return normalizeShippingMethod(currentCustomer != null ? currentCustomer.getPreferredShippingMethodCode() : null);
+    }
+
+    private Long defaultShippingAddressId(List<Address> addresses) {
+        return addresses.stream()
+            .filter(address -> address != null && "SHIPPING".equalsIgnoreCase(address.getAddressType()) && Boolean.TRUE.equals(address.getIsDefault()))
+            .map(Address::getId)
+            .findFirst()
+            .orElseGet(() -> addresses.stream()
+                .filter(address -> address != null && Boolean.TRUE.equals(address.getIsDefault()))
+                .map(Address::getId)
+                .findFirst()
+                .orElse(addresses.get(0).getId()));
     }
 
     private PaymentMethod resolvePaymentMethod(String requestedCode, List<PaymentMethod> paymentMethods) {

@@ -11,7 +11,7 @@
 <main class="container">
     <section class="card section-pad block">
         <h1 th:text="#{account.home.heading}">Your account</h1>
-        <p th:text="${customer.firstName + ' ' + customer.lastName + ' - ' + customer.email}">Profile</p>
+        <p th:text="${accountDisplayName}">Profile</p>
         <p>
             <span th:text="#{account.home.newsletter}">Newsletter:</span>
             <strong th:text="${newsletterSubscribed ? #messages.msg('account.home.newsletter.active') : #messages.msg('account.home.newsletter.inactive') }">status</strong>

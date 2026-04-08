@@ -2,18 +2,9 @@ package com.newproject.web.dto;
 
 public class CustomerRegistrationForm {
     private String email;
-    private String firstName;
-    private String lastName;
-    private String phone;
-    private String addressLine1;
-    private String addressLine2;
-    private String city;
-    private String region;
-    private String country;
-    private String postalCode;
     private String password;
     private String passwordConfirm;
-    private Boolean newsletter;
+    private Boolean privacyAccepted;
 
     public String getEmail() {
         return email;
@@ -22,79 +13,6 @@ public class CustomerRegistrationForm {
     public void setEmail(String email) {
         this.email = email;
     }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
-
-    public String getAddressLine1() {
-        return addressLine1;
-    }
-
-    public void setAddressLine1(String addressLine1) {
-        this.addressLine1 = addressLine1;
-    }
-
-    public String getAddressLine2() {
-        return addressLine2;
-    }
-
-    public void setAddressLine2(String addressLine2) {
-        this.addressLine2 = addressLine2;
-    }
-
-    public String getCity() {
-        return city;
-    }
-
-    public void setCity(String city) {
-        this.city = city;
-    }
-
-    public String getRegion() {
-        return region;
-    }
-
-    public void setRegion(String region) {
-        this.region = region;
-    }
-
-    public String getCountry() {
-        return country;
-    }
-
-    public void setCountry(String country) {
-        this.country = country;
-    }
-
-    public String getPostalCode() {
-        return postalCode;
-    }
-
-    public void setPostalCode(String postalCode) {
-        this.postalCode = postalCode;
-    }
-
 
     public String getPassword() {
         return password;
@@ -111,11 +29,12 @@ public class CustomerRegistrationForm {
     public void setPasswordConfirm(String passwordConfirm) {
         this.passwordConfirm = passwordConfirm;
     }
-    public Boolean getNewsletter() {
-        return newsletter;
+
+    public Boolean getPrivacyAccepted() {
+        return privacyAccepted;
     }
 
-    public void setNewsletter(Boolean newsletter) {
-        this.newsletter = newsletter;
+    public void setPrivacyAccepted(Boolean privacyAccepted) {
+        this.privacyAccepted = privacyAccepted;
     }
 }

@@ -120,14 +120,6 @@ public class KeycloakRegistrationService {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("username", username);
         payload.put("email", email);
-        String firstName = trimToNull(form.getFirstName());
-        if (firstName != null) {
-            payload.put("firstName", firstName);
-        }
-        String lastName = trimToNull(form.getLastName());
-        if (lastName != null) {
-            payload.put("lastName", lastName);
-        }
         payload.put("enabled", true);
         payload.put("emailVerified", true);
 
@@ -272,6 +264,13 @@ public class KeycloakRegistrationService {
 
     private String obtainAdminAccessToken() {
         if (isBlank(adminClientId) || isBlank(adminUsername) || isBlank(adminPassword)) {
+            logger.error(
+                "Missing Keycloak admin credentials for registration. tokenEndpoint={}, adminClientId={}, usernamePresent={}, passwordPresent={}",
+                tokenEndpoint,
+                adminClientId,
+                !isBlank(adminUsername),
+                !isBlank(adminPassword)
+            );
             throw new KeycloakRegistrationException("identity", "Missing Keycloak admin credentials");
         }
 

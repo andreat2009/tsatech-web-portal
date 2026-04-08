@@ -5,7 +5,7 @@
                 <span class="support-kicker">Always-on support</span>
                 <span th:text="${#messages.msg('header.support.prefix') + ' ' + ((storeSettings != null and storeSettings.supportPhone != null and !#strings.isEmpty(storeSettings.supportPhone)) ? storeSettings.supportPhone : '+39 800 000 000')}">Support: +39 800 000 000</span>
             </div>
-            <button class="shell-toggle shell-toggle-top" type="button" data-shell-toggle="top-links-panel" aria-controls="top-links-panel" aria-expanded="false">
+            <button class="shell-toggle shell-toggle-top" type="button" data-shell-toggle="top-links-panel" aria-controls="top-links-panel" aria-expanded="false" th:text="#{header.tools}">
                 Account &amp; tools
             </button>
             <ul class="top-links" id="top-links-panel">
@@ -50,7 +50,7 @@
             </form>
             <div class="header-cta-group">
                 <a class="header-cart" th:href="@{/carrello}" th:text="#{header.goto.cart}">Vai al carrello</a>
-                <button class="shell-toggle shell-toggle-menu" type="button" data-shell-toggle="menu-links-panel" aria-controls="menu-links-panel" aria-expanded="false">
+                <button class="shell-toggle shell-toggle-menu" type="button" data-shell-toggle="menu-links-panel" aria-controls="menu-links-panel" aria-expanded="false" th:text="#{header.menu.toggle}">
                     Menu
                 </button>
             </div>
@@ -76,18 +76,18 @@
 
     <nav class="admin-quickbar" th:if="${isAdminArea}" sec:authorize="hasRole('ADMIN')">
         <div class="container admin-quickbar-inner">
-            <span class="admin-quickbar-label">Back office</span>
+            <span class="admin-quickbar-label" th:text="#{admin.quickbar.label}">Back office</span>
             <div class="admin-quickbar-links">
-                <a th:href="@{/admin}" th:classappend="${currentRequestUri == '/admin' or currentRequestUri == '/amministrazione'} ? ' is-active' : ''">Overview</a>
-                <a th:href="@{/admin/catalogo/prodotti}" th:classappend="${#strings.startsWith(currentRequestUri, '/admin/catalogo') or #strings.startsWith(currentRequestUri, '/admin/products')} ? ' is-active' : ''">Catalog</a>
-                <a th:href="@{/admin/orders}" th:classappend="${#strings.startsWith(currentRequestUri, '/admin/orders')} ? ' is-active' : ''">Orders</a>
-                <a th:href="@{/admin/customers}" th:classappend="${#strings.startsWith(currentRequestUri, '/admin/customers')} ? ' is-active' : ''">Customers</a>
-                <a th:href="@{/admin/payment-methods}" th:classappend="${#strings.startsWith(currentRequestUri, '/admin/payment-methods') or #strings.startsWith(currentRequestUri, '/admin/payments')} ? ' is-active' : ''">Payments</a>
-                <a th:href="@{/admin/information}" th:classappend="${#strings.startsWith(currentRequestUri, '/admin/information') or #strings.startsWith(currentRequestUri, '/admin/blog') or #strings.startsWith(currentRequestUri, '/admin/store-settings')} ? ' is-active' : ''">Content</a>
-                <a th:href="@{/admin/marketing/coupon}" th:classappend="${#strings.startsWith(currentRequestUri, '/admin/marketing') or #strings.startsWith(currentRequestUri, '/admin/coupons')} ? ' is-active' : ''">Growth</a>
-                <a th:href="@{/admin/integrations}" th:classappend="${#strings.startsWith(currentRequestUri, '/admin/integrations')} ? ' is-active' : ''">Integrations</a>
-                <a th:href="@{/admin/audit}" th:classappend="${#strings.startsWith(currentRequestUri, '/admin/audit')} ? ' is-active' : ''">Audit</a>
-                <a th:href="@{/admin/store-settings}" th:classappend="${#strings.startsWith(currentRequestUri, '/admin/store-settings')} ? ' is-active' : ''">Settings</a>
+                <a th:href="@{/admin}" th:classappend="${currentRequestUri == '/admin' or currentRequestUri == '/amministrazione'} ? ' is-active' : ''" th:text="#{admin.quickbar.overview}">Overview</a>
+                <a th:href="@{/admin/catalogo/prodotti}" th:classappend="${#strings.startsWith(currentRequestUri, '/admin/catalogo') or #strings.startsWith(currentRequestUri, '/admin/products')} ? ' is-active' : ''" th:text="#{admin.quickbar.catalog}">Catalog</a>
+                <a th:href="@{/admin/orders}" th:classappend="${#strings.startsWith(currentRequestUri, '/admin/orders')} ? ' is-active' : ''" th:text="#{admin.quickbar.orders}">Orders</a>
+                <a th:href="@{/admin/customers}" th:classappend="${#strings.startsWith(currentRequestUri, '/admin/customers')} ? ' is-active' : ''" th:text="#{admin.quickbar.customers}">Customers</a>
+                <a th:href="@{/admin/payment-methods}" th:classappend="${#strings.startsWith(currentRequestUri, '/admin/payment-methods') or #strings.startsWith(currentRequestUri, '/admin/payments')} ? ' is-active' : ''" th:text="#{admin.quickbar.payments}">Payments</a>
+                <a th:href="@{/admin/information}" th:classappend="${#strings.startsWith(currentRequestUri, '/admin/information') or #strings.startsWith(currentRequestUri, '/admin/blog') or #strings.startsWith(currentRequestUri, '/admin/store-settings')} ? ' is-active' : ''" th:text="#{admin.quickbar.content}">Content</a>
+                <a th:href="@{/admin/marketing/coupon}" th:classappend="${#strings.startsWith(currentRequestUri, '/admin/marketing') or #strings.startsWith(currentRequestUri, '/admin/coupons')} ? ' is-active' : ''" th:text="#{admin.quickbar.growth}">Growth</a>
+                <a th:href="@{/admin/integrations}" th:classappend="${#strings.startsWith(currentRequestUri, '/admin/integrations')} ? ' is-active' : ''" th:text="#{admin.quickbar.integrations}">Integrations</a>
+                <a th:href="@{/admin/audit}" th:classappend="${#strings.startsWith(currentRequestUri, '/admin/audit')} ? ' is-active' : ''" th:text="#{admin.quickbar.audit}">Audit</a>
+                <a th:href="@{/admin/store-settings}" th:classappend="${#strings.startsWith(currentRequestUri, '/admin/store-settings')} ? ' is-active' : ''" th:text="#{admin.quickbar.settings}">Settings</a>
             </div>
         </div>
     </nav>

@@ -53,9 +53,11 @@ app:
   keycloak-account-url: ${KEYCLOAK_ACCOUNT_URL:https://keycloak-platform.${APP_BASE_DOMAIN:apps.example.invalid}/realms/master/account}
   keycloak-admin-base-url: ${KEYCLOAK_ADMIN_BASE_URL:http://keycloak.${PLATFORM_NAMESPACE:platform}.svc.cluster.local}
   keycloak-admin-client-id: ${KEYCLOAK_ADMIN_CLIENT_ID:admin-cli}
-  keycloak-admin-username: ${KEYCLOAK_ADMIN_USER:admin}
-  keycloak-admin-password: ${KEYCLOAK_ADMIN_PASS:}
+  keycloak-admin-username: ${KEYCLOAK_ADMIN_USER:${KEYCLOAK_ADMIN_USERNAME:admin}}
+  keycloak-admin-password: ${KEYCLOAK_ADMIN_PASS:${KEYCLOAK_ADMIN_PASSWORD:}}
   keycloak-registration-role: ${KEYCLOAK_REGISTRATION_ROLE:USER}
+  privacy-policy-version: ${APP_PRIVACY_POLICY_VERSION:2026-04}
+  privacy-policy-path: ${APP_PRIVACY_POLICY_PATH:/information/privacy-policy}
   translation-request-timeout-ms: ${APP_TRANSLATION_REQUEST_TIMEOUT_MS:120000}
 
 management:

@@ -11,10 +11,66 @@
 <main class="container">
     <section class="form section-pad centered-form">
         <h1 th:text="#{account.edit.heading}">Edit profile</h1>
+        <p class="muted" th:text="#{account.edit.description}">Complete your profile and preferences from one place.</p>
+        <div class="alert-error" th:if="${param.error != null and param.error[0] == 'address'}" th:text="#{account.edit.error.address}">Complete all required address fields before saving.</div>
+        <div class="alert-error" th:if="${param.error != null and param.error[0] == 'processing'}" th:text="#{account.register.error.processing}">Processing error.</div>
         <form method="post" th:action="@{/account/edit}" th:object="${profileForm}">
-            <div class="field"><label th:text="#{common.name}">Name</label><input type="text" th:field="*{firstName}" /></div>
-            <div class="field"><label th:text="#{common.lastname}">Last name</label><input type="text" th:field="*{lastName}" /></div>
-            <div class="field"><label th:text="#{account.edit.phone}">Phone</label><input type="text" th:field="*{phone}" /></div>
+            <div class="field-grid two">
+                <div class="field full-width">
+                    <h2 th:text="#{account.edit.section.identity}">Identity</h2>
+                </div>
+                <div class="field"><label th:text="#{common.name}">Name</label><input type="text" th:field="*{firstName}" autocomplete="given-name" /></div>
+                <div class="field"><label th:text="#{common.lastname}">Last name</label><input type="text" th:field="*{lastName}" autocomplete="family-name" /></div>
+                <div class="field full-width"><label th:text="#{account.edit.phone}">Phone</label><input type="text" th:field="*{phone}" autocomplete="tel" /></div>
+
+                <div class="field full-width">
+                    <h2 th:text="#{account.edit.section.preferences}">Preferences</h2>
+                </div>
+                <div class="field">
+                    <label th:text="#{account.edit.preferred.payment}">Preferred payment method</label>
+                    <select th:field="*{preferredPaymentMethodCode}">
+                        <option value="" th:text="#{common.select}">Select</option>
+                        <option th:each="method : ${paymentMethods}" th:value="${method.code}" th:text="${method.displayName}">PayPal</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label th:text="#{account.edit.preferred.shipping}">Preferred shipping method</label>
+                    <select th:field="*{preferredShippingMethodCode}">
+                        <option value="" th:text="#{common.select}">Select</option>
+                        <option value="flat.flat" th:text="#{shipping.option.flat}">Flat shipping</option>
+                        <option value="pickup.pickup" th:text="#{shipping.option.pickup}">Store pickup</option>
+                    </select>
+                </div>
+
+                <div class="field full-width">
+                    <h2 th:text="#{account.edit.section.shipping}">Shipping address</h2>
+                </div>
+                <div class="field"><label th:text="#{checkout.field.address1}">Address</label><input type="text" th:field="*{shippingLine1}" autocomplete="address-line1" /></div>
+                <div class="field"><label th:text="#{checkout.field.address2}">Address line 2</label><input type="text" th:field="*{shippingLine2}" autocomplete="address-line2" /></div>
+                <div class="field"><label th:text="#{checkout.field.city}">City</label><input type="text" th:field="*{shippingCity}" autocomplete="address-level2" /></div>
+                <div class="field"><label th:text="#{checkout.field.region}">Region</label><input type="text" th:field="*{shippingRegion}" autocomplete="address-level1" /></div>
+                <div class="field"><label th:text="#{checkout.field.country}">Country</label><input type="text" th:field="*{shippingCountry}" autocomplete="country-name" /></div>
+                <div class="field"><label th:text="#{checkout.field.postal}">Postal code</label><input type="text" th:field="*{shippingPostalCode}" autocomplete="postal-code" /></div>
+
+                <div class="field full-width">
+                    <h2 th:text="#{account.edit.section.billing}">Billing address</h2>
+                </div>
+                <div class="field"><label th:text="#{checkout.field.address1}">Address</label><input type="text" th:field="*{billingLine1}" autocomplete="address-line1" /></div>
+                <div class="field"><label th:text="#{checkout.field.address2}">Address line 2</label><input type="text" th:field="*{billingLine2}" autocomplete="address-line2" /></div>
+                <div class="field"><label th:text="#{checkout.field.city}">City</label><input type="text" th:field="*{billingCity}" autocomplete="address-level2" /></div>
+                <div class="field"><label th:text="#{checkout.field.region}">Region</label><input type="text" th:field="*{billingRegion}" autocomplete="address-level1" /></div>
+                <div class="field"><label th:text="#{checkout.field.country}">Country</label><input type="text" th:field="*{billingCountry}" autocomplete="country-name" /></div>
+                <div class="field"><label th:text="#{checkout.field.postal}">Postal code</label><input type="text" th:field="*{billingPostalCode}" autocomplete="postal-code" /></div>
+
+                <div class="field full-width">
+                    <h2 th:text="#{account.edit.saved.instruments}">Saved secure payment tokens</h2>
+                    <ul th:if="${!#lists.isEmpty(savedPaymentInstruments)}" data-paginate-collection="true" data-paginate="10" data-pagination-item="li">
+                        <li th:each="instrument : ${savedPaymentInstruments}"
+                            th:text="${(instrument.displayLabel != null ? instrument.displayLabel : instrument.provider) + ' · ' + (instrument.brand != null ? instrument.brand : '') + (instrument.last4 != null ? ' •••• ' + instrument.last4 : '')}">Instrument</li>
+                    </ul>
+                    <p class="muted" th:if="${#lists.isEmpty(savedPaymentInstruments)}" th:text="#{account.edit.saved.instruments.empty}">No secure payment tokens saved yet.</p>
+                </div>
+            </div>
             <button class="btn btn-primary" type="submit" th:text="#{account.edit.save}">Save</button>
             <a class="btn" th:href="@{/account}" th:text="#{common.cancel}">Cancel</a>
         </form>

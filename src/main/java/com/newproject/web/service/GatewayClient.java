@@ -884,6 +884,29 @@ public class GatewayClient {
             .block();
     }
 
+    public Optional<Address> getCustomerAddressByType(Long customerId, String addressType) {
+        return safeCall(
+            () -> Optional.ofNullable(
+                client().get()
+                    .uri(baseUrl + "/api/customers/{customerId}/addresses/type/{addressType}", customerId, addressType)
+                    .retrieve()
+                    .bodyToMono(Address.class)
+                    .block()
+            ),
+            "/api/customers/{customerId}/addresses/type/{addressType}",
+            Optional.empty()
+        );
+    }
+
+    public Address upsertCustomerAddressByType(Long customerId, String addressType, AddressRequest request) {
+        return client().put()
+            .uri(baseUrl + "/api/customers/{customerId}/addresses/type/{addressType}", customerId, addressType)
+            .bodyValue(request)
+            .retrieve()
+            .bodyToMono(Address.class)
+            .block();
+    }
+
 
 
     public List<WishlistItem> listWishlist(Long customerId) {
@@ -939,6 +962,44 @@ public class GatewayClient {
                 .orElse(List.of()),
             "/api/payments/methods"
         );
+    }
+
+    public List<PaymentInstrument> listPaymentInstruments(Long customerId) {
+        return safeList(
+            () -> client().get()
+                .uri(baseUrl + "/api/payments/customers/{customerId}/instruments", customerId)
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<List<PaymentInstrument>>() {})
+                .blockOptional()
+                .orElse(List.of()),
+            "/api/payments/customers/{customerId}/instruments"
+        );
+    }
+
+    public PaymentInstrument createPaymentInstrument(Long customerId, PaymentInstrumentForm form) {
+        return client().post()
+            .uri(baseUrl + "/api/payments/customers/{customerId}/instruments", customerId)
+            .bodyValue(form)
+            .retrieve()
+            .bodyToMono(PaymentInstrument.class)
+            .block();
+    }
+
+    public PaymentInstrument updatePaymentInstrument(Long customerId, Long instrumentId, PaymentInstrumentForm form) {
+        return client().put()
+            .uri(baseUrl + "/api/payments/customers/{customerId}/instruments/{instrumentId}", customerId, instrumentId)
+            .bodyValue(form)
+            .retrieve()
+            .bodyToMono(PaymentInstrument.class)
+            .block();
+    }
+
+    public void deletePaymentInstrument(Long customerId, Long instrumentId) {
+        client().delete()
+            .uri(baseUrl + "/api/payments/customers/{customerId}/instruments/{instrumentId}", customerId, instrumentId)
+            .retrieve()
+            .toBodilessEntity()
+            .block();
     }
 
     public List<PaymentMethod> listAdminPaymentMethods() {

@@ -74,6 +74,10 @@
         </div>
     </nav>
 
+    <div class="container" th:if="${globalAlertMessage != null}">
+        <p class="alert-error global-alert" th:text="${globalAlertMessage}">Your session security token expired. Please try again.</p>
+    </div>
+
     <nav class="admin-quickbar" th:if="${isAdminArea}" sec:authorize="hasRole('ADMIN')">
         <div class="container admin-quickbar-inner">
             <span class="admin-quickbar-label" th:text="#{admin.quickbar.label}">Back office</span>

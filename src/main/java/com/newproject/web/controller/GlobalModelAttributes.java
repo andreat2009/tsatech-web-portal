@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import org.springframework.context.MessageSource;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -16,9 +17,11 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 @ControllerAdvice
 public class GlobalModelAttributes {
     private final GatewayClient gatewayClient;
+    private final MessageSource messageSource;
 
-    public GlobalModelAttributes(GatewayClient gatewayClient) {
+    public GlobalModelAttributes(GatewayClient gatewayClient, MessageSource messageSource) {
         this.gatewayClient = gatewayClient;
+        this.messageSource = messageSource;
     }
 
     @ModelAttribute
@@ -59,5 +62,16 @@ public class GlobalModelAttributes {
         model.addAttribute("isAdminArea", isAdminArea);
         model.addAttribute("storeSettings", settings);
         model.addAttribute("footerInformationPages", footerInformationPages);
+        if ("expired".equalsIgnoreCase(request.getParameter("csrf"))) {
+            model.addAttribute(
+                "globalAlertMessage",
+                messageSource.getMessage(
+                    "common.error.csrf.expired",
+                    null,
+                    "Your session security token expired. Please try again.",
+                    locale
+                )
+            );
+        }
     }
 }

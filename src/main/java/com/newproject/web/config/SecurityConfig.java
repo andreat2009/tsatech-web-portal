@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -22,8 +23,12 @@ import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
 import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfFilter;
+import org.springframework.security.web.csrf.CsrfTokenRepository;
+import org.springframework.web.filter.OncePerRequestFilter;
 
 @Configuration
 public class SecurityConfig {
@@ -32,10 +37,16 @@ public class SecurityConfig {
     private static final String CONTENT_SECURITY_POLICY = "default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https:; script-src 'self' https://www.paypal.com https://*.paypal.com https://*.paypalobjects.com; connect-src 'self' https://www.paypal.com https://*.paypal.com https://*.paypalobjects.com https://api-m.paypal.com https://api-m.sandbox.paypal.com; font-src 'self' data: https:; frame-src 'self' https://www.paypal.com https://*.paypal.com https://*.paypalobjects.com; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'";
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, ClientRegistrationRepository clientRegistrationRepository) throws Exception {
+    public SecurityFilterChain securityFilterChain(
+        HttpSecurity http,
+        ClientRegistrationRepository clientRegistrationRepository,
+        CsrfTokenRepository csrfTokenRepository,
+        AccessDeniedHandler accessDeniedHandler,
+        OncePerRequestFilter csrfTokenResponseCookieBindingFilter
+    ) throws Exception {
         http
             .csrf(csrf -> csrf
-                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                .csrfTokenRepository(csrfTokenRepository)
                 .ignoringRequestMatchers("/actuator/health", "/actuator/info", "/analytics/track")
             )
             .headers(headers -> headers
@@ -75,6 +86,9 @@ public class SecurityConfig {
                 .requestMatchers("/account/**").authenticated()
                 .anyRequest().permitAll()
             )
+            .exceptionHandling(exceptionHandling -> exceptionHandling
+                .accessDeniedHandler(accessDeniedHandler)
+            )
             .oauth2Login(oauth2 -> oauth2
                 .loginPage("/account/login")
                 .userInfoEndpoint(userInfo -> userInfo.oidcUserService(oidcUserService()))
@@ -85,9 +99,29 @@ public class SecurityConfig {
                 .clearAuthentication(true)
                 .deleteCookies("JSESSIONID")
                 .logoutSuccessHandler(oidcLogoutSuccessHandler(clientRegistrationRepository))
-            );
+            )
+            .addFilterAfter(csrfTokenResponseCookieBindingFilter, CsrfFilter.class);
 
         return http.build();
+    }
+
+    @Bean
+    public CsrfTokenRepository csrfTokenRepository() {
+        CookieCsrfTokenRepository repository = CookieCsrfTokenRepository.withHttpOnlyFalse();
+        repository.setCookieName("XSRF-TOKEN");
+        repository.setCookiePath("/");
+        repository.setCookieCustomizer(builder -> builder.sameSite("Lax"));
+        return repository;
+    }
+
+    @Bean
+    public AccessDeniedHandler accessDeniedHandler(CsrfTokenRepository csrfTokenRepository, MessageSource messageSource) {
+        return new PortalCsrfAccessDeniedHandler(csrfTokenRepository, messageSource);
+    }
+
+    @Bean
+    public OncePerRequestFilter csrfTokenResponseCookieBindingFilter() {
+        return new CsrfTokenResponseCookieBindingFilter();
     }
 
     private LogoutSuccessHandler oidcLogoutSuccessHandler(ClientRegistrationRepository clientRegistrationRepository) {

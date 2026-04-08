@@ -3,6 +3,7 @@ server:
   forward-headers-strategy: framework
   servlet:
     session:
+      timeout: ${APP_SESSION_TIMEOUT:12h}
       cookie:
         http-only: true
         secure: true
@@ -22,8 +23,17 @@ spring:
     url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
     username: ${DB_USER}
     password: ${DB_PASSWORD}
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 0
+    table: flyway_web_portal
   application:
     name: web-portal
+  session:
+    store-type: jdbc
+    jdbc:
+      initialize-schema: never
   thymeleaf:
     cache: false
   security:

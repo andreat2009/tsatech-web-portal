@@ -861,6 +861,11 @@ main.container {
   font-size: 13px;
 }
 
+.global-alert {
+  margin-top: 14px;
+  margin-bottom: 0;
+}
+
 #footer {
   margin-top: 30px;
   background: linear-gradient(#229ac8, #1f90bb);

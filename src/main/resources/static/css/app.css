@@ -79,17 +79,23 @@ a:hover {
   gap: 20px;
 }
 
+#logo {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
 #logo .brand-link {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 12px;
   color: #444;
   text-decoration: none;
+  max-width: 100%;
 }
 
 #logo .brand-logo {
-  max-height: var(--brand-logo-height, 96px);
-  max-width: 240px;
+  max-height: min(var(--brand-logo-height, 96px), 360px);
+  max-width: min(480px, 42vw);
   width: auto;
   object-fit: contain;
 }
@@ -102,7 +108,8 @@ a:hover {
 }
 
 .header-search {
-  flex: 1;
+  flex: 1 1 320px;
+  min-width: 280px;
   display: flex;
   gap: 0;
 }
@@ -678,8 +685,8 @@ main.container {
 
 @media (max-width: 640px) {
   #logo .brand-logo {
-    max-height: min(var(--brand-logo-height, 96px), 56px);
-    max-width: 180px;
+    max-height: min(var(--brand-logo-height, 96px), 84px);
+    max-width: min(240px, 68vw);
   }
 
   #logo .brand-link span {
@@ -1879,8 +1886,12 @@ h1, h2, h3 {
 }
 
 .header-row {
-  min-height: 108px;
+  min-height: auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 24px;
+  padding: 12px 0;
 }
 
 .header-search input {
@@ -1892,6 +1903,8 @@ h1, h2, h3 {
   display: flex;
   align-items: center;
   gap: 10px;
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .header-cart {

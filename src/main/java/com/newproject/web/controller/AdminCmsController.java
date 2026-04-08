@@ -36,7 +36,7 @@ public class AdminCmsController {
     private static final int DEFAULT_LOGO_MAX_HEIGHT_PX = 96;
     private static final int DEFAULT_SITE_NAME_FONT_SIZE_PX = 28;
     private static final int MIN_LOGO_MAX_HEIGHT_PX = 32;
-    private static final int MAX_LOGO_MAX_HEIGHT_PX = 220;
+    private static final int MAX_LOGO_MAX_HEIGHT_PX = 360;
     private static final int MIN_SITE_NAME_FONT_SIZE_PX = 14;
     private static final int MAX_SITE_NAME_FONT_SIZE_PX = 56;
 

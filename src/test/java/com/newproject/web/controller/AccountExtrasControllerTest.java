@@ -3,6 +3,7 @@ package com.newproject.web.controller;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -13,6 +14,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import static org.mockito.Mockito.mock;
 import com.newproject.web.dto.Customer;
 import com.newproject.web.dto.CustomerRequest;
 import com.newproject.web.dto.PayPalBrowserVaultSession;
@@ -40,6 +42,8 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.ui.ExtendedModelMap;
+import org.springframework.web.server.ResponseStatusException;
 
 @WebMvcTest(
     controllers = {AccountExtrasController.class, GlobalModelAttributes.class, PortalExceptionHandler.class},
@@ -57,6 +61,9 @@ class AccountExtrasControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private AccountExtrasController accountExtrasController;
 
     @MockBean
     private GatewayClient gatewayClient;
@@ -118,6 +125,21 @@ class AccountExtrasControllerTest {
         assertEquals("RETAIL", request.getCustomerGroupCode());
         assertNotNull(request.getPrivacyAcceptedAt());
         assertEquals("2026-04", request.getPrivacyPolicyVersion());
+    }
+
+
+    @Test
+    void accountHomeReturnsServiceUnavailableWhenCustomerServiceIsUnavailable() {
+        org.springframework.security.core.Authentication authentication = mock(org.springframework.security.core.Authentication.class);
+        when(authentication.isAuthenticated()).thenReturn(true);
+        when(customerResolver.resolveCustomerId(authentication)).thenReturn(null);
+
+        ResponseStatusException exception = assertThrows(
+            ResponseStatusException.class,
+            () -> accountExtrasController.accountHome(new ExtendedModelMap(), authentication)
+        );
+
+        assertEquals(503, exception.getStatusCode().value());
     }
 
     @Test

@@ -36,6 +36,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.server.ResponseStatusException;
 
 @Controller
 @RequestMapping("/account")
@@ -72,6 +73,10 @@ public class AccountExtrasController {
     @GetMapping("/login")
     public String login(Model model, Authentication authentication) {
         if (isAuthenticated(authentication)) {
+            Long customerId = customerResolver.resolveCustomerId(authentication);
+            if (customerId == null) {
+                return handleMissingAuthenticatedCustomer(authentication);
+            }
             return "redirect:/account";
         }
         model.addAttribute("loginReturnTarget", "/catalogo");
@@ -81,6 +86,10 @@ public class AccountExtrasController {
     @GetMapping("/register")
     public String register(Model model, Authentication authentication) {
         if (isAuthenticated(authentication)) {
+            Long customerId = customerResolver.resolveCustomerId(authentication);
+            if (customerId == null) {
+                return handleMissingAuthenticatedCustomer(authentication);
+            }
             return "redirect:/account";
         }
 
@@ -152,12 +161,12 @@ public class AccountExtrasController {
     public String accountHome(Model model, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
-            return "redirect:/account/login";
+            return handleMissingAuthenticatedCustomer(authentication);
         }
 
         Optional<Customer> customerOpt = gatewayClient.getCustomerSafe(customerId);
         if (customerOpt.isEmpty()) {
-            return "redirect:/";
+            throw accountServiceUnavailable();
         }
 
         Customer customer = customerOpt.get();
@@ -177,12 +186,12 @@ public class AccountExtrasController {
     public String editProfile(Model model, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
-            return "redirect:/account/login";
+            return handleMissingAuthenticatedCustomer(authentication);
         }
 
         Customer customer = gatewayClient.getCustomerSafe(customerId).orElse(null);
         if (customer == null) {
-            return "redirect:/account";
+            throw accountServiceUnavailable();
         }
 
         List<Address> addresses = gatewayClient.listCustomerAddresses(customerId);
@@ -197,12 +206,12 @@ public class AccountExtrasController {
     public String saveProfile(@ModelAttribute("profileForm") AccountProfileForm form, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
-            return "redirect:/account/login";
+            return handleMissingAuthenticatedCustomer(authentication);
         }
 
         Customer current = gatewayClient.getCustomerSafe(customerId).orElse(null);
         if (current == null) {
-            return "redirect:/account";
+            throw accountServiceUnavailable();
         }
 
         if (!validateAddressSection(form.getShippingLine1(), form.getShippingCity(), form.getShippingCountry(), form.getShippingPostalCode())) {
@@ -246,7 +255,7 @@ public class AccountExtrasController {
     public String updateNewsletter(@RequestParam(defaultValue = "false") boolean newsletter, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
-            return "redirect:/account/login";
+            return handleMissingAuthenticatedCustomer(authentication);
         }
 
         gatewayClient.updateNewsletterPreference(customerId, newsletter);
@@ -272,7 +281,7 @@ public class AccountExtrasController {
     public String paymentMethod(Model model, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
-            return "redirect:/account/login";
+            return handleMissingAuthenticatedCustomer(authentication);
         }
         Customer customer = gatewayClient.getCustomerSafe(customerId).orElse(null);
         List<PaymentMethod> paymentMethods = gatewayClient.listPaymentMethods();
@@ -299,7 +308,7 @@ public class AccountExtrasController {
     ) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            return accountApiUnavailable(authentication);
         }
         try {
             return ResponseEntity.ok(gatewayClient.createPayPalBrowserVaultSession(customerId, paymentMethodCode));
@@ -316,7 +325,7 @@ public class AccountExtrasController {
     ) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            return accountApiUnavailable(authentication);
         }
         try {
             return ResponseEntity.ok(gatewayClient.createPayPalSetupToken(customerId, paymentMethodCode));
@@ -329,7 +338,7 @@ public class AccountExtrasController {
     public String createPaymentInstrument(@ModelAttribute("paymentInstrumentForm") PaymentInstrumentForm form, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
-            return "redirect:/account/login";
+            return handleMissingAuthenticatedCustomer(authentication);
         }
         if (isBlank(form.getPaymentMethodCode()) || isBlank(form.getProviderToken())) {
             return "redirect:/account/payment-method?error=data";
@@ -364,7 +373,7 @@ public class AccountExtrasController {
     public String deletePaymentInstrument(@PathVariable Long instrumentId, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
-            return "redirect:/account/login";
+            return handleMissingAuthenticatedCustomer(authentication);
         }
         try {
             gatewayClient.deletePaymentInstrument(customerId, instrumentId);
@@ -378,7 +387,7 @@ public class AccountExtrasController {
     public String reward(Model model, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
-            return "redirect:/account/login";
+            return handleMissingAuthenticatedCustomer(authentication);
         }
 
         model.addAttribute("rewardSummary", gatewayClient.getRewardSummary(customerId));
@@ -390,7 +399,7 @@ public class AccountExtrasController {
     public String transactions(Model model, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
-            return "redirect:/account/login";
+            return handleMissingAuthenticatedCustomer(authentication);
         }
 
         model.addAttribute("transactions", gatewayClient.listStoreTransactions(customerId));
@@ -401,7 +410,7 @@ public class AccountExtrasController {
     public String subscriptions(Model model, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
-            return "redirect:/account/login";
+            return handleMissingAuthenticatedCustomer(authentication);
         }
 
         CustomerSubscriptionRequest form = new CustomerSubscriptionRequest();
@@ -419,7 +428,7 @@ public class AccountExtrasController {
     public String addSubscription(@ModelAttribute CustomerSubscriptionRequest form, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
-            return "redirect:/account/login";
+            return handleMissingAuthenticatedCustomer(authentication);
         }
 
         if (form.getPlanName() == null || form.getPlanName().isBlank()) {
@@ -448,7 +457,7 @@ public class AccountExtrasController {
     ) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
-            return "redirect:/account/login";
+            return handleMissingAuthenticatedCustomer(authentication);
         }
 
         CustomerSubscription existing = gatewayClient.listSubscriptions(customerId).stream()
@@ -475,7 +484,7 @@ public class AccountExtrasController {
     public String downloads(Model model, Authentication authentication) {
         Long customerId = customerResolver.resolveCustomerId(authentication);
         if (customerId == null) {
-            return "redirect:/account/login";
+            return handleMissingAuthenticatedCustomer(authentication);
         }
 
         model.addAttribute("downloads", gatewayClient.listDownloads(customerId));
@@ -586,6 +595,24 @@ public class AccountExtrasController {
             .filter(code -> code != null && !code.isBlank())
             .findFirst()
             .orElse(null);
+    }
+
+    private String handleMissingAuthenticatedCustomer(Authentication authentication) {
+        if (!isAuthenticated(authentication)) {
+            return "redirect:/account/login";
+        }
+        throw accountServiceUnavailable();
+    }
+
+    private <T> ResponseEntity<T> accountApiUnavailable(Authentication authentication) {
+        if (!isAuthenticated(authentication)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+    }
+
+    private ResponseStatusException accountServiceUnavailable() {
+        return new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Account services are temporarily unavailable. Please try again.");
     }
 
     private String buildAccountDisplayName(Customer customer) {

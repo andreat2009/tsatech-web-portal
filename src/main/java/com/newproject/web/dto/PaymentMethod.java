@@ -22,6 +22,7 @@ public class PaymentMethod {
     private String providerLightboxScriptUrl;
     private String providerNotificationUrl;
     private Boolean providerConfigurationAvailable;
+    private String browserTokenizationMode;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -65,4 +66,6 @@ public class PaymentMethod {
     public void setProviderNotificationUrl(String providerNotificationUrl) { this.providerNotificationUrl = providerNotificationUrl; }
     public Boolean getProviderConfigurationAvailable() { return providerConfigurationAvailable; }
     public void setProviderConfigurationAvailable(Boolean providerConfigurationAvailable) { this.providerConfigurationAvailable = providerConfigurationAvailable; }
+    public String getBrowserTokenizationMode() { return browserTokenizationMode; }
+    public void setBrowserTokenizationMode(String browserTokenizationMode) { this.browserTokenizationMode = browserTokenizationMode; }
 }

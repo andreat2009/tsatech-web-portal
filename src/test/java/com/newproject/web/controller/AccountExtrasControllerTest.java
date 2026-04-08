@@ -15,6 +15,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.newproject.web.dto.Customer;
 import com.newproject.web.dto.CustomerRequest;
+import com.newproject.web.dto.PayPalBrowserVaultSession;
+import com.newproject.web.dto.PayPalSetupToken;
 import com.newproject.web.dto.PaymentInstrument;
 import com.newproject.web.dto.PaymentMethod;
 import com.newproject.web.dto.PublicStoreSettings;
@@ -165,14 +167,45 @@ class AccountExtrasControllerTest {
         method.setPaymentFlow("REDIRECT");
         method.setActive(true);
         method.setProviderConfigurationAvailable(true);
+        method.setBrowserTokenizationMode("PAYPAL_JS_SDK");
         when(gatewayClient.listPaymentMethods()).thenReturn(List.of(method));
         when(gatewayClient.listCustomerAddresses(42L)).thenReturn(List.of());
         when(gatewayClient.listPaymentInstruments(42L)).thenReturn(List.<PaymentInstrument>of());
 
         mockMvc.perform(get("/account/payment-method").with(csrf()))
             .andExpect(status().isOk())
-            .andExpect(content().string(containsString("providerToken")))
-            .andExpect(content().string(containsString("providerToken")))
+            .andExpect(content().string(containsString("data-payment-vault-form")))
+            .andExpect(content().string(containsString("data-payment-sdk-field")))
             .andExpect(content().string(containsString("Token vault pagamenti")));
+    }
+
+    @Test
+    @WithMockUser(username = "shopper", roles = "USER")
+    void paypalBrowserVaultSessionEndpointUsesResolvedCustomer() throws Exception {
+        when(customerResolver.resolveCustomerId(any())).thenReturn(42L);
+        PayPalBrowserVaultSession session = new PayPalBrowserVaultSession();
+        session.setPaymentMethodCode("paypal");
+        session.setClientId("client-id");
+        session.setUserIdToken("id-token");
+        session.setSdkUrl("https://www.paypal.com/sdk/js");
+        when(gatewayClient.createPayPalBrowserVaultSession(42L, "paypal")).thenReturn(session);
+
+        mockMvc.perform(post("/account/payment-method/providers/paypal/paypal/browser-session").with(csrf()))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("client-id")));
+    }
+
+    @Test
+    @WithMockUser(username = "shopper", roles = "USER")
+    void paypalSetupTokenEndpointUsesResolvedCustomer() throws Exception {
+        when(customerResolver.resolveCustomerId(any())).thenReturn(42L);
+        PayPalSetupToken token = new PayPalSetupToken();
+        token.setPaymentMethodCode("paypal");
+        token.setSetupToken("setup-token-1");
+        when(gatewayClient.createPayPalSetupToken(42L, "paypal")).thenReturn(token);
+
+        mockMvc.perform(post("/account/payment-method/providers/paypal/paypal/setup-token").with(csrf()))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("setup-token-1")));
     }
 }

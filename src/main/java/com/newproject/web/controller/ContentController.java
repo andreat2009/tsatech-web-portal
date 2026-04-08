@@ -1,21 +1,47 @@
 package com.newproject.web.controller;
 
-import com.newproject.web.dto.*;
+import com.newproject.web.dto.BlogCommentRequest;
+import com.newproject.web.dto.BlogPost;
+import com.newproject.web.dto.ContactMessageRequest;
+import com.newproject.web.dto.InformationPage;
 import com.newproject.web.service.GatewayClient;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 
 @Controller
 public class ContentController {
     private final GatewayClient gatewayClient;
+    private final String privacyPolicySlug;
+    private final String privacyPolicyVersion;
 
-    public ContentController(GatewayClient gatewayClient) {
+    public ContentController(
+        GatewayClient gatewayClient,
+        @Value("${app.privacy-policy-path:/information/privacy-policy}") String privacyPolicyPath,
+        @Value("${app.privacy-policy-version:2026-04}") String privacyPolicyVersion
+    ) {
         this.gatewayClient = gatewayClient;
+        this.privacyPolicyVersion = privacyPolicyVersion;
+        String slug = "privacy-policy";
+        if (privacyPolicyPath != null && !privacyPolicyPath.isBlank()) {
+            String normalized = privacyPolicyPath.trim();
+            while (normalized.endsWith("/")) {
+                normalized = normalized.substring(0, normalized.length() - 1);
+            }
+            int idx = normalized.lastIndexOf('/');
+            if (idx >= 0 && idx < normalized.length() - 1) {
+                slug = normalized.substring(idx + 1);
+            }
+        }
+        this.privacyPolicySlug = slug;
     }
 
     @GetMapping({"/information/contact", "/contatti"})
@@ -58,11 +84,15 @@ public class ContentController {
     @GetMapping("/information/{slug}")
     public String information(@PathVariable String slug, Model model) {
         Optional<InformationPage> page = gatewayClient.getInformationBySlug(slug);
-        if (page.isEmpty()) {
-            return "redirect:/mappa-sito";
+        if (page.isPresent()) {
+            model.addAttribute("page", page.get());
+            return "information/page";
         }
-        model.addAttribute("page", page.get());
-        return "information/page";
+        if (privacyPolicySlug.equalsIgnoreCase(slug)) {
+            model.addAttribute("privacyPolicyVersion", privacyPolicyVersion);
+            return "information/privacy-fallback";
+        }
+        return "redirect:/mappa-sito";
     }
 
     @GetMapping({"/blog", "/news"})

@@ -5,6 +5,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title th:text="#{account.payment.method.title}">Payment methods</title>
     <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css" />
+    <style>
+        .provider-sdk-panel {
+            border: 1px dashed #d1d5db;
+            border-radius: 18px;
+            padding: 1rem;
+            background: #f8fafc;
+        }
+        .provider-sdk-panel strong {
+            display: block;
+            margin-bottom: 0.4rem;
+        }
+        .provider-sdk-panel.is-error {
+            border-color: #ef4444;
+            background: #fef2f2;
+            color: #991b1b;
+        }
+        .provider-sdk-panel.is-ready {
+            border-color: #0f766e;
+            background: #ecfeff;
+        }
+        .provider-sdk-mount {
+            min-height: 52px;
+            margin-top: 0.85rem;
+        }
+    </style>
 </head>
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
@@ -27,7 +52,13 @@
             No tokenizable payment method is configured yet.
         </div>
 
-        <form class="form" th:if="${!#lists.isEmpty(tokenizablePaymentMethods)}" method="post" th:action="@{/account/payment-method/instruments}" th:object="${paymentInstrumentForm}">
+        <form class="form"
+              th:if="${!#lists.isEmpty(tokenizablePaymentMethods)}"
+              method="post"
+              th:action="@{/account/payment-method/instruments}"
+              th:object="${paymentInstrumentForm}"
+              data-payment-vault-form="true"
+              th:attr="data-paypal-session-url-template=@{/account/payment-method/providers/paypal/__METHOD__/browser-session},data-paypal-setup-url-template=@{/account/payment-method/providers/paypal/__METHOD__/setup-token}">
             <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 
             <div class="field-grid two">
@@ -37,31 +68,42 @@
                 </div>
                 <div class="field">
                     <label th:text="#{account.payment.method.form.method}">Payment method</label>
-                    <select th:field="*{paymentMethodCode}" required>
+                    <select th:field="*{paymentMethodCode}" required data-payment-method-select>
                         <option value="" th:text="#{common.select}">Select</option>
                         <option th:each="method : ${tokenizablePaymentMethods}"
                                 th:value="${method.code}"
                                 th:data-provider="${method.provider}"
+                                th:data-browser-tokenization-mode="${method.browserTokenizationMode}"
+                                th:data-provider-brand-name="${method.providerBrandName}"
                                 th:data-lightbox-script="${method.providerLightboxScriptUrl}"
                                 th:text="${method.displayName}">PayPal</option>
                     </select>
                 </div>
                 <div class="field">
                     <label th:text="#{account.payment.method.form.customer.reference}">Gateway customer reference</label>
-                    <input type="text" th:field="*{gatewayCustomerReference}" autocomplete="off" />
+                    <input type="text" th:field="*{gatewayCustomerReference}" autocomplete="off" data-gateway-customer-reference-input />
                 </div>
-                <div class="field full-width">
+                <div class="field full-width" data-payment-sdk-field hidden>
+                    <label th:text="#{account.payment.method.sdk.heading}">Secure provider widget</label>
+                    <div class="provider-sdk-panel" data-payment-sdk-status-panel>
+                        <strong data-payment-sdk-status th:text="#{account.payment.method.sdk.idle}">Choose a compatible method to initialize the secure widget.</strong>
+                        <p class="muted" data-payment-sdk-helper th:text="#{account.payment.method.sdk.helper}">For PayPal the token is generated in the browser by the provider SDK, then only the secure token is sent to the vault.</p>
+                        <div class="provider-sdk-mount" data-payment-sdk-mount></div>
+                    </div>
+                </div>
+                <div class="field full-width" data-provider-token-field>
                     <label th:text="#{account.payment.method.form.token}">Provider token</label>
                     <input type="password" th:field="*{providerToken}" autocomplete="off" required data-provider-token-input />
+                    <input type="hidden" th:field="*{providerTokenType}" data-provider-token-type-input />
                     <small class="muted" th:text="#{account.payment.method.token.help}">Paste the secure token returned by the provider widget or SDK. Never paste raw card data.</small>
                 </div>
                 <div class="field full-width">
                     <label th:text="#{account.payment.method.form.label}">Display label</label>
-                    <input type="text" th:field="*{displayLabel}" autocomplete="off" />
+                    <input type="text" th:field="*{displayLabel}" autocomplete="off" data-display-label-input />
                 </div>
                 <div class="field">
                     <label th:text="#{account.payment.method.form.brand}">Brand</label>
-                    <input type="text" th:field="*{brand}" autocomplete="off" />
+                    <input type="text" th:field="*{brand}" autocomplete="off" data-brand-input />
                 </div>
                 <div class="field">
                     <label th:text="#{account.payment.method.form.last4}">Last 4 digits</label>
@@ -88,7 +130,7 @@
             </div>
 
             <div class="actions-row">
-                <button class="btn btn-primary" type="submit" th:text="#{common.save}">Save</button>
+                <button class="btn btn-primary" type="submit" th:text="#{common.save}" data-manual-save-button>Save</button>
                 <a class="btn" th:href="@{/account/edit}" th:text="#{account.edit.heading}">Edit profile</a>
             </div>
         </form>
@@ -121,5 +163,6 @@
     </section>
 </main>
 <div th:replace="~{fragments/footer :: footer}"></div>
+<script th:src="@{/js/payment-vault.js}" defer></script>
 </body>
 </html>

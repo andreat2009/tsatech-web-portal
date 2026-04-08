@@ -9,6 +9,8 @@ import com.newproject.web.dto.CustomerRequest;
 import com.newproject.web.dto.CustomerSubscription;
 import com.newproject.web.dto.CustomerSubscriptionRequest;
 import com.newproject.web.dto.NewsletterPreference;
+import com.newproject.web.dto.PayPalBrowserVaultSession;
+import com.newproject.web.dto.PayPalSetupToken;
 import com.newproject.web.dto.PaymentInstrumentForm;
 import com.newproject.web.dto.PaymentMethod;
 import com.newproject.web.service.CustomerResolver;
@@ -21,6 +23,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -31,6 +35,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 @Controller
 @RequestMapping("/account")
@@ -284,6 +289,40 @@ public class AccountExtrasController {
         model.addAttribute("preferredPaymentMethodCode", customer != null ? customer.getPreferredPaymentMethodCode() : null);
         model.addAttribute("paymentInstrumentForm", paymentInstrumentForm);
         return "account/payment-method";
+    }
+
+    @PostMapping("/payment-method/providers/paypal/{paymentMethodCode}/browser-session")
+    @ResponseBody
+    public ResponseEntity<PayPalBrowserVaultSession> createPayPalBrowserVaultSession(
+        @PathVariable String paymentMethodCode,
+        Authentication authentication
+    ) {
+        Long customerId = customerResolver.resolveCustomerId(authentication);
+        if (customerId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        try {
+            return ResponseEntity.ok(gatewayClient.createPayPalBrowserVaultSession(customerId, paymentMethodCode));
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.BAD_GATEWAY).build();
+        }
+    }
+
+    @PostMapping("/payment-method/providers/paypal/{paymentMethodCode}/setup-token")
+    @ResponseBody
+    public ResponseEntity<PayPalSetupToken> createPayPalSetupToken(
+        @PathVariable String paymentMethodCode,
+        Authentication authentication
+    ) {
+        Long customerId = customerResolver.resolveCustomerId(authentication);
+        if (customerId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        try {
+            return ResponseEntity.ok(gatewayClient.createPayPalSetupToken(customerId, paymentMethodCode));
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.BAD_GATEWAY).build();
+        }
     }
 
     @PostMapping("/payment-method/instruments")

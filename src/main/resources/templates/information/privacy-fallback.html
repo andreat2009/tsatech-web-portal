@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title th:text="#{privacy.fallback.title}">Privacy notice</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+</head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+<main class="container">
+    <div class="breadcrumbs">
+        <a th:href="@{/}" th:text="#{menu.home}">Home</a>
+        <span>/</span>
+        <span th:text="#{privacy.fallback.heading}">Privacy notice</span>
+    </div>
+
+    <section class="card section-pad">
+        <h1 th:text="#{privacy.fallback.heading}">Privacy notice</h1>
+        <p class="muted" th:text="#{privacy.fallback.version(${privacyPolicyVersion})}">Version</p>
+        <p th:text="#{privacy.fallback.intro}">We process only the data needed to create your account and manage orders.</p>
+        <p th:text="#{privacy.fallback.body.1}">Registration stores your identity credentials in Keycloak and your customer profile in the ecommerce platform.</p>
+        <p th:text="#{privacy.fallback.body.2}">Shipping, billing and preferred payment details can be updated later from your account area.</p>
+        <p th:text="#{privacy.fallback.body.3}">Payment instruments are tokenized by the provider and the backend stores only secure references, never raw card data.</p>
+    </section>
+</main>
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

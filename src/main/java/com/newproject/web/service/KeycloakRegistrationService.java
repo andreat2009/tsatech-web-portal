@@ -138,7 +138,6 @@ public class KeycloakRegistrationService {
                 return userId;
             }
 
-            // fallback: eventual consistency on listing can lag briefly
             for (int i = 0; i < 6; i++) {
                 String found = findUserId(accessToken, username, email);
                 if (found != null) {
@@ -187,17 +186,7 @@ public class KeycloakRegistrationService {
 
     private void assignRealmRole(String accessToken, String userId, String roleName) {
         try {
-            Map<String, Object> roleRepresentation = webClient.get()
-                .uri(adminRealmEndpoint + "/roles/" + url(roleName))
-                .headers(h -> h.setBearerAuth(accessToken))
-                .retrieve()
-                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
-                .block();
-
-            if (roleRepresentation == null || roleRepresentation.isEmpty()) {
-                throw new KeycloakRegistrationException("identity", "Keycloak role not found: " + roleName);
-            }
-
+            Map<String, Object> roleRepresentation = ensureRealmRole(accessToken, roleName);
             webClient.post()
                 .uri(adminRealmEndpoint + "/users/" + url(userId) + "/role-mappings/realm")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -209,6 +198,63 @@ public class KeycloakRegistrationService {
         } catch (WebClientResponseException ex) {
             logHttpError("assignRealmRole", ex);
             throw new KeycloakRegistrationException("identity", "Failed to assign Keycloak role", ex);
+        }
+    }
+
+    private Map<String, Object> ensureRealmRole(String accessToken, String roleName) {
+        String normalizedRole = trimToNull(roleName);
+        if (normalizedRole == null) {
+            throw new KeycloakRegistrationException("identity", "Keycloak registration role is missing");
+        }
+        Map<String, Object> roleRepresentation = fetchRealmRole(accessToken, normalizedRole);
+        if (roleRepresentation != null && !roleRepresentation.isEmpty()) {
+            return roleRepresentation;
+        }
+        createRealmRole(accessToken, normalizedRole);
+        roleRepresentation = fetchRealmRole(accessToken, normalizedRole);
+        if (roleRepresentation == null || roleRepresentation.isEmpty()) {
+            throw new KeycloakRegistrationException("identity", "Keycloak role not found: " + normalizedRole);
+        }
+        return roleRepresentation;
+    }
+
+    private Map<String, Object> fetchRealmRole(String accessToken, String roleName) {
+        try {
+            return webClient.get()
+                .uri(adminRealmEndpoint + "/roles/" + url(roleName))
+                .headers(h -> h.setBearerAuth(accessToken))
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                .block();
+        } catch (WebClientResponseException ex) {
+            if (ex.getStatusCode().value() == 404) {
+                return null;
+            }
+            logHttpError("fetchRealmRole", ex);
+            throw new KeycloakRegistrationException("identity", "Failed to load Keycloak role", ex);
+        }
+    }
+
+    private void createRealmRole(String accessToken, String roleName) {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("name", roleName);
+        payload.put("description", "Auto-created default shopper role for portal registration");
+        try {
+            webClient.post()
+                .uri(adminRealmEndpoint + "/roles")
+                .contentType(MediaType.APPLICATION_JSON)
+                .headers(h -> h.setBearerAuth(accessToken))
+                .bodyValue(payload)
+                .retrieve()
+                .toBodilessEntity()
+                .block();
+            logger.info("Created missing Keycloak realm role '{}' during registration bootstrap", roleName);
+        } catch (WebClientResponseException ex) {
+            if (ex.getStatusCode().value() == 409) {
+                return;
+            }
+            logHttpError("createRealmRole", ex);
+            throw new KeycloakRegistrationException("identity", "Failed to create Keycloak role", ex);
         }
     }
 

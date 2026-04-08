@@ -976,6 +976,22 @@ public class GatewayClient {
         );
     }
 
+    public PayPalBrowserVaultSession createPayPalBrowserVaultSession(Long customerId, String paymentMethodCode) {
+        return client().post()
+            .uri(baseUrl + "/api/payments/customers/{customerId}/vault/paypal/{paymentMethodCode}/browser-session", customerId, paymentMethodCode)
+            .retrieve()
+            .bodyToMono(PayPalBrowserVaultSession.class)
+            .block();
+    }
+
+    public PayPalSetupToken createPayPalSetupToken(Long customerId, String paymentMethodCode) {
+        return client().post()
+            .uri(baseUrl + "/api/payments/customers/{customerId}/vault/paypal/{paymentMethodCode}/setup-token", customerId, paymentMethodCode)
+            .retrieve()
+            .bodyToMono(PayPalSetupToken.class)
+            .block();
+    }
+
     public PaymentInstrument createPaymentInstrument(Long customerId, PaymentInstrumentForm form) {
         return client().post()
             .uri(baseUrl + "/api/payments/customers/{customerId}/instruments", customerId)

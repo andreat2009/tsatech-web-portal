@@ -29,7 +29,7 @@ import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 public class SecurityConfig {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-    private static final String CONTENT_SECURITY_POLICY = "default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https:; script-src 'self'; connect-src 'self'; font-src 'self' data: https:; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'";
+    private static final String CONTENT_SECURITY_POLICY = "default-src 'self'; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https:; script-src 'self' https://www.paypal.com https://*.paypal.com https://*.paypalobjects.com; connect-src 'self' https://www.paypal.com https://*.paypal.com https://*.paypalobjects.com https://api-m.paypal.com https://api-m.sandbox.paypal.com; font-src 'self' data: https:; frame-src 'self' https://www.paypal.com https://*.paypal.com https://*.paypalobjects.com; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'";
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, ClientRegistrationRepository clientRegistrationRepository) throws Exception {
@@ -41,7 +41,7 @@ public class SecurityConfig {
             .headers(headers -> headers
                 .contentSecurityPolicy(csp -> csp.policyDirectives(CONTENT_SECURITY_POLICY))
                 .referrerPolicy(referrer -> referrer.policy(org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
-                .frameOptions(frame -> frame.deny())
+                .frameOptions(frame -> frame.sameOrigin())
                 .httpStrictTransportSecurity(hsts -> hsts.includeSubDomains(true).maxAgeInSeconds(31536000))
                 .permissionsPolicy(permissions -> permissions.policy("camera=(), microphone=(), geolocation=()"))
             )

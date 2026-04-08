@@ -2,34 +2,145 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
-    <title th:text="#{admin.inventory.title}">Admin Inventario</title>
+    <title th:text="#{admin.inventory.title}">Inventory</title>
     <link rel="stylesheet" th:href="@{/css/app.css}" />
 </head>
 <body>
 <div th:replace="fragments/header :: header"></div>
 
 <main class="container admin">
-    <h1 th:text="#{admin.inventory.title}">Inventario</h1>
-    <table class="table">
-        <thead>
+    <section class="admin-page-hero">
+        <div>
+            <p class="eyebrow" th:text="#{admin.inventory.title}">Inventory</p>
+            <h1 th:text="#{admin.inventory.console.heading}">Inventory control room</h1>
+            <p class="hero-copy" th:text="#{admin.inventory.description}">
+                Monitor available units, reserved checkout stock and inventory drift from one operational console.
+            </p>
+        </div>
+        <div class="admin-page-hero-actions">
+            <a class="btn btn-secondary" th:href="@{/admin/inventory/export(query=${query},state=${state})}" th:text="#{admin.inventory.export}">Export CSV</a>
+        </div>
+    </section>
+
+    <div class="alert success" th:if="${adjusted}" th:text="#{admin.inventory.adjusted}">Inventory saved.</div>
+    <div class="alert success" th:if="${released}" th:text="#{admin.inventory.released}">Reserved units released.</div>
+    <div class="alert error" th:if="${error == 'adjust'}" th:text="#{admin.inventory.error.adjust}">Inventory update failed.</div>
+    <div class="alert error" th:if="${error == 'release'}" th:text="#{admin.inventory.error.release}">Reserved stock release failed.</div>
+    <div class="alert error" th:if="${error == 'invalid'}" th:text="#{admin.inventory.error.invalid}">Invalid inventory values.</div>
+    <div class="alert error" th:if="${error == 'missing'}" th:text="#{admin.inventory.error.missing}">Inventory record not found.</div>
+
+    <form class="payment-console-filters inventory-console-filters" method="get" th:action="@{/admin/inventory}">
+        <label>
+            <span th:text="#{admin.inventory.search.label}">Search</span>
+            <input type="search" name="query" th:value="${query}" th:placeholder="#{admin.inventory.search.placeholder}" />
+        </label>
+        <label>
+            <span th:text="#{admin.inventory.filter.state}">State</span>
+            <select name="state">
+                <option value="all" th:selected="${state == 'all'}" th:text="#{admin.inventory.state.all}">All stock</option>
+                <option value="attention" th:selected="${state == 'attention'}" th:text="#{admin.inventory.state.attention}">Needs attention</option>
+                <option value="out" th:selected="${state == 'out'}" th:text="#{admin.inventory.state.out}">Out of stock</option>
+                <option value="low" th:selected="${state == 'low'}" th:text="#{admin.inventory.state.low}">Low stock</option>
+                <option value="reserved" th:selected="${state == 'reserved'}" th:text="#{admin.inventory.state.reserved}">Reserved in checkout</option>
+                <option value="variant" th:selected="${state == 'variant'}" th:text="#{admin.inventory.state.variant}">Variant stock</option>
+                <option value="healthy" th:selected="${state == 'healthy'}" th:text="#{admin.inventory.state.healthy}">Healthy</option>
+            </select>
+        </label>
+        <div class="payment-console-toggle">
+            <button class="btn" type="submit" th:text="#{admin.inventory.filter.apply}">Apply filters</button>
+            <a class="btn btn-secondary" th:href="@{/admin/inventory}" th:text="#{admin.inventory.filter.reset}">Reset</a>
+        </div>
+    </form>
+
+    <p class="inventory-console-note" th:text="#{admin.inventory.explainer}">
+        Available now = immediately sellable stock. Reserved = units temporarily locked by open checkouts or pending orders. Tracked total = available + reserved.
+    </p>
+
+    <section class="payment-console-stats inventory-console-stats">
+        <article class="payment-console-stat">
+            <span class="label" th:text="#{admin.inventory.summary.available}">Available units</span>
+            <strong th:text="${availableUnits}">0</strong>
+        </article>
+        <article class="payment-console-stat">
+            <span class="label" th:text="#{admin.inventory.summary.reserved}">Reserved units</span>
+            <strong th:text="${reservedUnits}">0</strong>
+        </article>
+        <article class="payment-console-stat">
+            <span class="label" th:text="#{admin.inventory.summary.tracked}">Tracked units</span>
+            <strong th:text="${trackedUnits}">0</strong>
+        </article>
+        <article class="payment-console-stat">
+            <span class="label" th:text="#{admin.inventory.summary.attention}">Needs attention</span>
+            <strong th:text="${attentionCount}">0</strong>
+        </article>
+        <article class="payment-console-stat">
+            <span class="label" th:text="#{admin.inventory.summary.out}">Out of stock</span>
+            <strong th:text="${outOfStockCount}">0</strong>
+        </article>
+        <article class="payment-console-stat">
+            <span class="label" th:text="#{admin.inventory.summary.low}">Low stock</span>
+            <strong th:text="${lowStockCount}">0</strong>
+        </article>
+    </section>
+
+    <div class="table-wrapper">
+        <table class="table">
+            <thead>
             <tr>
                 <th>ID</th>
-                <th th:text="#{common.product}">Prodotto</th>
-                <th th:text="#{admin.inventory.on.hand}">On hand</th>
+                <th th:text="#{common.product}">Product</th>
+                <th th:text="#{admin.inventory.scope}">Scope</th>
+                <th th:text="#{admin.inventory.available}">Available</th>
                 <th th:text="#{admin.inventory.reserved}">Reserved</th>
-                <th th:text="#{common.updated.at}">Aggiornato</th>
+                <th th:text="#{admin.inventory.tracked}">Tracked</th>
+                <th th:text="#{admin.inventory.state.label}">State</th>
+                <th th:text="#{common.updated.at}">Updated</th>
+                <th th:text="#{common.actions}">Actions</th>
             </tr>
-        </thead>
-        <tbody>
+            </thead>
+            <tbody>
+            <tr th:if="${#lists.isEmpty(inventoryItems)}">
+                <td colspan="9" th:text="#{admin.inventory.empty}">No inventory rows match the current filters.</td>
+            </tr>
             <tr th:each="item : ${inventoryItems}">
-                <td th:text="${item.id}">1</td>
-                <td th:text="${item.productId}">1001</td>
-                <td th:text="${item.onHand}">0</td>
+                <td th:text="${item.inventoryId}">1</td>
+                <td>
+                    <div class="inventory-console-product">
+                        <img th:if="${item.productImageUrl != null}" th:src="${item.productImageUrl}" alt="" />
+                        <div>
+                            <strong th:text="${item.productName}">Product</strong>
+                            <div class="payment-console-meta">
+                                <span th:text="${item.productSku != null ? item.productSku : 'SKU -'}">SKU</span>
+                                <span th:text="${'#' + item.productId}">#1001</span>
+                            </div>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div class="payment-console-meta">
+                        <span th:text="#{__${item.scopeKey}__}">Base product</span>
+                        <strong th:if="${item.variantScoped}" th:text="${item.resolvedVariantLabel}">Size M</strong>
+                    </div>
+                </td>
+                <td th:text="${item.available}">0</td>
                 <td th:text="${item.reserved}">0</td>
-                <td th:text="${item.updatedAt}">-</td>
+                <td th:text="${item.tracked}">0</td>
+                <td><span th:class="${item.stockStateClass}" th:text="#{__${item.stockStateKey}__}">Healthy</span></td>
+                <td th:text="${item.updatedAt != null ? #temporals.format(item.updatedAt, 'dd/MM/yyyy HH:mm') : '-'}">-</td>
+                <td>
+                    <div class="table-actions">
+                        <a class="btn btn-small" th:href="@{/admin/inventory/{id}(id=${item.inventoryId},returnTo=${returnTo})}" th:text="#{admin.inventory.open}">Open</a>
+                        <a class="btn btn-small btn-secondary" th:href="${item.productAdminPath}" th:text="#{common.edit}">Edit</a>
+                        <form th:if="${item.reserved > 0}" method="post" th:action="@{/admin/inventory/{id}/release-reserved(id=${item.inventoryId})}">
+                            <input type="hidden" name="returnTo" th:value="${returnTo}" />
+                            <button class="btn btn-small btn-secondary" type="submit" th:text="#{admin.inventory.release}">Release reserved</button>
+                        </form>
+                    </div>
+                </td>
             </tr>
-        </tbody>
-    </table>
+            </tbody>
+        </table>
+    </div>
 </main>
 
 <div th:replace="fragments/footer :: footer"></div>

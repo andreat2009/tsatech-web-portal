@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title th:text="${payment != null ? 'Payment #' + payment.id : 'Payment detail'}">Payment detail</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+</head>
+<body>
+<div th:replace="fragments/header :: header"></div>
+
+<main class="container admin">
+    <div class="page-header">
+        <div>
+            <h1 th:text="${payment != null ? 'Payment #' + payment.id : 'Payment detail'}">Payment detail</h1>
+            <p class="muted">Investigate provider references, review timeline events and trigger operational actions from one place.</p>
+        </div>
+        <div class="actions-row">
+            <a class="btn" th:href="${backTo}">Back to payments</a>
+            <a class="btn" th:if="${linkedOrder != null}" th:href="@{/admin/orders}">Open orders</a>
+        </div>
+    </div>
+
+    <p class="alert-success" th:if="${reconciled}">Reconciliation completed.</p>
+    <p class="alert-success" th:if="${refunded}">Refund saved.</p>
+    <p class="alert-error" th:if="${error == 'reconcile'}">Unable to reconcile this payment.</p>
+    <p class="alert-error" th:if="${error == 'refund'}">Unable to save the refund request.</p>
+
+    <section class="payment-console-stats payment-console-stats--detail">
+        <article class="payment-console-stat">
+            <span class="muted">Status</span>
+            <strong th:text="${payment.status}">CAPTURED</strong>
+        </article>
+        <article class="payment-console-stat">
+            <span class="muted">Provider</span>
+            <strong th:text="${payment.provider}">PAYPAL</strong>
+        </article>
+        <article class="payment-console-stat">
+            <span class="muted">Amount</span>
+            <strong th:text="${payment.amount != null ? #numbers.formatDecimal(payment.amount, 1, 'POINT', 2, 'POINT') + ' ' + payment.currency : '-'}">19.90 EUR</strong>
+        </article>
+        <article class="payment-console-stat">
+            <span class="muted">Attention</span>
+            <strong th:text="${hasFailure ? 'Failure' : (requiresAttention ? 'Needs review' : 'Healthy')}">Healthy</strong>
+        </article>
+    </section>
+
+    <section class="payment-console-grid">
+        <article class="card payment-console-card">
+            <h2>Overview</h2>
+            <dl class="payment-console-meta">
+                <div><dt>Order</dt><dd th:text="${payment.orderId != null ? '#' + payment.orderId : '-'}">#1</dd></div>
+                <div><dt>Method</dt><dd th:text="${payment.methodLabel != null ? payment.methodLabel : payment.methodCode}">PayPal</dd></div>
+                <div><dt>Provider env</dt><dd th:text="${payment.providerEnvironment != null ? payment.providerEnvironment : '-'}">sandbox</dd></div>
+                <div><dt>Created</dt><dd th:text="${payment.createdAt != null ? #temporals.format(payment.createdAt, 'dd/MM/yyyy HH:mm') : '-'}">08/04/2026 11:00</dd></div>
+                <div><dt>Updated</dt><dd th:text="${payment.updatedAt != null ? #temporals.format(payment.updatedAt, 'dd/MM/yyyy HH:mm') : '-'}">08/04/2026 11:05</dd></div>
+                <div><dt>Refunded</dt><dd th:text="${payment.refundedAmount != null ? #numbers.formatDecimal(payment.refundedAmount, 1, 'POINT', 2, 'POINT') + ' ' + payment.currency : '0.00'}">0.00</dd></div>
+                <div><dt>Failure code</dt><dd th:text="${payment.failureCode != null ? payment.failureCode : '-'}">-</dd></div>
+                <div><dt>Failure reason</dt><dd th:text="${payment.failureReason != null ? payment.failureReason : '-'}">-</dd></div>
+            </dl>
+        </article>
+
+        <article class="card payment-console-card">
+            <h2>Provider references</h2>
+            <dl class="payment-console-meta">
+                <div><dt>Provider order id</dt><dd th:text="${payment.providerOrderId != null ? payment.providerOrderId : '-'}">-</dd></div>
+                <div><dt>Provider payment id</dt><dd th:text="${payment.providerPaymentId != null ? payment.providerPaymentId : '-'}">-</dd></div>
+                <div><dt>Provider status</dt><dd th:text="${payment.providerStatus != null ? payment.providerStatus : '-'}">-</dd></div>
+                <div><dt>Last provider sync</dt><dd th:text="${payment.lastProviderSyncAt != null ? #temporals.format(payment.lastProviderSyncAt, 'dd/MM/yyyy HH:mm') : '-'}">-</dd></div>
+                <div><dt>Last webhook</dt><dd th:text="${payment.lastWebhookAt != null ? #temporals.format(payment.lastWebhookAt, 'dd/MM/yyyy HH:mm') : '-'}">-</dd></div>
+                <div><dt>Last reconciliation</dt><dd th:text="${payment.lastReconciledAt != null ? #temporals.format(payment.lastReconciledAt, 'dd/MM/yyyy HH:mm') : '-'}">-</dd></div>
+            </dl>
+        </article>
+    </section>
+
+    <section class="payment-console-grid">
+        <article class="card payment-console-card">
+            <h2>Operations</h2>
+            <div class="actions-row">
+                <form th:action="@{|/admin/payments/${payment.id}/reconcile|}" method="post">
+                    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                    <input type="hidden" name="returnTo" th:value="${actionReturnTo}" />
+                    <button class="btn btn-primary" type="submit">Run reconciliation</button>
+                </form>
+            </div>
+            <form class="form payment-console-refund-form" th:action="@{|/admin/payments/${payment.id}/refund|}" method="post">
+                <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <input type="hidden" name="returnTo" th:value="${actionReturnTo}" />
+                <div class="grid">
+                    <div class="field">
+                        <label for="refundAmount">Refund amount</label>
+                        <input id="refundAmount" type="number" step="0.01" min="0.01" name="amount" placeholder="19.90" />
+                    </div>
+                    <div class="field">
+                        <label for="refundReason">Reason</label>
+                        <input id="refundReason" type="text" name="reason" placeholder="Customer request" />
+                    </div>
+                </div>
+                <div class="actions-row">
+                    <button class="btn" type="submit">Save refund</button>
+                </div>
+            </form>
+        </article>
+
+        <article class="card payment-console-card">
+            <h2>Linked order</h2>
+            <div th:if="${linkedOrder != null}">
+                <p><strong th:text="${'#' + linkedOrder.id}">#1</strong></p>
+                <p class="muted" th:text="${linkedOrder.customerEmail != null ? linkedOrder.customerEmail : 'Guest checkout'}">customer@example.com</p>
+                <p class="muted" th:text="${linkedOrder.status != null ? linkedOrder.status : '-'}">Confirmed</p>
+            </div>
+            <p class="muted" th:if="${linkedOrder == null}">The linked order is not available from the gateway right now.</p>
+        </article>
+    </section>
+
+    <section class="card payment-console-card payment-console-card--full">
+        <div class="page-header">
+            <h2>Payment timeline</h2>
+            <span class="muted" th:text="${transactions != null ? transactions.size() + ' events' : '0 events'}">0 events</span>
+        </div>
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>When</th>
+                    <th>Operation</th>
+                    <th>Source</th>
+                    <th>Status</th>
+                    <th>Provider ref</th>
+                    <th>Amount</th>
+                    <th>Failure</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${transactions == null or transactions.isEmpty()}">
+                    <td colspan="7" class="muted">No payment events recorded yet.</td>
+                </tr>
+                <tr th:each="tx : ${transactions}">
+                    <td><div th:text="${tx.createdAt != null ? #temporals.format(tx.createdAt, 'dd/MM/yyyy HH:mm:ss') : '-'}">08/04/2026 11:05:00</div></td>
+                    <td th:text="${tx.operationType}">CAPTURE</td>
+                    <td th:text="${tx.eventSource}">PAYPAL_WEBHOOK</td>
+                    <td>
+                        <div th:text="${tx.status != null ? tx.status : '-'}">CAPTURED</div>
+                        <small class="muted" th:text="${tx.providerStatus != null ? tx.providerStatus : '-'}">COMPLETED</small>
+                    </td>
+                    <td th:text="${tx.providerReference != null ? tx.providerReference : '-'}">ABC123</td>
+                    <td th:text="${tx.amount != null ? #numbers.formatDecimal(tx.amount, 1, 'POINT', 2, 'POINT') + ' ' + tx.currency : '-'}">19.90 EUR</td>
+                    <td>
+                        <div th:text="${tx.failureCode != null ? tx.failureCode : '-'}">-</div>
+                        <small class="muted" th:text="${tx.failureReason != null ? tx.failureReason : '-'}">-</small>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div th:each="tx : ${transactions}" class="payment-console-raw" th:if="${tx.rawPayload != null and !#strings.isEmpty(tx.rawPayload)}">
+            <details>
+                <summary th:text="${'Raw payload for event #' + tx.id}">Raw payload</summary>
+                <pre th:text="${tx.rawPayload}">payload</pre>
+            </details>
+        </div>
+    </section>
+</main>
+
+<div th:replace="fragments/footer :: footer"></div>
+</body>
+</html>

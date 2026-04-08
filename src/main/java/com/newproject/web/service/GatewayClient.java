@@ -938,17 +938,45 @@ public class GatewayClient {
             .block();
     }
     public List<Payment> listPayments(Long orderId) {
+        return listPayments(orderId, null, null, null, null);
+    }
+
+    public List<Payment> listPayments(Long orderId, String status, String provider, Boolean failureOnly, String query) {
         return safeList(
             () -> client().get()
                 .uri(uriBuilder -> uriBuilder
                     .path(baseUrl + "/api/payments")
                     .queryParamIfPresent("orderId", Optional.ofNullable(orderId))
+                    .queryParamIfPresent("status", Optional.ofNullable(status))
+                    .queryParamIfPresent("provider", Optional.ofNullable(provider))
+                    .queryParamIfPresent("failureOnly", Optional.ofNullable(failureOnly))
+                    .queryParamIfPresent("query", Optional.ofNullable(query))
                     .build())
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<List<Payment>>() {})
                 .blockOptional()
                 .orElse(List.of()),
             "/api/payments"
+        );
+    }
+
+    public Payment getPayment(Long paymentId) {
+        return client().get()
+            .uri(baseUrl + "/api/payments/{paymentId}", paymentId)
+            .retrieve()
+            .bodyToMono(Payment.class)
+            .block();
+    }
+
+    public List<PaymentTransaction> listPaymentTransactions(Long paymentId) {
+        return safeList(
+            () -> client().get()
+                .uri(baseUrl + "/api/payments/{paymentId}/transactions", paymentId)
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<List<PaymentTransaction>>() {})
+                .blockOptional()
+                .orElse(List.of()),
+            "/api/payments/{paymentId}/transactions"
         );
     }
 

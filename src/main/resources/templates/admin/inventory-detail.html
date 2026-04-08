@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title th:text="#{admin.inventory.detail.title}">Inventory detail</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+</head>
+<body>
+<div th:replace="fragments/header :: header"></div>
+
+<main class="container admin" th:with="item=${inventoryItem}">
+    <section class="admin-page-hero">
+        <div>
+            <p class="eyebrow" th:text="#{admin.inventory.title}">Inventory</p>
+            <h1 th:text="${item.productName}">Product</h1>
+            <p class="hero-copy">
+                <span th:text="${'#' + item.productId}">#1001</span>
+                <span th:if="${item.productSku != null}" th:text="${' · ' + item.productSku}">SKU</span>
+                <span th:if="${item.variantScoped}" th:text="${' · ' + item.resolvedVariantLabel}">Variant</span>
+            </p>
+        </div>
+        <div class="admin-page-hero-actions">
+            <a class="btn btn-secondary" th:href="${returnTo}" th:text="#{common.back.to.list}">Back to list</a>
+            <a class="btn" th:href="${item.productAdminPath}" th:text="#{common.edit}">Edit</a>
+        </div>
+    </section>
+
+    <div class="alert success" th:if="${adjusted}" th:text="#{admin.inventory.adjusted}">Inventory saved.</div>
+    <div class="alert success" th:if="${released}" th:text="#{admin.inventory.released}">Reserved units released.</div>
+    <div class="alert error" th:if="${error == 'adjust'}" th:text="#{admin.inventory.error.adjust}">Inventory update failed.</div>
+    <div class="alert error" th:if="${error == 'release'}" th:text="#{admin.inventory.error.release}">Reserved stock release failed.</div>
+    <div class="alert error" th:if="${error == 'invalid'}" th:text="#{admin.inventory.error.invalid}">Invalid inventory values.</div>
+    <div class="alert error" th:if="${error == 'missing'}" th:text="#{admin.inventory.error.missing}">Inventory record not found.</div>
+
+    <section class="payment-console-stats inventory-console-stats">
+        <article class="payment-console-stat">
+            <span class="label" th:text="#{admin.inventory.available}">Available</span>
+            <strong th:text="${item.available}">0</strong>
+        </article>
+        <article class="payment-console-stat">
+            <span class="label" th:text="#{admin.inventory.reserved}">Reserved</span>
+            <strong th:text="${item.reserved}">0</strong>
+        </article>
+        <article class="payment-console-stat">
+            <span class="label" th:text="#{admin.inventory.tracked}">Tracked</span>
+            <strong th:text="${item.tracked}">0</strong>
+        </article>
+        <article class="payment-console-stat">
+            <span class="label" th:text="#{admin.inventory.state.label}">State</span>
+            <strong><span th:class="${item.stockStateClass}" th:text="#{__${item.stockStateKey}__}">Healthy</span></strong>
+        </article>
+    </section>
+
+    <section class="payment-console-grid">
+        <article class="payment-console-card">
+            <h2 th:text="#{admin.inventory.adjust.heading}">Adjust stock</h2>
+            <p class="payment-console-meta" th:text="#{admin.inventory.adjust.help}">Use this form to correct available stock and reserved checkout units when a manual reconciliation is needed.</p>
+            <form class="inventory-adjust-form" method="post" th:action="@{/admin/inventory/{id}/adjust(id=${item.inventoryId})}">
+                <input type="hidden" name="returnTo" th:value="${'/admin/inventory/' + item.inventoryId}" />
+                <label>
+                    <span th:text="#{admin.inventory.available}">Available</span>
+                    <input type="number" min="0" name="onHand" th:value="${item.available}" />
+                </label>
+                <label>
+                    <span th:text="#{admin.inventory.reserved}">Reserved</span>
+                    <input type="number" min="0" name="reserved" th:value="${item.reserved}" />
+                </label>
+                <button class="btn" type="submit" th:text="#{common.save}">Save</button>
+            </form>
+        </article>
+
+        <article class="payment-console-card">
+            <h2 th:text="#{admin.inventory.operations.heading}">Operational actions</h2>
+            <p class="payment-console-meta" th:text="#{admin.inventory.release.help}">Release reserved stock only when you are sure there are no active checkouts or pending orders that still need those units.</p>
+            <form class="payment-console-refund-form" method="post" th:action="@{/admin/inventory/{id}/release-reserved(id=${item.inventoryId})}">
+                <input type="hidden" name="returnTo" th:value="${'/admin/inventory/' + item.inventoryId}" />
+                <button class="btn btn-secondary" type="submit" th:text="#{admin.inventory.release}">Release reserved</button>
+            </form>
+            <div class="payment-console-meta">
+                <span th:text="#{admin.inventory.scope}">Scope</span>
+                <strong th:text="#{__${item.scopeKey}__}">Base product</strong>
+            </div>
+            <div class="payment-console-meta" th:if="${item.variantScoped}">
+                <span th:text="#{admin.inventory.variant}">Variant</span>
+                <strong th:text="${item.resolvedVariantLabel}">Size M</strong>
+            </div>
+            <div class="payment-console-meta">
+                <span th:text="#{common.updated.at}">Updated</span>
+                <strong th:text="${item.updatedAt != null ? #temporals.format(item.updatedAt, 'dd/MM/yyyy HH:mm') : '-'}">-</strong>
+            </div>
+        </article>
+    </section>
+</main>
+
+<div th:replace="fragments/footer :: footer"></div>
+</body>
+</html>

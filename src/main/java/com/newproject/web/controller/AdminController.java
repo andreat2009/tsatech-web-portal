@@ -185,21 +185,6 @@ public class AdminController {
         return "admin/returns";
     }
 
-    @GetMapping("/payments")
-    public String payments(
-        @RequestParam(name = "reconciled", required = false) String reconciled,
-        @RequestParam(name = "refunded", required = false) String refunded,
-        @RequestParam(name = "error", required = false) String error,
-        Model model
-    ) {
-        List<Payment> payments = gatewayClient.listPayments(null);
-        model.addAttribute("payments", payments);
-        model.addAttribute("reconciled", reconciled != null);
-        model.addAttribute("refunded", refunded != null);
-        model.addAttribute("error", error);
-        return "admin/payments";
-    }
-
     @GetMapping("/shipments")
     public String shipments(Model model) {
         List<Shipment> shipments = gatewayClient.listShipments(null);
@@ -237,13 +222,6 @@ public class AdminController {
         List<Cart> carts = gatewayClient.listCarts(null);
         model.addAttribute("carts", carts);
         return "admin/carts";
-    }
-
-    @GetMapping("/inventory")
-    public String inventory(Model model) {
-        List<InventoryItem> inventoryItems = gatewayClient.listInventory();
-        model.addAttribute("inventoryItems", inventoryItems);
-        return "admin/inventory";
     }
 
     @GetMapping("/pricing")

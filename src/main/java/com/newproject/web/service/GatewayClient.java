@@ -33,6 +33,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
 @Service
@@ -88,7 +89,17 @@ public class GatewayClient {
                     .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
                     .build();
             }
-            return oauth2WebClient;
+            // Utente con sessione OAuth2 ma access token non più risolvibile
+            // (refresh fallito, session ripristinata dopo restart pod, authorized client
+            // mai salvato nel repository ecc.). NON usiamo oauth2WebClient perché il
+            // ServletOAuth2AuthorizedClientExchangeFilterFunction con
+            // setDefaultOAuth2AuthorizedClient(true) richiede l'authorized client e
+            // farebbe fallire OGNI chiamata downstream con `client_authorization_required`
+            // — anche quelle pubbliche tipo /api/catalog/products (permitAll) → safeList
+            // ritorna [] → storefront vuoto. Degradiamo invece a client anonymous: le
+            // rotte permitAll rispondono normalmente, quelle authed falliscono con 401
+            // catturato da safeList come prima.
+            logger.warn("OAuth2 session senza access token risolvibile (login scaduto o authorized client mancante): degradazione a client anonimo");
         }
         return defaultWebClient;
     }
@@ -1247,6 +1258,47 @@ public class GatewayClient {
                 .orElse(List.of()),
             "/api/inventory"
         );
+    }
+
+    /**
+     * Riserva sincrona dell'intero carrello prima di creare l'ordine. Propaga
+     * {@link OutOfStockException} se l'inventory-service risponde 409 (stock insufficiente),
+     * così il checkout può fermarsi senza creare un ordine destinato a fallire.
+     */
+    public void reserveStock(List<StockLineRequest> lines) {
+        if (lines == null || lines.isEmpty()) {
+            return;
+        }
+        try {
+            client().post()
+                .uri(baseUrl + "/api/inventory/reserve")
+                .bodyValue(new StockReservationRequest(lines))
+                .retrieve()
+                .toBodilessEntity()
+                .block();
+        } catch (WebClientResponseException.Conflict ex) {
+            throw new OutOfStockException(ex.getResponseBodyAsString());
+        }
+    }
+
+    /**
+     * Rilascio di compensazione di una riserva sincrona (checkout abortito prima della
+     * creazione del pagamento). Best-effort: non deve mai far fallire il flusso chiamante.
+     */
+    public void releaseStock(List<StockLineRequest> lines) {
+        if (lines == null || lines.isEmpty()) {
+            return;
+        }
+        try {
+            client().post()
+                .uri(baseUrl + "/api/inventory/release")
+                .bodyValue(new StockReservationRequest(lines))
+                .retrieve()
+                .toBodilessEntity()
+                .block();
+        } catch (Exception ex) {
+            logger.warn("Unable to release reserved stock: {}", ex.getMessage());
+        }
     }
 
     public Optional<InventoryItem> getInventorySafe(Long productId) {

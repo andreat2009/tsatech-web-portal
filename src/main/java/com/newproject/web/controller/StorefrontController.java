@@ -3,6 +3,7 @@ package com.newproject.web.controller;
 import com.newproject.web.dto.*;
 import com.newproject.web.service.CustomerResolver;
 import com.newproject.web.service.GatewayClient;
+import com.newproject.web.service.OutOfStockException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import java.nio.charset.StandardCharsets;
@@ -404,6 +405,7 @@ public class StorefrontController {
             case "custom_fields" -> msg("checkout.error.custom.fields");
             case "payment_cancelled" -> msg("checkout.error.payment.cancelled");
             case "payment_failed" -> msg("checkout.error.payment.failed");
+            case "out_of_stock" -> msg("checkout.error.out.of.stock");
             case "processing" -> msg("checkout.error.services");
             default -> msg("checkout.error.data");
         };
@@ -541,7 +543,16 @@ public class StorefrontController {
         PriceQuoteResponse quote = quoteCheckout(summary.subtotal(), shippingCost, checkoutForm.getCouponCode(), customerGroupCode, cartItemCount(summary.items()));
         BigDecimal total = quote.getTotal() != null ? quote.getTotal() : summary.subtotal().add(shippingCost);
 
+        List<StockLineRequest> stockLines = toStockLines(summary.items());
+        try {
+            gatewayClient.reserveStock(stockLines);
+        } catch (OutOfStockException ex) {
+            logger.info("Checkout fermato per stock insufficiente (cliente {}): {}", customerId, ex.getMessage());
+            return "redirect:/checkout-rapido?error=out_of_stock";
+        }
+
         Order order = null;
+        Payment payment = null;
         try {
             OrderRequest orderRequest = new OrderRequest();
             orderRequest.setCustomerId(customerId);
@@ -578,7 +589,7 @@ public class StorefrontController {
 
             persistCustomerCustomFields(customerId, checkoutForm, checkoutCustomFields);
 
-            Payment payment = gatewayClient.createPayment(buildPaymentRequest(order.getId(), total, paymentMethod.getCode(), orderRequest));
+            payment = gatewayClient.createPayment(buildPaymentRequest(order.getId(), total, paymentMethod.getCode(), orderRequest));
             PendingCheckoutContext pendingContext = new PendingCheckoutContext(
                 order.getId(),
                 payment.getId(),
@@ -598,6 +609,11 @@ public class StorefrontController {
             }
             return finalizeCheckout(session, pendingContext, payment, true);
         } catch (Exception ex) {
+            // Compensazione riserva: solo se il pagamento non è ancora stato creato. Da lì in
+            // poi il rilascio è guidato dal ciclo di vita ordine/pagamento (ORDER_ITEM_RELEASED).
+            if (payment == null) {
+                gatewayClient.releaseStock(stockLines);
+            }
             if (order != null && order.getId() != null) {
                 failOrderQuietly(order.getId(), "PAYMENT_FAILED");
             }
@@ -634,7 +650,16 @@ public class StorefrontController {
         PriceQuoteResponse quote = quoteCheckout(summary.subtotal(), shippingCost, checkoutForm.getCouponCode(), customerGroupCode, cartItemCount(summary.items()));
         BigDecimal total = quote.getTotal() != null ? quote.getTotal() : summary.subtotal().add(shippingCost);
 
+        List<StockLineRequest> stockLines = toStockLines(summary.items());
+        try {
+            gatewayClient.reserveStock(stockLines);
+        } catch (OutOfStockException ex) {
+            logger.info("Checkout guest fermato per stock insufficiente: {}", ex.getMessage());
+            return "redirect:/checkout-rapido?error=out_of_stock";
+        }
+
         Order order = null;
+        Payment payment = null;
         try {
             Customer guestCustomer = ensureGuestCustomer(checkoutForm, session);
             createGuestAddress(guestCustomer.getId(), checkoutForm);
@@ -672,7 +697,7 @@ public class StorefrontController {
                 confirmationItems.add(toConfirmationItem(request));
             }
 
-            Payment payment = gatewayClient.createPayment(buildPaymentRequest(order.getId(), total, paymentMethod.getCode(), orderRequest));
+            payment = gatewayClient.createPayment(buildPaymentRequest(order.getId(), total, paymentMethod.getCode(), orderRequest));
             PendingCheckoutContext pendingContext = new PendingCheckoutContext(
                 order.getId(),
                 payment.getId(),
@@ -692,6 +717,9 @@ public class StorefrontController {
             }
             return finalizeCheckout(session, pendingContext, payment, true);
         } catch (Exception ex) {
+            if (payment == null) {
+                gatewayClient.releaseStock(stockLines);
+            }
             if (order != null && order.getId() != null) {
                 failOrderQuietly(order.getId(), "PAYMENT_FAILED");
             }
@@ -1787,6 +1815,24 @@ public class StorefrontController {
         quoteRequest.setCustomerGroupCode(normalizeCustomerGroupCode(customerGroupCode));
         quoteRequest.setItemCount(itemCount);
         return gatewayClient.quote(quoteRequest);
+    }
+
+    private List<StockLineRequest> toStockLines(List<CartItemView> items) {
+        List<StockLineRequest> lines = new ArrayList<>();
+        if (items == null) {
+            return lines;
+        }
+        for (CartItemView item : items) {
+            if (item == null || item.getProductId() == null) {
+                continue;
+            }
+            int quantity = item.getQuantity() != null ? item.getQuantity() : 0;
+            if (quantity <= 0) {
+                continue;
+            }
+            lines.add(new StockLineRequest(item.getProductId(), item.getVariantKey(), quantity));
+        }
+        return lines;
     }
 
     private int cartItemCount(List<CartItemView> items) {

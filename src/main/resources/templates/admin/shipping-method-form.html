@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title th:text="${formTitle}">Shipping Method</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" />
+    <style>
+        .hint { font-size: 0.9rem; color: #6b7280; margin-top: 0.35rem; }
+    </style>
+</head>
+<body>
+<div th:replace="~{fragments/header :: header}"></div>
+
+<main class="container admin">
+    <div class="page-header">
+        <h1 th:text="${formTitle}">Shipping Method</h1>
+        <div class="actions">
+            <a class="btn" th:href="@{/admin/shipping-methods}">Back to list</a>
+            <button class="btn btn-primary" type="submit" form="shipping-method-form">Save</button>
+        </div>
+    </div>
+
+    <form id="shipping-method-form" class="form" th:action="${formAction}" method="post" th:object="${shippingMethod}">
+        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+        <div class="field-grid two">
+            <div class="field">
+                <label>Code</label>
+                <input th:field="*{code}" required />
+                <p class="hint">Unique identifier (e.g. FLAT, PICKUP, EXPRESS).</p>
+            </div>
+            <div class="field">
+                <label>Label</label>
+                <input th:field="*{label}" required />
+                <p class="hint">Shown to customers at checkout.</p>
+            </div>
+        </div>
+
+        <div class="field-grid two">
+            <div class="field">
+                <label>Cost</label>
+                <input type="number" step="0.01" min="0" th:field="*{cost}" required />
+            </div>
+            <div class="field">
+                <label>Sort order</label>
+                <input type="number" step="1" th:field="*{sortOrder}" />
+            </div>
+        </div>
+
+        <div class="field">
+            <label>
+                <input type="checkbox" th:field="*{enabled}" />
+                Enabled
+            </label>
+        </div>
+    </form>
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+</body>
+</html>

@@ -19,6 +19,8 @@ public class OrderRequest {
     private String customerLocale;
     private String orderComment;
     private Boolean guestCheckout;
+    private String shippingMethod;
+    private List<OrderItemRequest> items;
     private List<OrderCustomFieldRequest> customFields;
 
     public Long getCustomerId() { return customerId; }
@@ -53,4 +55,8 @@ public class OrderRequest {
     public void setGuestCheckout(Boolean guestCheckout) { this.guestCheckout = guestCheckout; }
     public List<OrderCustomFieldRequest> getCustomFields() { return customFields; }
     public void setCustomFields(List<OrderCustomFieldRequest> customFields) { this.customFields = customFields; }
+    public String getShippingMethod() { return shippingMethod; }
+    public void setShippingMethod(String shippingMethod) { this.shippingMethod = shippingMethod; }
+    public List<OrderItemRequest> getItems() { return items; }
+    public void setItems(List<OrderItemRequest> items) { this.items = items; }
 }

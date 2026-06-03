@@ -1103,6 +1103,64 @@ public class GatewayClient {
             .block();
     }
 
+    public List<ShippingMethod> listShippingMethods() {
+        return safeList(
+            () -> client().get()
+                .uri(baseUrl + "/api/shipping-methods?enabledOnly=true")
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<List<ShippingMethod>>() {})
+                .blockOptional()
+                .orElse(List.of()),
+            "/api/shipping-methods"
+        );
+    }
+
+    public List<ShippingMethod> listAdminShippingMethods() {
+        return safeList(
+            () -> client().get()
+                .uri(baseUrl + "/api/shipping-methods")
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<List<ShippingMethod>>() {})
+                .blockOptional()
+                .orElse(List.of()),
+            "/api/shipping-methods"
+        );
+    }
+
+    public ShippingMethod getAdminShippingMethod(Long id) {
+        return client().get()
+            .uri(baseUrl + "/api/shipping-methods/{id}", id)
+            .retrieve()
+            .bodyToMono(ShippingMethod.class)
+            .block();
+    }
+
+    public ShippingMethod createAdminShippingMethod(AdminShippingMethodForm form) {
+        return client().post()
+            .uri(baseUrl + "/api/shipping-methods")
+            .bodyValue(form)
+            .retrieve()
+            .bodyToMono(ShippingMethod.class)
+            .block();
+    }
+
+    public ShippingMethod updateAdminShippingMethod(Long id, AdminShippingMethodForm form) {
+        return client().put()
+            .uri(baseUrl + "/api/shipping-methods/{id}", id)
+            .bodyValue(form)
+            .retrieve()
+            .bodyToMono(ShippingMethod.class)
+            .block();
+    }
+
+    public void deleteAdminShippingMethod(Long id) {
+        client().delete()
+            .uri(baseUrl + "/api/shipping-methods/{id}", id)
+            .retrieve()
+            .toBodilessEntity()
+            .block();
+    }
+
 
     public List<CommerceIntegration> listCommerceIntegrations() {
         return safeList(

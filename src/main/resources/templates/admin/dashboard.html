@@ -134,6 +134,7 @@
             <div class="stat-label" th:text="#{admin.dashboard.shipments}">Spedizioni</div>
             <div class="stat-value" th:text="${shipmentCount}">0</div>
             <a class="btn" th:href="@{/admin/shipments}" th:text="#{admin.dashboard.manage.shipments}">Gestisci spedizioni</a>
+            <a class="btn" th:href="@{/admin/shipping-methods}">Manage shipping methods</a>
         </div>
         <div class="card dashboard-tile tile-reviews">
             <img class="dashboard-tile-icon" th:src="@{/img/dashboard/reviews.svg}" alt="Reviews" />

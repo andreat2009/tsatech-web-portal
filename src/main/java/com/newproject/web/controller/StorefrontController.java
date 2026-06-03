@@ -539,10 +539,6 @@ public class StorefrontController {
             return "redirect:/checkout-rapido?error=payment_failed";
         }
 
-        BigDecimal shippingCost = shippingMethods().get(shippingMethod);
-        PriceQuoteResponse quote = quoteCheckout(summary.subtotal(), shippingCost, checkoutForm.getCouponCode(), customerGroupCode, cartItemCount(summary.items()));
-        BigDecimal total = quote.getTotal() != null ? quote.getTotal() : summary.subtotal().add(shippingCost);
-
         List<StockLineRequest> stockLines = toStockLines(summary.items());
         try {
             gatewayClient.reserveStock(stockLines);
@@ -557,11 +553,9 @@ public class StorefrontController {
             OrderRequest orderRequest = new OrderRequest();
             orderRequest.setCustomerId(customerId);
             orderRequest.setCurrency(currency);
-            orderRequest.setTotal(total);
-            orderRequest.setDiscountTotal(quote.getDiscount());
             orderRequest.setCustomerGroupCode(customerGroupCode);
-            orderRequest.setAppliedCouponCode(quote.getAppliedCoupon());
-            orderRequest.setAppliedOfferCodes(joinAppliedOfferCodes(quote));
+            orderRequest.setAppliedCouponCode(safeTrim(checkoutForm.getCouponCode()));
+            orderRequest.setShippingMethod(shippingMethod);
             orderRequest.setStatus("PENDING_PAYMENT");
             orderRequest.setCustomerEmail(customer != null ? customer.getEmail() : null);
             orderRequest.setCustomerFirstName(customer != null ? customer.getFirstName() : null);
@@ -572,7 +566,7 @@ public class StorefrontController {
             orderRequest.setGuestCheckout(false);
             orderRequest.setCustomFields(toOrderCustomFieldRequests(checkoutForm, checkoutCustomFields));
 
-            order = gatewayClient.createOrder(orderRequest);
+            List<OrderItemRequest> lineItems = new ArrayList<>();
             List<OrderConfirmationItem> confirmationItems = new ArrayList<>();
             for (CartItemView item : summary.items()) {
                 OrderItemRequest request = new OrderItemRequest();
@@ -583,9 +577,18 @@ public class StorefrontController {
                 request.setName(item.getProductName());
                 request.setQuantity(item.getQuantity());
                 request.setUnitPrice(item.getUnitPrice());
-                gatewayClient.addOrderItem(order.getId(), request);
+                lineItems.add(request);
                 confirmationItems.add(toConfirmationItem(request));
             }
+            orderRequest.setItems(lineItems);
+
+            // order-service crea gli items e calcola in modo autoritativo prezzi/sconto/spedizione/total.
+            order = gatewayClient.createOrder(orderRequest);
+            BigDecimal total = order.getTotal();
+            orderRequest.setTotal(total);
+            orderRequest.setDiscountTotal(order.getDiscountTotal());
+            orderRequest.setAppliedCouponCode(order.getAppliedCouponCode());
+            orderRequest.setAppliedOfferCodes(order.getAppliedOfferCodes());
 
             persistCustomerCustomFields(customerId, checkoutForm, checkoutCustomFields);
 
@@ -646,10 +649,6 @@ public class StorefrontController {
             return "redirect:/checkout-rapido?error=payment_failed";
         }
 
-        BigDecimal shippingCost = shippingMethods().get(shippingMethod);
-        PriceQuoteResponse quote = quoteCheckout(summary.subtotal(), shippingCost, checkoutForm.getCouponCode(), customerGroupCode, cartItemCount(summary.items()));
-        BigDecimal total = quote.getTotal() != null ? quote.getTotal() : summary.subtotal().add(shippingCost);
-
         List<StockLineRequest> stockLines = toStockLines(summary.items());
         try {
             gatewayClient.reserveStock(stockLines);
@@ -667,11 +666,9 @@ public class StorefrontController {
             OrderRequest orderRequest = new OrderRequest();
             orderRequest.setCustomerId(guestCustomer.getId());
             orderRequest.setCurrency(currency);
-            orderRequest.setTotal(total);
-            orderRequest.setDiscountTotal(quote.getDiscount());
             orderRequest.setCustomerGroupCode(resolveCustomerGroupCode(guestCustomer));
-            orderRequest.setAppliedCouponCode(quote.getAppliedCoupon());
-            orderRequest.setAppliedOfferCodes(joinAppliedOfferCodes(quote));
+            orderRequest.setAppliedCouponCode(safeTrim(checkoutForm.getCouponCode()));
+            orderRequest.setShippingMethod(shippingMethod);
             orderRequest.setStatus("PENDING_PAYMENT");
             orderRequest.setCustomerEmail(normalizeGuestEmail(checkoutForm.getGuestEmail()));
             orderRequest.setCustomerFirstName(safeTrim(checkoutForm.getGuestFirstName()));
@@ -682,7 +679,7 @@ public class StorefrontController {
             orderRequest.setGuestCheckout(true);
             orderRequest.setCustomFields(toOrderCustomFieldRequests(checkoutForm, checkoutCustomFields));
 
-            order = gatewayClient.createOrder(orderRequest);
+            List<OrderItemRequest> lineItems = new ArrayList<>();
             List<OrderConfirmationItem> confirmationItems = new ArrayList<>();
             for (CartItemView item : summary.items()) {
                 OrderItemRequest request = new OrderItemRequest();
@@ -693,9 +690,17 @@ public class StorefrontController {
                 request.setName(item.getProductName());
                 request.setQuantity(item.getQuantity());
                 request.setUnitPrice(item.getUnitPrice());
-                gatewayClient.addOrderItem(order.getId(), request);
+                lineItems.add(request);
                 confirmationItems.add(toConfirmationItem(request));
             }
+            orderRequest.setItems(lineItems);
+
+            order = gatewayClient.createOrder(orderRequest);
+            BigDecimal total = order.getTotal();
+            orderRequest.setTotal(total);
+            orderRequest.setDiscountTotal(order.getDiscountTotal());
+            orderRequest.setAppliedCouponCode(order.getAppliedCouponCode());
+            orderRequest.setAppliedOfferCodes(order.getAppliedOfferCodes());
 
             payment = gatewayClient.createPayment(buildPaymentRequest(order.getId(), total, paymentMethod.getCode(), orderRequest));
             PendingCheckoutContext pendingContext = new PendingCheckoutContext(
@@ -1310,7 +1315,7 @@ public class StorefrontController {
             .map(CartItemView::getLineTotal)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal shipping = items.isEmpty() ? BigDecimal.ZERO : shippingMethods().get(SHIPPING_FLAT);
+        BigDecimal shipping = items.isEmpty() ? BigDecimal.ZERO : defaultShippingCost();
         BigDecimal total = subtotal.add(shipping);
 
         return new CartSummary(items, subtotal, shipping, total);
@@ -1379,7 +1384,7 @@ public class StorefrontController {
             .map(CartItemView::getLineTotal)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal shipping = items.isEmpty() ? BigDecimal.ZERO : shippingMethods().get(SHIPPING_FLAT);
+        BigDecimal shipping = items.isEmpty() ? BigDecimal.ZERO : defaultShippingCost();
         BigDecimal total = subtotal.add(shipping);
 
         return new CartSummary(items, subtotal, shipping, total);
@@ -1632,7 +1637,7 @@ public class StorefrontController {
     ) {
         PriceQuoteResponse initialQuote = quoteCheckout(
             summary.subtotal(),
-            shippingMethods().get(normalizeShippingMethod(checkoutForm.getShippingMethod())),
+            shippingCostFor(checkoutForm.getShippingMethod()),
             checkoutForm.getCouponCode(),
             customerGroupCode,
             cartItemCount(summary.items())
@@ -1651,6 +1656,7 @@ public class StorefrontController {
         model.addAttribute("quoteMessage", initialQuote.getMessage());
         model.addAttribute("addresses", addresses);
         model.addAttribute("shippingMethods", shippingMethods());
+        model.addAttribute("shippingMethodOptions", gatewayClient.listShippingMethods());
         model.addAttribute("paymentMethods", paymentMethods);
         model.addAttribute("selectedPaymentMethodDescription", selectedPaymentMethodDescription(checkoutForm.getPaymentMethod(), paymentMethods));
         model.addAttribute("checkoutCustomFields", checkoutCustomFields);
@@ -2191,15 +2197,39 @@ public class StorefrontController {
         return options;
     }
 
+    /**
+     * Metodi di spedizione configurati a DB (editabili da /admin/shipping-methods), letti dal
+     * backend tramite il gateway. Nessun fallback hardcoded: se il backend non risponde la mappa
+     * resta vuota (il costo autoritativo è comunque ricalcolato server-side da order-service).
+     */
     private Map<String, BigDecimal> shippingMethods() {
         Map<String, BigDecimal> methods = new LinkedHashMap<>();
-        methods.put(SHIPPING_FLAT, new BigDecimal("8.00"));
-        methods.put(SHIPPING_PICKUP, BigDecimal.ZERO);
+        for (ShippingMethod method : gatewayClient.listShippingMethods()) {
+            if (method.getCode() != null) {
+                methods.put(method.getCode(), method.getCost() != null ? method.getCost() : BigDecimal.ZERO);
+            }
+        }
         return methods;
     }
 
     private String normalizeShippingMethod(String method) {
-        return shippingMethods().containsKey(method) ? method : SHIPPING_FLAT;
+        Map<String, BigDecimal> methods = shippingMethods();
+        if (method != null && methods.containsKey(method)) {
+            return method;
+        }
+        return methods.keySet().stream().findFirst().orElse(null);
+    }
+
+    /** Costo del metodo di default (primo abilitato) per il display del riepilogo carrello. */
+    private BigDecimal defaultShippingCost() {
+        return shippingMethods().values().stream().findFirst().orElse(BigDecimal.ZERO);
+    }
+
+    /** Costo (solo display) del metodo indicato, normalizzato; ZERO se non risolvibile. */
+    private BigDecimal shippingCostFor(String method) {
+        Map<String, BigDecimal> methods = shippingMethods();
+        BigDecimal cost = methods.get(normalizeShippingMethod(method));
+        return cost != null ? cost : BigDecimal.ZERO;
     }
 
     private String msg(String key) {

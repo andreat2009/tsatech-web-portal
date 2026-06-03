@@ -183,8 +183,8 @@
                     <div class="field">
                         <label th:text="#{checkout.shipping.method}">Shipping method</label>
                         <select th:field="*{shippingMethod}" required>
-                            <option th:each="entry : ${shippingMethods.entrySet()}" th:value="${entry.key}"
-                                    th:text="${entry.key + ' - ' + entry.value}">flat.flat</option>
+                            <option th:each="m : ${shippingMethodOptions}" th:value="${m.code}"
+                                    th:text="${m.label + ' — ' + m.cost}">Standard</option>
                         </select>
                     </div>
 

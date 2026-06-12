@@ -32,6 +32,7 @@ spec:
     }
     environment {
         APP_NAME = 'web-portal'
+        SERVICE_DIR = "${params.SERVICE_DIR ?: 'tsatech-web-portal'}"
         HELM_RELEASE = "${params.HELM_RELEASE ?: 'web-portal'}"
         CHART_PATH = "${params.CHART_PATH ?: 'helm'}"
         K8S_NAMESPACE = "${params.K8S_NAMESPACE ?: 'ecommerce'}"
@@ -49,7 +50,7 @@ spec:
         stage('Build Maven') {
             steps {
                 container('maven') {
-                    sh 'mvn clean package -DskipTests'
+                    sh 'mvn -B -pl ${SERVICE_DIR} -am clean package -DskipTests'
                 }
             }
         }
@@ -71,7 +72,7 @@ JSON
                         }
                         sh '''#!/bin/sh
 set -eu
-/kaniko/executor --context "$PWD" --dockerfile Dockerfile.k8s --destination "${IMAGE_REPOSITORY}:${IMAGE_TAG}" --snapshot-mode=redo --use-new-run --digest-file "$WORKSPACE/.image-digest"
+/kaniko/executor --context "$PWD/${SERVICE_DIR}" --dockerfile ${SERVICE_DIR}/Dockerfile.k8s --destination "${IMAGE_REPOSITORY}:${IMAGE_TAG}" --snapshot-mode=redo --use-new-run --digest-file "$WORKSPACE/.image-digest"
 '''
                     }
                 }
@@ -101,8 +102,8 @@ helm upgrade --install "${HELM_RELEASE}" "${CHART_PATH}" \
   --set-string ingress.host="${APP_NAME}-${K8S_NAMESPACE}.${DOMAIN}" \
   --set-string env.GATEWAY_BASE_URL="http://api-gateway.${K8S_NAMESPACE}.svc.cluster.local:8443" \
   --set-string env.APP_STORE_URL="https://${APP_NAME}-${K8S_NAMESPACE}.${DOMAIN}" \
-  --set-string env.KEYCLOAK_ACCOUNT_URL="https://keycloak-${PLATFORM_NAMESPACE}.${DOMAIN}/realms/ecommerce/account" \
-  --set-string env.KEYCLOAK_ISSUER_URI="https://keycloak-${PLATFORM_NAMESPACE}.${DOMAIN}/realms/ecommerce" \
+  --set-string env.KEYCLOAK_ACCOUNT_URL="https://keycloak.${DOMAIN}/realms/ecommerce/account" \
+  --set-string env.KEYCLOAK_ISSUER_URI="https://keycloak.${DOMAIN}/realms/ecommerce" \
   --set-string env.KEYCLOAK_ADMIN_BASE_URL="http://keycloak.${PLATFORM_NAMESPACE}.svc.cluster.local" \
   --set-string env.KEYCLOAK_BACKCHANNEL_BASE_URL="http://keycloak.${PLATFORM_NAMESPACE}.svc.cluster.local"
 '''

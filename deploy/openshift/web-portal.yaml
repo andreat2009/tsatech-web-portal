@@ -3,7 +3,7 @@ kind: ConfigMap
 metadata:
   name: web-portal-config
 data:
-  KEYCLOAK_ISSUER_URI: https://keycloak-platform.apps-crc.testing/realms/master
+  KEYCLOAK_ISSUER_URI: https://keycloak-platform.apps-crc.testing/realms/ecommerce
   KEYCLOAK_CLIENT_ID: web-portal
   GATEWAY_BASE_URL: https://api-gateway-platform.apps-crc.testing
   SERVER_PORT: "8443"

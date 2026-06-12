@@ -41,7 +41,7 @@ spring:
       client:
         provider:
           keycloak:
-            issuer-uri: ${KEYCLOAK_ISSUER_URI:https://keycloak-platform.${APP_BASE_DOMAIN:apps.example.invalid}/realms/master}
+            issuer-uri: ${KEYCLOAK_ISSUER_URI:https://keycloak-platform.${APP_BASE_DOMAIN:apps.example.invalid}/realms/ecommerce}
             authorization-uri: ${KEYCLOAK_AUTHORIZATION_URI:}
             token-uri: ${KEYCLOAK_TOKEN_URI:}
             user-info-uri: ${KEYCLOAK_USERINFO_URI:}
@@ -60,11 +60,12 @@ app:
   currency: ${APP_CURRENCY:EUR}
   store-url: ${APP_STORE_URL:https://web-portal-${APP_NAMESPACE:ecommerce}.${APP_BASE_DOMAIN:apps.example.invalid}}
   keycloak-backchannel-base-url: ${KEYCLOAK_BACKCHANNEL_BASE_URL:http://keycloak.${PLATFORM_NAMESPACE:platform}.svc.cluster.local}
-  keycloak-account-url: ${KEYCLOAK_ACCOUNT_URL:https://keycloak-platform.${APP_BASE_DOMAIN:apps.example.invalid}/realms/master/account}
+  keycloak-account-url: ${KEYCLOAK_ACCOUNT_URL:https://keycloak-platform.${APP_BASE_DOMAIN:apps.example.invalid}/realms/ecommerce/account}
   keycloak-admin-base-url: ${KEYCLOAK_ADMIN_BASE_URL:http://keycloak.${PLATFORM_NAMESPACE:platform}.svc.cluster.local}
-  keycloak-admin-client-id: ${KEYCLOAK_ADMIN_CLIENT_ID:admin-cli}
-  keycloak-admin-username: ${KEYCLOAK_ADMIN_USER:${KEYCLOAK_ADMIN_USERNAME:admin}}
-  keycloak-admin-password: ${KEYCLOAK_ADMIN_PASS:${KEYCLOAK_ADMIN_PASSWORD:}}
+  # SECURITY (H-infra1): service-account scoped al realm ecommerce (client_credentials).
+  # Sostituisce admin-cli + superadmin master.
+  keycloak-admin-client-id: ${KEYCLOAK_ADMIN_CLIENT_ID:web-portal-admin}
+  keycloak-admin-client-secret: ${KEYCLOAK_ADMIN_CLIENT_SECRET:}
   keycloak-registration-role: ${KEYCLOAK_REGISTRATION_ROLE:USER}
   privacy-policy-version: ${APP_PRIVACY_POLICY_VERSION:2026-04}
   privacy-policy-path: ${APP_PRIVACY_POLICY_PATH:/information/privacy-policy}

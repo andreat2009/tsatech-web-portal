@@ -653,8 +653,20 @@ public class GatewayClient {
     }
 
     public Order updateOrder(Long orderId, OrderRequest request) {
+        return updateOrder(orderId, request, null);
+    }
+
+    // SECURITY (H5): per i guest order la PUT e' anonima; order-service esige il token opaco
+    // generato alla creazione, ripresentato qui come header X-Guest-Order-Token. Quando il token
+    // e' assente (utente autenticato) la chiamata resta invariata e si appoggia al bearer JWT.
+    public Order updateOrder(Long orderId, OrderRequest request, String guestToken) {
         return client().put()
             .uri(baseUrl + "/api/orders/{orderId}", orderId)
+            .headers(headers -> {
+                if (guestToken != null && !guestToken.isBlank()) {
+                    headers.set("X-Guest-Order-Token", guestToken);
+                }
+            })
             .bodyValue(request)
             .retrieve()
             .bodyToMono(Order.class)

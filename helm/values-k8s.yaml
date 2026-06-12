@@ -38,12 +38,12 @@ networkPolicy:
 
 env:
   KEYCLOAK_CLIENT_ID: "web-portal"
-  KEYCLOAK_ISSUER_URI: '{{ printf "https://keycloak-%s.%s/realms/master" .Values.global.platformNamespace .Values.global.domain }}'
+  KEYCLOAK_ISSUER_URI: '{{ printf "https://keycloak-%s.%s/realms/ecommerce" .Values.global.platformNamespace .Values.global.domain }}'
   KEYCLOAK_ADMIN_BASE_URL: '{{ printf "http://keycloak.%s.svc.cluster.local" .Values.global.platformNamespace }}'
   GATEWAY_BASE_URL: '{{ printf "http://api-gateway.%s.svc.cluster.local:8443" .Values.global.appNamespace }}'
   APP_STORE_URL: '{{ printf "https://%s-%s.%s" .Release.Name .Release.Namespace .Values.global.domain }}'
   KEYCLOAK_BACKCHANNEL_BASE_URL: '{{ printf "http://keycloak.%s.svc.cluster.local" .Values.global.platformNamespace }}'
-  KEYCLOAK_ACCOUNT_URL: '{{ printf "https://keycloak-%s.%s/realms/master/account" .Values.global.platformNamespace .Values.global.domain }}'
+  KEYCLOAK_ACCOUNT_URL: '{{ printf "https://keycloak-%s.%s/realms/ecommerce/account" .Values.global.platformNamespace .Values.global.domain }}'
   SERVER_PORT: "8443"
   SERVER_SSL_ENABLED: "false"
 
@@ -54,8 +54,9 @@ secret:
 
 secretEnv:
   KEYCLOAK_CLIENT_SECRET: KEYCLOAK_CLIENT_SECRET
-  KEYCLOAK_ADMIN_PASS: KEYCLOAK_ADMIN_PASS
-  KEYCLOAK_ADMIN_USER: KEYCLOAK_ADMIN_USER
+  # SECURITY (H-infra1): service-account scoped al realm ecommerce (no superadmin master).
+  KEYCLOAK_ADMIN_CLIENT_ID: KEYCLOAK_ADMIN_CLIENT_ID
+  KEYCLOAK_ADMIN_CLIENT_SECRET: KEYCLOAK_ADMIN_CLIENT_SECRET
 
 tls:
   enabled: false

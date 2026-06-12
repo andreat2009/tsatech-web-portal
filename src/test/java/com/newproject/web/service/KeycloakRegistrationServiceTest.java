@@ -63,9 +63,8 @@ class KeycloakRegistrationServiceTest {
             WebClient.builder().build(),
             baseUrl + "/realms/master",
             baseUrl,
-            "admin-cli",
-            "admin",
-            "adminPass",
+            "web-portal-admin",
+            "sa-secret",
             "USER"
         );
 

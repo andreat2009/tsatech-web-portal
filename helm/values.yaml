@@ -21,7 +21,7 @@ env:
   GATEWAY_BASE_URL: "http://api-gateway.ecommerce.svc.cluster.local:8443"
   SERVER_PORT: "8443"
   SERVER_SSL_ENABLED: "true"
-  KEYCLOAK_ISSUER_URI: "https://keycloak-platform.apps.example.invalid/realms/master"
+  KEYCLOAK_ISSUER_URI: "https://keycloak-platform.apps.example.invalid/realms/ecommerce"
 
 secret:
   name: "web-portal-secret"
@@ -36,8 +36,9 @@ secret:
 
 secretEnv:
   KEYCLOAK_CLIENT_SECRET: "KEYCLOAK_CLIENT_SECRET"
-  KEYCLOAK_ADMIN_PASS: "KEYCLOAK_ADMIN_PASS"
-  KEYCLOAK_ADMIN_USER: "KEYCLOAK_ADMIN_USER"
+  # SECURITY (H-infra1): service-account scoped al realm ecommerce (no superadmin master).
+  KEYCLOAK_ADMIN_CLIENT_ID: "KEYCLOAK_ADMIN_CLIENT_ID"
+  KEYCLOAK_ADMIN_CLIENT_SECRET: "KEYCLOAK_ADMIN_CLIENT_SECRET"
 
 tls:
   enabled: true

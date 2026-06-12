@@ -21,6 +21,9 @@ public class Order {
     private String customerLocale;
     private String orderComment;
     private Boolean guestCheckout;
+    // SECURITY (H5): presente solo nella create response di un guest order; usato per
+    // autorizzare le mutazioni successive (header X-Guest-Order-Token).
+    private String guestToken;
     private List<OrderCustomField> customFields;
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
@@ -57,6 +60,8 @@ public class Order {
     public void setOrderComment(String orderComment) { this.orderComment = orderComment; }
     public Boolean getGuestCheckout() { return guestCheckout; }
     public void setGuestCheckout(Boolean guestCheckout) { this.guestCheckout = guestCheckout; }
+    public String getGuestToken() { return guestToken; }
+    public void setGuestToken(String guestToken) { this.guestToken = guestToken; }
     public List<OrderCustomField> getCustomFields() { return customFields; }
     public void setCustomFields(List<OrderCustomField> customFields) { this.customFields = customFields; }
     public OffsetDateTime getCreatedAt() { return createdAt; }

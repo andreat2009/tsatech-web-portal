@@ -603,7 +603,8 @@ public class StorefrontController {
                 List.of(),
                 cartItemIds,
                 payment.getProviderPaymentId(),
-                payment.getLightboxPaymentToken()
+                payment.getLightboxPaymentToken(),
+                order.getGuestToken()
             );
 
             if (requiresRedirect(payment)) {
@@ -713,7 +714,8 @@ public class StorefrontController {
                 summary.items(),
                 List.of(),
                 payment.getProviderPaymentId(),
-                payment.getLightboxPaymentToken()
+                payment.getLightboxPaymentToken(),
+                order.getGuestToken()
             );
 
             if (requiresRedirect(payment)) {
@@ -1978,7 +1980,11 @@ public class StorefrontController {
 
     private Order markOrderFromContext(PendingCheckoutContext context, String status) {
         try {
-            return gatewayClient.updateOrder(context.orderId(), toOrderRequestWithStatus(context.orderRequest(), status));
+            // SECURITY (H5): per i guest order la PUT e' anonima -> serve il token opaco.
+            return gatewayClient.updateOrder(
+                context.orderId(),
+                toOrderRequestWithStatus(context.orderRequest(), status),
+                context.guestToken());
         } catch (Exception ex) {
             logger.warn("Unable to update order {} to status {}: {}", context.orderId(), status, ex.getMessage());
             return null;
@@ -2322,7 +2328,10 @@ public class StorefrontController {
         List<CartItemView> guestItems,
         List<Long> cartItemIds,
         String providerPaymentId,
-        String providerToken
+        String providerToken,
+        // SECURITY (H5): token opaco del guest order, ricevuto dalla create response e
+        // ripresentato sulle mutazioni (header X-Guest-Order-Token).
+        String guestToken
     ) {
     }
 

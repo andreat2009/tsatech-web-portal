@@ -28,23 +28,22 @@ public class KeycloakRegistrationService {
     private final String tokenEndpoint;
     private final String adminRealmEndpoint;
     private final String adminClientId;
-    private final String adminUsername;
-    private final String adminPassword;
+    private final String adminClientSecret;
     private final String registrationRole;
 
     public KeycloakRegistrationService(
         @Qualifier("defaultWebClient") WebClient webClient,
         @Value("${spring.security.oauth2.client.provider.keycloak.issuer-uri}") String issuerUri,
         @Value("${app.keycloak-admin-base-url:}") String adminBaseUrl,
-        @Value("${app.keycloak-admin-client-id:admin-cli}") String adminClientId,
-        @Value("${app.keycloak-admin-username:admin}") String adminUsername,
-        @Value("${app.keycloak-admin-password:}") String adminPassword,
+        // SECURITY (H-infra1): service-account scoped al realm ecommerce (client_credentials),
+        // non piu' il superadmin master via password-grant. Vedi terraform web_portal_admin.
+        @Value("${app.keycloak-admin-client-id:web-portal-admin}") String adminClientId,
+        @Value("${app.keycloak-admin-client-secret:}") String adminClientSecret,
         @Value("${app.keycloak-registration-role:USER}") String registrationRole
     ) {
         this.webClient = webClient;
         this.adminClientId = adminClientId;
-        this.adminUsername = adminUsername;
-        this.adminPassword = adminPassword;
+        this.adminClientSecret = adminClientSecret;
         this.registrationRole = registrationRole;
 
         String normalizedIssuer = normalize(issuerUri);
@@ -309,25 +308,26 @@ public class KeycloakRegistrationService {
     }
 
     private String obtainAdminAccessToken() {
-        if (isBlank(adminClientId) || isBlank(adminUsername) || isBlank(adminPassword)) {
+        if (isBlank(adminClientId) || isBlank(adminClientSecret)) {
             logger.error(
-                "Missing Keycloak admin credentials for registration. tokenEndpoint={}, adminClientId={}, usernamePresent={}, passwordPresent={}",
+                "Missing Keycloak service-account credentials for registration. tokenEndpoint={}, adminClientId={}, clientSecretPresent={}",
                 tokenEndpoint,
                 adminClientId,
-                !isBlank(adminUsername),
-                !isBlank(adminPassword)
+                !isBlank(adminClientSecret)
             );
             throw new KeycloakRegistrationException("identity", "Missing Keycloak admin credentials");
         }
 
         try {
+            // SECURITY (H-infra1): client_credentials grant con il service-account scoped al
+            // realm ecommerce (ruoli realm-management: manage-users/view-users). Sostituisce il
+            // password-grant come superadmin master -> il pod non detiene piu' credenziali superadmin.
             Map<String, Object> response = webClient.post()
                 .uri(tokenEndpoint)
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .body(BodyInserters.fromFormData("grant_type", "password")
+                .body(BodyInserters.fromFormData("grant_type", "client_credentials")
                     .with("client_id", adminClientId)
-                    .with("username", adminUsername)
-                    .with("password", adminPassword))
+                    .with("client_secret", adminClientSecret))
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
                 .block();

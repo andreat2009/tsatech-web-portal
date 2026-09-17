@@ -1,4 +1,5 @@
 <header th:fragment="header" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+    <a class="skip-link" href="#main-content" th:text="#{layout.skip}">Vai al contenuto</a>
     <div id="top">
         <div class="container top-row">
             <div class="top-left">
@@ -11,7 +12,7 @@
             <ul class="top-links" id="top-links-panel">
                 <li>
                     <form class="lang-switcher" method="get" th:action="${currentRequestUri}" data-lang-switcher-form>
-                        <select name="lang" data-lang-switcher-select>
+                        <select name="lang" data-lang-switcher-select th:aria-label="#{layout.language}">
                             <option th:each="lang : ${languageOptions}"
                                     th:value="${lang.code}"
                                     th:selected="${lang.code == currentLanguage}"
@@ -45,7 +46,7 @@
                 </a>
             </div>
             <form class="header-search" method="get" th:action="@{/catalogo}">
-                <input type="text" name="q" th:placeholder="#{header.search.placeholder}" />
+                <input type="search" name="q" th:placeholder="#{header.search.placeholder}" th:aria-label="#{header.search.placeholder}" />
                 <button type="submit" class="btn btn-search" th:text="#{header.search}">Cerca</button>
             </form>
             <div class="header-cta-group">
@@ -96,4 +97,3 @@
         </div>
     </nav>
 </header>
-<script th:src="@{/js/app-shell.js}" defer></script>

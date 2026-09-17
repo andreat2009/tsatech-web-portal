@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8" />
     <title th:text="#{error.page.title}">Application error</title>
-    <link rel="stylesheet" th:href="@{/css/app.css}" />
+    <th:block th:replace="~{fragments/head :: assets}"></th:block>
 </head>
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
 
-<main class="container">
+<main id="main-content" tabindex="-1" class="container">
     <section class="card error-page-card">
         <div class="page-header">
             <h1 th:text="#{error.page.heading}">Something went wrong</h1>

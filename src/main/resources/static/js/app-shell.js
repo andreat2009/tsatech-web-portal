@@ -2,12 +2,27 @@
   const MOBILE_BREAKPOINT = '(max-width: 960px)';
 
   function init() {
+    // Keep wide operational tables usable without changing their form behaviour.
+    document.querySelectorAll('main table.table').forEach((table) => {
+      if (!table.closest('.table-wrap')) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'table-wrap';
+        table.before(wrapper);
+        wrapper.append(table);
+      }
+    });
+    document.querySelectorAll('#menu a').forEach((link) => {
+      if (new URL(link.href, window.location.href).pathname === window.location.pathname) {
+        link.setAttribute('aria-current', 'page');
+      }
+    });
     const toggles = Array.from(document.querySelectorAll('[data-shell-toggle]'));
     if (!toggles.length || typeof window.matchMedia !== 'function') {
       return;
     }
 
     const mobileQuery = window.matchMedia(MOBILE_BREAKPOINT);
+    document.documentElement.classList.add('shell-ready');
     let lastTouchToggleAt = 0;
 
     const targetOf = (button) => {
@@ -121,7 +136,9 @@
 
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape') {
+        const openToggle = toggles.find((button) => button.getAttribute('aria-expanded') === 'true');
         closeAll();
+        if (openToggle) openToggle.focus();
       }
     });
 

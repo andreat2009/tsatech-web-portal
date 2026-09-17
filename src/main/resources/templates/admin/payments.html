@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8" />
     <title th:text="#{admin.payments.title}">Payments</title>
-    <link rel="stylesheet" th:href="@{/css/app.css}" />
+    <th:block th:replace="~{fragments/head :: assets}"></th:block>
 </head>
 <body>
 <div th:replace="fragments/header :: header"></div>
 
-<main class="container admin">
+<main id="main-content" tabindex="-1" class="container admin">
     <div class="page-header">
         <div>
             <h1 th:text="#{admin.payments.title}">Payments</h1>

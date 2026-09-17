@@ -2,13 +2,12 @@
 <html lang="it" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title th:text="${#messages.msg(formTitleKey)}">Form pagina</title>
-    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css" />
+    <th:block th:replace="~{fragments/head :: assets}"></th:block>
 </head>
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
-<main class="container">
+<main id="main-content" tabindex="-1" class="container">
     <section class="form section-pad centered-form information-editor-form">
         <h1 th:text="${#messages.msg(formTitleKey)}">Form</h1>
         <div class="alert-error" th:if="${translationErrors != null and !#lists.isEmpty(translationErrors)}">

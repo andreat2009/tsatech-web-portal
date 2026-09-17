@@ -2,15 +2,14 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title th:text="#{cart.title}">Cart</title>
     <link rel="canonical" th:href="@{/carrello}" />
-    <link rel="stylesheet" th:href="@{/css/app.css}" />
+    <th:block th:replace="~{fragments/head :: assets}"></th:block>
 </head>
 <body>
 <div th:replace="fragments/header :: header"></div>
 
-<main class="container">
+<main id="main-content" tabindex="-1" class="container">
     <div class="breadcrumbs">
         <a th:href="@{/}" th:text="#{menu.home}">Home</a>
         <span>/</span>

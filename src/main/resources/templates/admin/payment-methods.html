@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8" />
     <title>Payment Methods</title>
-    <link rel="stylesheet" th:href="@{/css/app.css}" />
+    <th:block th:replace="~{fragments/head :: assets}"></th:block>
 </head>
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
 
-<main class="container admin">
+<main id="main-content" tabindex="-1" class="container admin">
     <div class="page-header">
         <h1>Payment Methods & Credentials</h1>
         <a class="btn btn-primary" th:href="@{/admin/payment-methods/new}">New payment method</a>

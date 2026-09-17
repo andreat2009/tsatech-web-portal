@@ -2,13 +2,12 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title th:text="#{blog.list.title}">Blog</title>
-    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css" />
+    <th:block th:replace="~{fragments/head :: assets}"></th:block>
 </head>
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
-<main class="container">
+<main id="main-content" tabindex="-1" class="container">
     <section class="card section-pad">
         <h1 th:text="#{blog.list.heading}">Blog</h1>
         <div class="blog-list" data-paginate-collection="true" data-paginate="10" data-pagination-item=".list-divider">

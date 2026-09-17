@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8" />
     <title th:text="#{admin.inventory.detail.title}">Inventory detail</title>
-    <link rel="stylesheet" th:href="@{/css/app.css}" />
+    <th:block th:replace="~{fragments/head :: assets}"></th:block>
 </head>
 <body>
 <div th:replace="fragments/header :: header"></div>
 
-<main class="container admin" th:with="item=${inventoryItem}">
+<main id="main-content" tabindex="-1" class="container admin" th:with="item=${inventoryItem}">
     <section class="admin-page-hero">
         <div>
             <p class="eyebrow" th:text="#{admin.inventory.title}">Inventory</p>

@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8" />
     <title th:text="#{admin.returns.title}">Returns</title>
-    <link rel="stylesheet" th:href="@{/css/app.css}" />
+    <th:block th:replace="~{fragments/head :: assets}"></th:block>
 </head>
 <body>
 <div th:replace="fragments/header :: header"></div>
 
-<main class="container">
+<main id="main-content" tabindex="-1" class="container">
     <div class="page-header">
         <h1 th:text="#{admin.returns.heading}">Manage returns</h1>
         <a class="btn" th:href="@{/admin}" th:text="#{menu.admin}">Dashboard</a>

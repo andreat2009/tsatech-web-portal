@@ -2,17 +2,16 @@
 <html lang="it" th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title th:text="#{catalog.title}">Product catalog | TSATech Commerce</title>
     <meta name="description" th:content="#{catalog.meta.description}" />
     <meta name="keywords" th:content="${storeSettings != null ? storeSettings.siteMetaKeywords : null}" />
     <link rel="canonical" th:href="@{/catalogo}" />
-    <link rel="stylesheet" th:href="@{/css/app.css}" />
+    <th:block th:replace="~{fragments/head :: assets}"></th:block>
 </head>
 <body th:attr="data-entity-type='home'">
 <div th:replace="~{fragments/header :: header}"></div>
 
-<main class="container">
+<main id="main-content" tabindex="-1" class="container">
     <div class="breadcrumbs">
         <a th:href="@{/}" th:text="#{menu.home}">Home</a>
         <span>/</span>

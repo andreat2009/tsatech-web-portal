@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8" />
     <title th:text="#{account.order.detail.title}">Order details</title>
-    <link rel="stylesheet" th:href="@{/css/app.css}" />
+    <th:block th:replace="~{fragments/head :: assets}"></th:block>
 </head>
 <body>
 <div th:replace="fragments/header :: header"></div>
 
-<main class="container">
+<main id="main-content" tabindex="-1" class="container">
     <div class="page-header">
         <h1><span th:text="#{common.order}">Order</span> #<span th:text="${order.id}">1</span></h1>
         <div class="actions">

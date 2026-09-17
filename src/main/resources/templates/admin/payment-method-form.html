@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <title th:text="${formTitle}">Payment Method</title>
-    <link rel="stylesheet" th:href="@{/css/app.css}" />
+    <th:block th:replace="~{fragments/head :: assets}"></th:block>
     <style>
         .hint { font-size: 0.9rem; color: #6b7280; margin-top: 0.35rem; }
         .provider-panel { border: 1px solid #e5e7eb; border-radius: 16px; padding: 1rem; margin-top: 1rem; background: #fafafa; }
@@ -16,7 +16,7 @@
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
 
-<main class="container admin">
+<main id="main-content" tabindex="-1" class="container admin">
     <div class="page-header">
         <h1 th:text="${formTitle}">Payment Method</h1>
         <div class="actions">

@@ -98,7 +98,7 @@ public class PortalExceptionHandler {
         PublicStoreSettings settings = gatewayClient.getPublicStoreSettings();
         if (settings == null) {
             settings = new PublicStoreSettings();
-            settings.setSiteName("TSATech Store");
+            settings.setSiteName("Keros Store");
             settings.setLogoMaxHeightPx(96);
             settings.setSiteNameFontSizePx(28);
             settings.setSupportPhone("+39 800 000 000");

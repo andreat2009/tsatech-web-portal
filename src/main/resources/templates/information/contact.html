@@ -23,7 +23,7 @@
     </section>
     <aside class="card-lite contact-details">
         <h3 th:text="#{info.contact.details}">Contact details</h3>
-        <p><strong th:text="#{admin.settings.site.name}">Site name</strong><br><span th:text="${storeSettings.siteName}">TSATech Store</span></p>
+        <p><strong th:text="#{admin.settings.site.name}">Site name</strong><br><span th:text="${storeSettings.siteName}">Keros Store</span></p>
         <p th:if="${storeSettings.supportEmail != null}"><strong th:text="#{admin.settings.support.email}">Support email</strong><br><a th:href="${'mailto:' + storeSettings.supportEmail}" th:text="${storeSettings.supportEmail}">support@example.com</a></p>
         <p th:if="${storeSettings.supportPhone != null}"><strong th:text="#{admin.settings.support.phone}">Support phone</strong><br><span th:text="${storeSettings.supportPhone}">+39 800 000 000</span></p>
         <p th:if="${storeSettings.addressLine1 != null}"><strong th:text="#{admin.settings.address1}">Address</strong><br><span th:text="${storeSettings.addressLine1}">Via Roma 1</span><br><span th:text="${storeSettings.city + (storeSettings.postalCode != null ? ' ' + storeSettings.postalCode : '')}">Milano 20100</span></p>

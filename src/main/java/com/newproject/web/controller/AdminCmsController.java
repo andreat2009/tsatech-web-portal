@@ -73,7 +73,7 @@ public class AdminCmsController {
             settings.setSmtpStarttls(true);
             settings.setSmtpUsername("andrea.terrasi78@gmail.com");
             settings.setMailFromEmail("andrea.terrasi78@gmail.com");
-            settings.setMailFromName(firstNonBlank(fallback.getSiteName(), "TSATech Store"));
+            settings.setMailFromName(firstNonBlank(fallback.getSiteName(), "Keros Store"));
         }
 
         normalizeStoreSettings(settings);
@@ -571,7 +571,7 @@ public class AdminCmsController {
     }
 
     private void normalizeStoreSettings(StoreSettings form) {
-        form.setSiteName(firstNonBlank(form.getSiteName(), "TSATech Store"));
+        form.setSiteName(firstNonBlank(form.getSiteName(), "Keros Store"));
         form.setLogoUrl(trimToNull(form.getLogoUrl()));
         form.setSiteMetaKeywords(trimToNull(form.getSiteMetaKeywords()));
         form.setLogoMaxHeightPx(clampInt(form.getLogoMaxHeightPx(), DEFAULT_LOGO_MAX_HEIGHT_PX, MIN_LOGO_MAX_HEIGHT_PX, MAX_LOGO_MAX_HEIGHT_PX));

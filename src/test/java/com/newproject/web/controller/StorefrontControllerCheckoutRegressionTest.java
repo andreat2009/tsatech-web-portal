@@ -61,7 +61,7 @@ class StorefrontControllerCheckoutRegressionTest {
     @BeforeEach
     void setUp() {
         PublicStoreSettings settings = new PublicStoreSettings();
-        settings.setSiteName("TSATech Store");
+        settings.setSiteName("Keros Store");
         when(gatewayClient.getPublicStoreSettings()).thenReturn(settings);
         when(gatewayClient.listInformationPages(true)).thenReturn(List.of());
         when(customerResolver.resolveCustomerId(any())).thenReturn(null);

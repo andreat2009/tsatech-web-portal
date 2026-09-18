@@ -2178,7 +2178,7 @@ public class GatewayClient {
 
     private PublicStoreSettings defaultPublicStoreSettings() {
         PublicStoreSettings fallback = new PublicStoreSettings();
-        fallback.setSiteName("TSATech Store");
+        fallback.setSiteName("Keros Store");
         fallback.setLogoMaxHeightPx(96);
         fallback.setSiteNameFontSizePx(28);
         fallback.setContactEmail("andrea.terrasi78@gmail.com");
